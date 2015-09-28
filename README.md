@@ -1,6 +1,4 @@
-##WhyCon - an efficient marker-based localization system for
-
-###What is WhyCon-orig ?
+##WhyCon - an efficient marker-based localization system
 
 _WhyCon_ is a version of a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
 The system is capable of efficient real-time detection and precise position estimation of several circular markers in a video stream. 
