@@ -2,6 +2,15 @@
 #include <stdio.h>
 #include "sysmat.h" 
 
+/*
+ * File name: CTransformation.h
+ * Date:      2014
+ * Author:   Tom Krajnik, Matias Nitsche
+ * Description: Transforms detected ellipse position and dimensions to arbitrary 3D or 2D coordinate frame. The method is described in Chapter 4 of the article [1]. 
+ * Licence: if you use this class for your research, please cite [1]. 
+ * References: [1] Krajnik, Nitsche et al.: A practical multirobot localization system. Journal of Intelligent and Robotic Systems, 2014.
+ */
+
 int sortByDistance(const void* m1,const void* m2)
 {
         if (((STrackedObject*)m1)->d > ((STrackedObject*)m2)->d) return -1;
