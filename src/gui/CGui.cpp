@@ -13,7 +13,7 @@ CGui::CGui(int wi,int he,int sc)
 	screen = NULL;
 	screen = SDL_SetVideoMode(wi/sc,he/sc,24,SDL_SWSURFACE); 
 	if (screen == NULL)fprintf(stderr,"Couldn't set SDL video mode: %s\r\n",SDL_GetError());
-	SDL_WM_SetCaption("SWARMCON","Swarm Robot Localization");
+	SDL_WM_SetCaption("WHYCON","WhyCon localization system");
 	smallFont =  TTF_OpenFont("../etc/font.ttf",16);
 	if(!smallFont)printf("Unable to open font: %s\n", TTF_GetError());
 	TTF_SetFontStyle(smallFont, TTF_STYLE_NORMAL);

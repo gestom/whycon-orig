@@ -9,7 +9,6 @@
 #include "CPosition.h"
 #include "CTransformation.h"
 #include <SDL/SDL.h>
-#include "CMessageClient.h"
 #include "CPositionServer.h"
 
 //-----These parameters need to be adjusted by the user -----------------------
@@ -69,7 +68,6 @@ Uint8 lastKeys[1000];		//keys pressed in the previous step
 Uint8 *keys = NULL;		//pressed keys
 bool displayHelp = false;	//displays some usage hints
 bool drawCoords = true;		//draws coordinatess at the robot's positions
-TLogModule module = LOG_MODULE_MAIN;	//logging module name
 int runs = 0;			//number of gui updates/detections performed 
 int evalTime = 0;		//time required to detect the patterns
 FILE *robotPositionLog = NULL;	//file to log robot positions
@@ -177,15 +175,12 @@ void autocalibration()
 /*initialize logging*/
 bool initializeLogging()
 {
-	//initialize logging system
-	dump = new CDump(NULL,256,1000000);
-
 	char logFileName[1000];
 	char timeStr[100];
 	time_t timeNow;
 	time(&timeNow);
 	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S",localtime(&timeNow));
-	sprintf(logFileName,"output/SwarmCon_%s.txt",timeStr);
+	sprintf(logFileName,"output/WhyCon_%s.txt",timeStr);
 	robotPositionLog = fopen(logFileName,"w");
 	if (robotPositionLog == NULL)
 	{
