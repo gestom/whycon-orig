@@ -12,7 +12,7 @@ COPY_ETC_CMD=../etc/copy.sh
 COPY_ETC_SRC=../etc
 COPY_ETC_DST=../bin
 
-swarmcon: all obj
+whycon: all obj
 	$(MAKE) -C main $@; \
 	$(CXX) $(CXXDEFINE) -o ../bin/$@  $(OBJS) main/$@.o $(CXXFLAGS) $(LXXLIBS) -lSDL -lSDL_ttf 
 

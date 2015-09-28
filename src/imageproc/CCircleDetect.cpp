@@ -14,7 +14,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	localSearch = false;
 	ID = idi;
 	numberIDs =0;
-	enableCorrections = false;
+	enableCorrections = true;
 	lastTrackOK = false;
 	debug = 0; 
 	draw = false; 
@@ -53,7 +53,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	innerAreaRatio = M_PI/4.0;
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
 	tima = timb = timc =timd = sizer = sizerAll = 0;
-	loadCircleID("../etc/ID.txt");
+//	loadCircleID("../etc/ID.txt");
 }
 
 CCircleDetect::~CCircleDetect()
@@ -205,6 +205,7 @@ void CCircleDetect::bufferCleanup(SSegment init)
 	}
 }
 
+//not for use in this version
 int CCircleDetect::loadCircleID(const char* id)
 {
 	FILE* idFile = fopen(id,"r");
@@ -230,6 +231,9 @@ int CCircleDetect::loadCircleID(const char* id)
 
 void CCircleDetect::identifySegment(SSegment* segment)
 {
+	segment->ID = 0;
+	return;
+	//not for use in this version
 	float maxDistance = 1000;
 	int index = -1;
 	float dx,dy;

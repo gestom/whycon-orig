@@ -49,12 +49,12 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 1. Calibrate your camera using the MATLAB (or Octave) calibration toolbox and put the <b>Calib_Results.m</b> in the <b>etc</b> directory.
 1. If you have resized the markers (their default size is 122mm), then adjust their diameter in the <b>main/whycon.cpp</b> file.
 1. Print additional four circular <a href="etc/test.pdf">markers</a> and place to the corners of your (reclangular) operational space.
-1. Modify the dimensions of the operation space in the <b>main/whycon.cpp</b> - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
-1. Call <b>make</b> to recompile and fix your camera.
+1. Modify the dimensions of the operation space in the <b>main/whycon.cpp</b> and call <b>make</b> to recompile - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
+1. Position and fixate your camera so that it has all four circles in it's field of view.
 1. Go to <b>bin</b> directory and run  <b>./whycon /dev/videoX Y</b>, where X is the number of your camera and Y is the number of patterns you want to track, i.e. Y=NxM+4.
 1. Once all the patterns are found, press <b>a</b> and the four outermost patterns will be used to calculate the coordinate system.
 1. Alternatively, you can press <b>r</b> and then click the four circles that define the coordinate system.
-1. Each pattern will have four numbers - ID (this is always 0 in our case), x,y,z coordinates and in m.
+1. Pressing 1 should show you the patterns' positions in camera-centric coordinates (x-axis equals to camera optical axis), pressing 2 and 3 will display marker coordinates in user-defined 2D or 3D coordinate systems.
 1. Pressing <b>+</b>,<b>-</b> changes the number of localized patterns.
 
 ####To postprocess the stored videos
