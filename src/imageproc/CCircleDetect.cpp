@@ -1,5 +1,14 @@
 #include "CCircleDetect.h"
 
+/*
+ * File name: CCircleDetect.h
+ * Date:      2014
+ * Author:   Tom Krajnik, Matias Nitsche
+ * Description: implements computationally efficient and precist circular pattern detection. Algorithm is described in Chapter 3 of the article [1]. 
+ * Licence: if you use this class for your research, please cite [1]. 
+ * References: [1] Krajnik, Nitsche et al.: A practical multirobot localization system. Journal of Intelligent and Robotic Systems, 2014.
+ */
+
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
@@ -11,28 +20,29 @@ int CCircleDetect::maskNum = 0;
 //Variable initialization
 CCircleDetect::CCircleDetect(int wi,int he,int idi)
 {
-	localSearch = false;
-	ID = idi;
-	numberIDs =0;
-	enableCorrections = true;
-	lastTrackOK = false;
-	debug = 0; 
-	draw = false; 
-	drawAll = true;
-	maxFailed = 0;
-	minSize = 15;
-	thresholdStep = 256;
-	maxThreshold = 3*256;
-	centerDistanceToleranceRatio = 0.1;
-	centerDistanceToleranceAbs = 15;
-	circularTolerance = 1.5;
-	ratioTolerance = 0.4;
-	threshold = maxThreshold/2;
-	numFailed = maxFailed;
-	track = true;
-	circularityTolerance = 0.02;
+	localSearch = false;				//by default, search for the pattern eveywhere, true is used when position of the pattern is indicated by a click
+	ID = idi;					//pattern ID - not used in this case	
+	numberIDs =0;					//pattern ID - not used in this case	
+	enableCorrections = true;			//enables brightness compensation, see 3.5 of [1]
+	lastTrackOK = false;				//was the pattern detected in the previous step ? used to initiate the search position
+	debug = 0;					//debug level 
+	draw = false; 					//draw the detected segments in bright colors to indicate segmentation results
+	drawAll = true;					//draw all segmentation results - used for debugging
+	maxFailed = 0;					//used to decide when to start changing the threshold 
+	minSize = 15;					//minimal pattern size in pixels
+	thresholdStep = 256;				//related to thresholding in case of unsuccessful detections, see 3.2 of [1]
+	maxThreshold = 3*256;				//related to thresholding in case of unsuccessful detections, see 3.2 of [1]
+	centerDistanceToleranceRatio = 0.1;		//max allowd distance of the inner and outer circle centers (relative to pattern dimensions)
+	centerDistanceToleranceAbs = 15;		//max allowed distance of the inner and outer circle centers (in pixels)
+	circularTolerance = 1.5;			//maximal tolerance of bounding box dimensions vs expected pixel area - see equation 2 of the paper [1] 
+	ratioTolerance = 1.4;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
+	threshold = maxThreshold/2;			//default tresholt
 
-	//initialization - fixed params
+	numFailed = maxFailed;				//used to decide when to start changing the threshold 
+	track = true;					//initiate the search from the last position ?
+	circularityTolerance = 0.02;			//final circularity test, see Equation 5 of [1]
+
+	/*initialization of supporting structures according to the image size provided*/ 
 	width = wi;
 	height = he;
 	len = width*height;
@@ -46,12 +56,15 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 		SSegment dummy;
 		bufferCleanup(dummy);
 	}
-	clearCalibMask();
-	diameterRatio = 50.0/122.0; //inner vs. outer circle diameter 
+
+	/*inner vs. outer circle diameter, used to calculate expected pixel ratios, see Alg 2 and Eq. 2 of [1]   */
+	diameterRatio = 50.0/122.0; 			
 	float areaRatioInner_Outer = diameterRatio*diameterRatio;
 	outerAreaRatio = M_PI*(1.0-areaRatioInner_Outer)/4;
 	innerAreaRatio = M_PI/4.0;
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
+
+	//timers for benchmarking
 	tima = timb = timc =timd = sizer = sizerAll = 0;
 //	loadCircleID("../etc/ID.txt");
 }
@@ -248,26 +261,6 @@ void CCircleDetect::identifySegment(SSegment* segment)
 		}
 	}
 	segment->ID = index;
-}
-
-void CCircleDetect::clearCalibMask()
-{
-	maskNum = 0;
-}
-
-void CCircleDetect::applyCalibMask(CRawImage* image)
-{
-	int pos;
-	for (int p =  0;p< maskNum;p++)
-	{
-		pos = mask[p];	
-		image->data[3*pos+0] = image->data[3*pos+1] = image->data[3*pos+2] = 0;
-	}
-}
-
-void CCircleDetect::addCalibMask()
-{
-	for (int p = queueOldStart;p<queueEnd;p++) mask[maskNum++] = queue[p];
 }
 
 SSegment CCircleDetect::calcSegment(SSegment segment,int size,long int x,long int y,long int cm0,long int cm1,long int cm2)
