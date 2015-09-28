@@ -1,13 +1,12 @@
 ##WhyCon - an efficient marker-based localization system for
 
 ###What is WhyCon-orig ?
-WhyCon-orig is a minimalistic version of the <a href="http://www.youtube.com/watch?v=KgKrN8_EmUA">WhyCon</a> localization system.
 
-_WhyCon_ is a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
-These characteristics allow its use as an alternative to more expensive localization systems available. 
+_WhyCon_ is a version of a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
 The system is capable of efficient real-time detection and precise position estimation of several circular markers in a video stream. 
 It can be used both off-line, as a source of ground-truth for robotics experiments, or on-line as a component of robotic systems that require real-time, precise position estimation.
 _WhyCon_ is meant as an alternative to widely used and expensive localization systems. It is fully open-source.
+_WhyCon-orig_ is WhyCon's original, minimalistic version that was supposed to be ROS and openCV independent.
 
 
 | WhyCon example application (video)  | Scenario description |
@@ -26,7 +25,7 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 | [Social-card](https://github.com/strands-project/strands_social/tree/hydro-devel/social_card_reader) | HRI | orientation translated to commands  | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
 
 
-####How does it work ?
+####Where is it described ?
 
 <i>WhyCon</i> was first presented on International Conference on Advanced Robotics 2013 [[1](#references)], later in the Journal of Intelligent and Robotics Systems [[2](#references)] and finally at the Workshop on Open Source Aerial Robotics during the International Conference on Intelligent Robotic Systems, 2015 [[3](#references)]. Its early version was also presented at the International Conference of Robotics and Automation, 2013 [[4](#references)].
 If you decide to use this software for your research, please cite <i>WhyCon</i> using the one of the references provided in this [bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/WhyCon.bib) file.
@@ -42,7 +41,7 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 1. Adjust the camera resolution in the <b>main/whycon.cpp</b>.
 1. Compile the software - just type <b>make</b>.
 1. Download, resize and print one circular <a href="etc/test.pdf">pattern</a> - you have the pattern also in the <b>etc/test.pdf</b> file.
-1. Try a test run - you need to run the binary from the <b>bin</b> directory. Type <b>./swarmcon /dev/videoX 1</b>, where X is the number of the camera and 1 tells the system to track one pattern.</li> 
+1. Try a test run - you need to run the binary from the <b>bin</b> directory. Type <b>./whycon /dev/videoX 1</b>, where X is the number of the camera and 1 tells the system to track one pattern.</li> 
 1. You should see the image with some numbers below the circle. Pressing <b>D</b> shows the segmentation result.
 1. At this point, you can also change camera brightness, exposure, contrast by pressing <i>(SHIFT) b, e, c</i> respectively. These settings are stored in <i>etc/camera.cfg</i> and reloaded on restart.
 1. Open your browser to view localhost:6666. You should see the circle position.
