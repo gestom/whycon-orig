@@ -612,7 +612,8 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 	float x,y,x1,x2,y1,y2,major,minor,v0,v1;
 	STrackedObject result;
 	fullUnbarrel = unbarreli;
-	//Transform to the Canonical camera coordinates
+	
+	/* transformation to the canonical camera coordinates, see 4.1 of [1]*/
 	x = segment.x;
 	y = segment.y;
 	transformXY(&x,&y);
@@ -644,7 +645,7 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 	minor = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
 	//printf("BBB: %f %f\n",sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1))-sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2)),minor);
 
-	//Construct the ellipse characteristic equation
+	/*construct the ellipse characteristic equation, see 4.2 of [1], prepare coefs for Eq */
 	float a,b,c,d,e,f;
 	a = v0*v0/(major*major)+v1*v1/(minor*minor);
 	b = v0*v1*(1.0/(major*major)-1.0/(minor*minor));
@@ -652,12 +653,12 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 	d = (-x*a-b*y);
 	e = (-y*c-b*x);
 	f = (a*x*x+c*y*y+2*b*x*y-1.0);
-	
-	//transformation to global coordinates
-	double data[] ={a,b,d,b,c,e,d,e,f};
-	//printf("%lf %lf %lf\n%lf %lf %lf\n%lf %lf %lf\n",data[0],data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8]);
-	//homographic transform
-	if (transformType == TRANSFORM_2D){
+	double data[] ={a,b,d,b,c,e,d,e,f};		//matrix conic coefficients, see 4.2 of [1]
+
+	/*transformation to camera-centric or user-defined coordinate frames*/
+	//3D->2D homography, see 4.4.2 of [1]
+	if (transformType == TRANSFORM_2D)			
+	{
 		//for debug only
 		result = eigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
@@ -675,24 +676,27 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 		result.yaw = segment.angle;
 		result.ID = segment.ID;
 	}
-	//transform
-	if (transformType == TRANSFORM_NONE){
+	//camera-centric coordinate frame, see 4.3 and 4.4 of [1]
+	if (transformType == TRANSFORM_NONE)
+	{
 		result = eigen(data);
 	}
+	//user-defined 3D coordinate system, see 4.4.1 of [1]
 	if (transformType == TRANSFORM_3D){
 		result = eigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 		result = transform3D(result);
-//		result.esterror += 20.0/(segment.m0*4)+0.20/(segment.m1*4);
 		result.esterror += 15.0/(segment.m1*4);
 		result.d = d;
 	}
+	//alternative calculation of 3D->3D transform
 	if (transformType == TRANSFORM_4D){
 		result = eigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 		result = transform4D(result);
 		result.d = d;
 	}
+	//camera centric + error estimate
 	if (transformType == TRANSFORM_INV){
 		result = eigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
