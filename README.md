@@ -1,4 +1,5 @@
-##WhyCon - an efficient marker-based localization system
+##WhyCon 
+###A precise, efficient and low-cost localization system 
 
 _WhyCon_ is a version of a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
 The system is capable of efficient real-time detection and precise position estimation of several circular markers in a video stream. 
@@ -27,6 +28,8 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 
 <i>WhyCon</i> was first presented on International Conference on Advanced Robotics 2013 [[1](#references)], later in the Journal of Intelligent and Robotics Systems [[2](#references)] and finally at the Workshop on Open Source Aerial Robotics during the International Conference on Intelligent Robotic Systems, 2015 [[3](#references)]. Its early version was also presented at the International Conference of Robotics and Automation, 2013 [[4](#references)].
 If you decide to use this software for your research, please cite <i>WhyCon</i> using the one of the references provided in this [bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/WhyCon.bib) file.
+
+-----
 
 ###Setting up WhyCon 
 
