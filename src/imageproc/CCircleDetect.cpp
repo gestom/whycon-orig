@@ -26,7 +26,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	centerDistanceToleranceRatio = 0.1;
 	centerDistanceToleranceAbs = 15;
 	circularTolerance = 1.5;
-	ratioTolerance = 2.4;
+	ratioTolerance = 0.4;
 	threshold = maxThreshold/2;
 	numFailed = maxFailed;
 	track = true;
@@ -47,7 +47,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 		bufferCleanup(dummy);
 	}
 	clearCalibMask();
-	diameterRatio = 5.0/14.0; //inner vs. outer circle diameter 
+	diameterRatio = 50.0/122.0; //inner vs. outer circle diameter 
 	float areaRatioInner_Outer = diameterRatio*diameterRatio;
 	outerAreaRatio = M_PI*(1.0-areaRatioInner_Outer)/4;
 	innerAreaRatio = M_PI/4.0;

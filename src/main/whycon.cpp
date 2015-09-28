@@ -305,7 +305,7 @@ int main(int argc,char* argv[])
 	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale);
 	image = new CRawImage(imageWidth,imageHeight);
 	trans = new CTransformation(imageWidth,imageHeight,circleDiameter,true);
-	trans->transformType = TRANSFORM_2D;		//in our case, 2D is the default
+	trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
 	//initialize the circle detectors - each circle has its own detector instance 
 	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,i);
