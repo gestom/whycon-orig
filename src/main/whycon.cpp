@@ -14,8 +14,8 @@
 //-----These parameters need to be adjusted by the user -----------------------
 
 //Adjust camera resolution here
-int  imageWidth= 960;
-int  imageHeight = 720;
+int  imageWidth= 1600;
+int  imageHeight = 1200;
 
 //int  imageWidth= 800;
 //int  imageHeight = 600;
@@ -302,7 +302,7 @@ int main(int argc,char* argv[])
 	camera->loadConfig("../etc/camera.cfg");
 
 	//determine gui size so that it fits the screen
-	while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
+	//while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
 
 	//initialize GUI, image structures, coordinate transformation modules
 	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale);

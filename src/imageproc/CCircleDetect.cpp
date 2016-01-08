@@ -246,7 +246,7 @@ int CCircleDetect::loadCircleID(const char* id)
 
 int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 {
-#define ANGLE_RANGE 360
+#define ANGLE_RANGE 640
 #define ID_BITS 8 
 	int pos;
 	float x[ANGLE_RANGE];
@@ -255,11 +255,10 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 	float differ[ANGLE_RANGE];
 	float smooth[ANGLE_RANGE];
 	int segmentWidth = ANGLE_RANGE/ID_BITS/2;
-
 	//calculate appropriate positions
 	for (int a = 0;a<ANGLE_RANGE;a++){
-		x[a] = inner->x+(inner->m0*cos((float)a/180.0*M_PI)*inner->v0+inner->m1*sin((float)a/180.0*M_PI)*inner->v1)*2.0;
-		y[a] = inner->y+(inner->m0*cos((float)a/180.0*M_PI)*inner->v1-inner->m1*sin((float)a/180.0*M_PI)*inner->v0)*2.0;
+		x[a] = inner->x+(inner->m0*cos((float)a/ANGLE_RANGE*2*M_PI)*inner->v0+inner->m1*sin((float)a/ANGLE_RANGE*2*M_PI)*inner->v1)*2.0;
+		y[a] = inner->y+(inner->m0*cos((float)a/ANGLE_RANGE*2*M_PI)*inner->v1-inner->m1*sin((float)a/ANGLE_RANGE*2*M_PI)*inner->v0)*2.0;
 	}
 
 	//retrieve the image brightness on these using bilinear transformation
@@ -282,7 +281,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 
 	//calculate signal gradient 
 	for (int a = 1;a<ANGLE_RANGE;a++) differ[a] = signal[a]-signal[a-1];  
-	differ[0] = signal[0] - signal[ANGLE_RANGE];
+	differ[0] = signal[0] - signal[ANGLE_RANGE-1];
 
 	//and smooth the gradient out
 	smooth[0] = 0; 
@@ -305,7 +304,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 	int state = 1;
 	int position0 = (maxIndex + segmentWidth)%ANGLE_RANGE;
 	int position1 = (maxIndex + 2*segmentWidth)%ANGLE_RANGE;
-	char code[ID_BITS*2];
+	char code[ID_BITS*4];
 	code[0] = '1';
 
 	while (a<ID_BITS*2)
@@ -317,7 +316,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 				code[a++]='X';
 				position0 += segmentWidth;
 			}
-			state=-1;
+			state=0;
 			code[a]='0';
 		}else{
 			if (smooth[position0] < smooth[position1]){
@@ -328,13 +327,13 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 			code[a]='1';
 		}
 		if (code[a] == '1'){
-			while (smooth[position0] < smooth[(position0+ANGLE_RANGE-1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE-1)%ANGLE_RANGE; 
-			while (smooth[position0] < smooth[(position0+ANGLE_RANGE+1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE+1)%ANGLE_RANGE;
+			//while (smooth[position0] < smooth[(position0+ANGLE_RANGE-1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE-1)%ANGLE_RANGE; 
+			//while (smooth[position0] < smooth[(position0+ANGLE_RANGE+1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE+1)%ANGLE_RANGE;
 		}
 		if (code[a] == '0')
 		{
-			while (smooth[position0] > smooth[(position0+ANGLE_RANGE-1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE-1)%ANGLE_RANGE; 
-			while (smooth[position0] > smooth[(position0+ANGLE_RANGE+1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE+1)%ANGLE_RANGE;
+			//while (smooth[position0] > smooth[(position0+ANGLE_RANGE-1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE-1)%ANGLE_RANGE; 
+			//while (smooth[position0] > smooth[(position0+ANGLE_RANGE+1)%ANGLE_RANGE]) position0=(position0+ANGLE_RANGE+1)%ANGLE_RANGE;
 		}
 		position0 += segmentWidth;
 		position0 = position0%ANGLE_RANGE;
@@ -349,7 +348,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 	{
 		if (code[a] == 'X') edgeIndex = a;
 	}
-	char realCode[ID_BITS*2];
+	char realCode[ID_BITS*4];
 	edgeIndex = 1-(edgeIndex%2);
 	int ID = 0;	
 	for (unsigned int a=0;a<ID_BITS;a++){
@@ -369,7 +368,15 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 		printf("\n");
 	}
 	printf("CODE %i %x %s %s\n",decoder->get(ID),ID,realCode,code);
-	
+
+	for (int a = 0;a<ANGLE_RANGE;a++){
+		pos = ((int)x[a]+((int)y[a])*image->width);
+		if (pos > 0 && pos < image->width*image->height){	
+			image->data[3*pos+0] = 0;
+			image->data[3*pos+1] = (unsigned char)(255.0*a/ANGLE_RANGE);
+			image->data[3*pos+2] = 0;
+		}
+	}	
 	return decoder->get(ID);
 }
 
@@ -599,22 +606,26 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 		if (changeThreshold()==false) numFailed = 0;
 		if (debug > 5) drawAll = true;
 	}
-
-	int segment = identifySegment(&inner,image);
-	outer.angle = init.angle;
-	outer.ID = init.ID;
-	if (segment > -1)
-	{
-		outer.angle = inner.angle;
-	       	outer.ID = segment;
+	if (outer.valid){
+		/*inner.x = outer.x; 
+		inner.y = outer.y; 
+		inner.m0 = 0.50*outer.m0; 
+		inner.m1 = 0.50*outer.m1; */
+		int segment = identifySegment(&inner,image);
+		outer.angle = init.angle;
+		outer.ID = init.ID;
+		if (segment > -1)
+		{
+			outer.angle = inner.angle;
+			outer.ID = segment;
+		}
 	}
-	
 	//Drawing results 
 	if (outer.valid){
 		for (int p =  queueOldStart;p< queueEnd;p++)
 		{
 			pos = queue[p];	
-			image->data[3*pos+0] = 	image->data[3*pos+1] = 	image->data[3*pos+2] = outer.mean/3;
+	//		image->data[3*pos+0] = 	image->data[3*pos+1] = 	image->data[3*pos+2] = outer.mean/3;
 		}
 	}
 	if (draw){
