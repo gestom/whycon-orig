@@ -23,7 +23,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	localSearch = false;				//by default, search for the pattern eveywhere, true is used when position of the pattern is indicated by a click
 	ID = idi;					//pattern ID - not used in this case	
 	numberIDs =0;					//pattern ID - not used in this case	
-	enableCorrections = true;			//enables brightness compensation, see 3.5 of [1]
+	enableCorrections = false;			//enables brightness compensation, see 3.5 of [1]
 	lastTrackOK = false;				//was the pattern detected in the previous step ? used to initiate the search position
 	debug = 0;					//debug level 
 	draw = false; 					//draw the detected segments in bright colors to indicate segmentation results
@@ -34,8 +34,8 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	maxThreshold = 3*256;				//related to thresholding in case of unsuccessful detections, see 3.2 of [1]
 	centerDistanceToleranceRatio = 0.1;		//max allowd distance of the inner and outer circle centers (relative to pattern dimensions)
 	centerDistanceToleranceAbs = 15;		//max allowed distance of the inner and outer circle centers (in pixels)
-	circularTolerance = 1.5;			//maximal tolerance of bounding box dimensions vs expected pixel area - see equation 2 of the paper [1] 
-	ratioTolerance = 1.4;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
+	circularTolerance = 2.5;			//maximal tolerance of bounding box dimensions vs expected pixel area - see equation 2 of the paper [1] 
+	ratioTolerance = 2.4;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
 	threshold = maxThreshold/2;			//default tresholt
 
 	numFailed = maxFailed;				//used to decide when to start changing the threshold 
@@ -410,6 +410,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 										outer.r0 = inner.m1/outer.m0;
 										outer.r1 = inner.m0/outer.m1;
 									}
+									
 									float orient = atan2(outer.y-inner.y,outer.x-inner.x);
 									outer.angle = atan2(outer.v1,outer.v0);
 									if (debug > 5) printf("Angle: %.3f %.3f \n",outer.angle,orient);
@@ -497,7 +498,92 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 		for (int p =  queueOldStart;p< queueEnd;p++)
 		{
 			pos = queue[p];	
-			image->data[3*pos+0] = 	image->data[3*pos+1] = 	image->data[3*pos+2] = outer.mean/3;
+			//image->data[3*pos+0] = 	image->data[3*pos+1] = 	image->data[3*pos+2] = outer.mean/3;
+		}
+		if (true){
+			float x[360];
+			float y[360];
+			float signal[360];
+			for (int a = 0;a<360;a++){
+				x[a] = inner.x+(inner.m0*cos((float)a/180.0*M_PI)*inner.v0+inner.m1*sin((float)a/180.0*M_PI)*inner.v1)*2.0;
+				y[a] = inner.y+(inner.m0*cos((float)a/180.0*M_PI)*inner.v1-inner.m1*sin((float)a/180.0*M_PI)*inner.v0)*2.0;
+			}
+			float gx,gy; 
+			int px,py;
+			//unsigned char *ptr = image->data;
+			int *ptr = buffer;
+			for (int a = 0;a<360;a++)
+			{	
+				px = x[a];
+				py = y[a];
+				gx = x[a]-px;
+				gy = y[a]-py;
+				pos = (px+py*image->width);
+				/*detection from the image
+				signal[a]  = ptr[(pos+0)*3+0]*(1-gx)*(1-gy)+ptr[(pos+1)*3+0]*gx*(1-gy)+ptr[(pos+image->width)*3+0]*(1-gx)*gy+ptr[3*(pos+(image->width+1))+0]*gx*gy; 
+				signal[a] += ptr[(pos+0)*3+1]*(1-gx)*(1-gy)+ptr[(pos+1)*3+1]*gx*(1-gy)+ptr[(pos+image->width)*3+1]*(1-gx)*gy+ptr[3*(pos+(image->width+1))+1]*gx*gy; 
+				signal[a] += ptr[(pos+0)*3+2]*(1-gx)*(1-gy)+ptr[(pos+1)*3+2]*gx*(1-gy)+ptr[(pos+image->width)*3+2]*(1-gx)*gy+ptr[3*(pos+(image->width+1))+2]*gx*gy; 
+				if (signal[a] > threshold) signal[a] = 1; else signal[a] = 0;*/
+				/*detection from the buffer*/ 
+				signal[a]  = ptr[pos]*(1-gx)*(1-gy)+ptr[pos+1]*gx*(1-gy)+ptr[pos+image->width]*(1-gx)*gy+ptr[pos+(image->width+1)]*gx*gy; 
+				if (signal[a] > 1.5) signal[a] = 1; else signal[a] = 0;
+			}
+			for (int a = 0;a<360;a++){
+				pos = ((int)x[a]+((int)y[a])*image->width);
+				if (pos > 0 && pos < image->width*image->height){	
+					/*image->data[3*pos+0] = 0;
+					  image->data[3*pos+1] = 255;
+					  image->data[3*pos+2] = 0;*/
+				}
+			}
+			printf("SIGNAL: ");
+			for (int a = 0;a<360;a++)printf("%.2f ",signal[a]);
+			printf("\n");
+			printf("LENGTHS: ");
+			int counter = 0;
+			int gaps = 1000;
+			int index = -1;
+			float length = 0;
+			for (int a = 1;a<720;a++)
+			{
+				counter++;
+				if (signal[a%360] > signal[(a-1)%360]) printf("%i ",-counter);
+				if (signal[a%360] < signal[(a-1)%360]) printf("%i ",+counter);
+				if (signal[a%360] != signal[(a-1)%360])
+				{
+					length = counter/18.0;
+
+					//try to ignore noise
+					if (length > 0.5){
+						//can it be an origin marker ?
+						if ((signal[a%360] > signal[(a-1)%360]) && ((length > 1.25 && length < 1.75) || (length > 2.25 && length < 2.75)))
+						{
+							printf("GAPS %i ",gaps);
+							if (gaps == 1){
+								index = a;
+								if (length > 2.0) index = a-18;
+								printf("Here ");
+							}
+							gaps = 0;
+						}else if (length > 0.5 && length < 1.25) gaps++; else gaps = 1000;
+						counter = 0;
+					}
+				}	
+			}
+			printf("\n");
+			char retez[100];
+			counter = 0;
+			int residualError = 0;
+			printf("Count ");
+			for (int a = 0;a<360-18*3;a++){
+				counter+=signal[(a+index)%360];
+				if (a%18 == 17){
+					residualError = max(min(abs(18-counter),counter),residualError); 
+					if (a%36 == 35) printf("%i",counter>8);
+					counter = 0;
+				}
+			}
+			printf(" %i \n",residualError);
 		}
 	}
 	if (draw){

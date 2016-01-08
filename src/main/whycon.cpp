@@ -17,6 +17,9 @@
 int  imageWidth= 960;
 int  imageHeight = 720;
 
+//int  imageWidth= 800;
+//int  imageHeight = 600;
+
 //Adjust the black circle diameter [m] 
 float circleDiameter = 0.122;
 
