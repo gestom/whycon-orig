@@ -627,7 +627,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 		for (int p =  queueOldStart;p< queueEnd;p++)
 		{
 			pos = queue[p];	
-	//		image->data[3*pos+0] = 	image->data[3*pos+1] = 	image->data[3*pos+2] = outer.mean/3;
+			image->data[3*pos+0] = 	image->data[3*pos+1] = 	image->data[3*pos+2] = outer.mean/3;
 		}
 	}
 	if (draw){
