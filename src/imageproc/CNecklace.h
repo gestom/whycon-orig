@@ -5,17 +5,23 @@
 #include <stdlib.h>
 #include <math.h>
 
+typedef struct
+{
+	int id;
+	int rotation;
+}SNecklace;
+
 class CNecklace{
 	public:
 		CNecklace(int bits);
 		~CNecklace();
-		int get(int sequence);
+		SNecklace get(int sequence);
 
 	private:
 		int length;
 		int idLength; 
-		int bitshift(int a);
-		int *idArray;
+		SNecklace *idArray;
+		SNecklace unknown;
 };
 #endif
 

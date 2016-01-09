@@ -240,6 +240,12 @@ void processKeys()
 			detectorArray[i]->debug = 10-detectorArray[i]->debug;
 		}
 	}
+	if (keys[SDLK_i] && lastKeys[SDLK_i] == false) 
+	{ 
+		for (int i = 0;i<numBots;i++){
+			detectorArray[i]->identify = detectorArray[i]->identify==false;
+		}
+	}
 
 	//transformations to use - in our case, the relevant transform is '2D'
 	if (keys[SDLK_1] && lastKeys[SDLK_1] == false) trans->transformType = TRANSFORM_NONE;
@@ -385,7 +391,7 @@ int main(int argc,char* argv[])
 
 		
 		for (int i = 0;i<numBots;i++){
-			//if (currentSegmentArray[i].valid) printf("Object %i %03f %03f %03f %03f %03f\n",i,objectArray[i].x,objectArray[i].y,objectArray[i].z,objectArray[i].error,objectArray[i].esterror);
+			if (currentSegmentArray[i].valid) printf("Object %i %03f %03f %03f %03f\n",objectArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].z,objectArray[i].yaw);
 		}
 
 		if (camera->cameraType == CT_WEBCAM){

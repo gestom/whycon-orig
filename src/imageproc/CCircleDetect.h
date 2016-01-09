@@ -21,6 +21,11 @@
 #define OUTER 1
 #define MAX_PATTERNS 50 
 
+//used for circle identification 
+#define ID_SAMPLES 320
+#define ID_BITS 8 
+
+
 //this structure contains information related to image coordinates and dimensions of the detected pattern
 typedef struct{
 	float x;			//center in image coordinates
@@ -78,6 +83,9 @@ class CCircleDetect
 
 		//used when selecting the circle by mouse click 
 		bool localSearch;
+
+		//attempt to identify segments 
+		bool identify;
 	private:
 		//see the constructor in CCircleDetection.cpp for description of the following parameters
 		CNecklace *decoder;
