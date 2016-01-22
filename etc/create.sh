@@ -1,3 +1,4 @@
+make neclage
 convert -size 2970x2100 xc:white -density 10x10 -units pixelspercentimeter -fill white result.png
 w=$(echo "360/$1/2"|bc -l)
 n=$(($(./neclage $1|cut -f 2 -d ' '|wc -l)-1))
