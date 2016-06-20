@@ -8,11 +8,21 @@ OBJS=$(wildcard ../obj/*.o)
 LXXLIBS+=-L/usr/local/lib
 LXXLIBS+=-lpthread
 
+#----------ROS START: uncomment the following lines if you want to use ROS
+CXXDEFINE=-DUSE_ROS
+LXXLIBS+=-L/opt/ros/indigo/lib/ 
+LXXLIBS+=-lroscpp -limage_transport -lrosconsole
+#----------ROS END 
+
 COPY_ETC_CMD=../etc/copy.sh
 COPY_ETC_SRC=../etc
 COPY_ETC_DST=../bin
 
 whycon: all obj
+	$(MAKE) -C main $@; \
+		$(CXX) $(CXXDEFINE) -o ../bin/$@  $(OBJS) main/$@.o $(CXXFLAGS) $(LXXLIBS) -lSDL -lSDL_ttf 
+
+ros: 	all obj
 	$(MAKE) -C main $@; \
 	$(CXX) $(CXXDEFINE) -o ../bin/$@  $(OBJS) main/$@.o $(CXXFLAGS) $(LXXLIBS) -lSDL -lSDL_ttf 
 
@@ -21,7 +31,7 @@ all:
 	@for i in $(SUBDIRS) ;\
 	do \
 	echo "making" all "in $(CURRENT_DIR)/$$i..."; \
-	$(MAKE) -C $$i all; \
+	$(MAKE) CXXDEFINE=$(CXXDEFINE) -C $$i all; \
 	done
 
 gui: all
