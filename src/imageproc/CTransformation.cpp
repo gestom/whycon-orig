@@ -683,7 +683,6 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 		result.esterror = fabs(sqrt(xerr*xerr+yerr*yerr))*30; 
 		result.yaw = atan2(segment.v0,segment.v1);
 		result.yaw = segment.angle;
-		result.ID = segment.ID;
 	}
 	//camera-centric coordinate frame, see 4.3 and 4.4 of [1]
 	if (transformType == TRANSFORM_NONE)
@@ -711,6 +710,8 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 		result.d = d;
 	}
+	result.ID = segment.ID;
+	result.yaw = segment.angle;
 	/*result.pitch = acos(fmin(minor/major,1.0))/M_PI*180.0; //TODO
 	result.roll = segment.horizontal; //TODO*/
 	return result;

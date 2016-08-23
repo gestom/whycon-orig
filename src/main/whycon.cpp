@@ -14,8 +14,11 @@
 //-----These parameters need to be adjusted by the user -----------------------
 
 //Adjust camera resolution here
-int  imageWidth= 960;
-int  imageHeight = 720;
+int  imageWidth= 1600;
+int  imageHeight = 1200;
+
+//int  imageWidth= 800;
+//int  imageHeight = 600;
 
 //Adjust the black circle diameter [m] 
 float circleDiameter = 0.122;
@@ -237,6 +240,12 @@ void processKeys()
 			detectorArray[i]->debug = 10-detectorArray[i]->debug;
 		}
 	}
+	if (keys[SDLK_i] && lastKeys[SDLK_i] == false) 
+	{ 
+		for (int i = 0;i<numBots;i++){
+			detectorArray[i]->identify = detectorArray[i]->identify==false;
+		}
+	}
 
 	//transformations to use - in our case, the relevant transform is '2D'
 	if (keys[SDLK_1] && lastKeys[SDLK_1] == false) trans->transformType = TRANSFORM_NONE;
@@ -299,7 +308,7 @@ int main(int argc,char* argv[])
 	camera->loadConfig("../etc/camera.cfg");
 
 	//determine gui size so that it fits the screen
-	while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
+	//while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
 
 	//initialize GUI, image structures, coordinate transformation modules
 	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale);
@@ -382,7 +391,7 @@ int main(int argc,char* argv[])
 
 		
 		for (int i = 0;i<numBots;i++){
-			//if (currentSegmentArray[i].valid) printf("Object %i %03f %03f %03f %03f %03f\n",i,objectArray[i].x,objectArray[i].y,objectArray[i].z,objectArray[i].error,objectArray[i].esterror);
+			if (currentSegmentArray[i].valid) printf("Object %i %03f %03f %03f %03f\n",objectArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].z,objectArray[i].yaw);
 		}
 
 		if (camera->cameraType == CT_WEBCAM){

@@ -10,6 +10,7 @@
 #ifndef __CCIRCLEDETECT_H__
 #define __CCIRCLEDETECT_H__
 
+#include "CNecklace.h"
 #include "CRawImage.h"
 #include "CTimer.h"
 #include <math.h>
@@ -19,6 +20,11 @@
 #define INNER 0
 #define OUTER 1
 #define MAX_PATTERNS 50 
+
+//used for circle identification 
+#define ID_SAMPLES 320
+#define ID_BITS 8 
+
 
 //this structure contains information related to image coordinates and dimensions of the detected pattern
 typedef struct{
@@ -59,7 +65,7 @@ class CCircleDetect
 		SSegment calcSegment(SSegment segment,int size,long int x,long int y,long int cm0,long int cm1,long int cm2);
 
 		//establish circle ID (not used, see the SwarmCon version of this class)
-		void identifySegment(SSegment* segment);
+		int identifySegment(SSegment* inner,CRawImage* image);
 		//cleanup the shared buffers - see 3.6 of [1] 
 		void bufferCleanup(SSegment init);
 
@@ -77,8 +83,12 @@ class CCircleDetect
 
 		//used when selecting the circle by mouse click 
 		bool localSearch;
+
+		//attempt to identify segments 
+		bool identify;
 	private:
 		//see the constructor in CCircleDetection.cpp for description of the following parameters
+		CNecklace *decoder;
 		bool track;
 		int maxFailed;
 		int numFailed;
