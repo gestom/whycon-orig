@@ -15,25 +15,51 @@ CNecklace::CNecklace(int bits)
 		/*check if there is a lower number that could be created by bitshifting it*/
 		tempID  = id;
 		rotations = 0;
+		int cached [length - 1];
+		bool isSymmetrical = false;
+
 		do{
 			bit = tempID%2;
 			tempID=tempID/2+bit*pow(2,length-1);
-		//	printf("%i %i %i\n",tempID,id,bit);
-		}
-		while (rotations++<length-1 && id <= tempID);
-		if (id > tempID){
+
+			if(bit || id == 0)
+			{
+				for (int i = 0; i < rotations && !isSymmetrical; i++)
+				{
+					// check for symmetry
+					if (cached[i] == tempID){
+						isSymmetrical = true;
+					}
+				}
+			}
+
+			cached[rotations] = tempID;
+
+		}while (rotations++<length-1 && id <= tempID && !isSymmetrical);
+
+		if(isSymmetrical)
+		{
+			idArray[id].id = -1;
+			idArray[id].rotation = -1;
+		} else if (id > tempID)
+		{
+			if(idArray[tempID].id != -1)
+			{
 				idArray[id] = idArray[tempID];
-				idArray[id].rotation += rotations;
-		}else{
+				idArray[id].rotation +=rotations;
+			}
+		}else
+		{
 			idArray[id].id =currentID++;
 			idArray[id].rotation = 0;
 		}
-		printf("IDD: %i %i %i\n",id,idArray[id].id,idArray[id].rotation);
 	}
+
 	idArray[idLength-1].id = 0;
 	idArray[idLength-1].rotation = 0;
 	unknown.id = -1;
 	unknown.rotation = -1;
+
 }
 
 CNecklace::~CNecklace()
