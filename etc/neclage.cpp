@@ -11,10 +11,11 @@ typedef struct
     int rotation;
     int hamming;
 }SNecklace;
+bool debug = false;
 
 class CNecklace{
     public:
-        CNecklace(int bits);
+        CNecklace(int bits,int minimalHamming);
         ~CNecklace();
         SNecklace get(int sequence);
         void printAll();
@@ -32,7 +33,7 @@ class CNecklace{
 };
 #endif
 
-CNecklace::CNecklace(int bits)
+CNecklace::CNecklace(int bits,int minimalHamming = 1)
 {
     length = bits;
     idLength = pow(2,length); 
@@ -52,7 +53,7 @@ CNecklace::CNecklace(int bits)
         int cached [length - 1];
         bool isSymmetrical = false;
 	minHam = 1000;
-	printf("Testing %i\n",tempID);
+	if (debug) printf("Testing %i\n",tempID);
         do{
 	    int ham = getMinimalHamming(tempID,id);
 	    if (minHam > ham) minHam = ham;
@@ -74,7 +75,7 @@ CNecklace::CNecklace(int bits)
 	    if (minHam > ham) minHam = ham;
         //}while (rotations++<length-1 && id <= tempID && !isSymmetrical);
         }while (rotations++<length-1 && !isSymmetrical);
-	if (minHam < 3) isSymmetrical = true;
+	if (minHam < minimalHamming) isSymmetrical = true;
         if(isSymmetrical)
         {
             idArray[id].id = -1;
@@ -91,7 +92,7 @@ CNecklace::CNecklace(int bits)
         }
 	else
         {
-	    printf("Adding %i\n",currentID);
+	    if (debug) printf("Adding %i\n",currentID);
             idArray[id].id =currentID++;
             idArray[id].rotation = 0;
             idArray[id].hamming = minHam;
@@ -133,7 +134,7 @@ int CNecklace::getHamming(int a, int b)
 		a = a/2;
 		b = b/2;
 	}while (a > 0 || b > 0);
-	printf("Hamming %i %i is %i\n",aa,bb,ham);
+	if (debug) printf("Hamming %i %i is %i\n",aa,bb,ham);
 	return ham;
 }
 
@@ -146,7 +147,7 @@ int CNecklace::getMinimalHamming(int a,int len)
 			if (minDist > m) minDist = m;
 		}
 	}
-	printf("Minimal hamming of %i is %i\n",a,minDist);
+	if (debug) printf("Minimal hamming of %i is %i\n",a,minDist);
 	return minDist;
 }
 
@@ -158,9 +159,9 @@ SNecklace CNecklace::get(int sequence)
 
 int main(int argc,char* argv[])
 {
-    CNecklace c = CNecklace(atoi(argv[1]));
-
-    c.printAll();
+	int minimalHamming = 0;
+	if (argc > 1) minimalHamming = atoi(argv[2]); 
+	CNecklace c = CNecklace(atoi(argv[1]),minimalHamming);
+	c.printAll();
 
 }
-    
