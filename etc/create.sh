@@ -83,12 +83,14 @@ legacy=0
 multithread=0
 validateBuildDir=0
 teethCount=""
+hamming=1
 
 while : 
 do
     case "$1" in
         -h | --help) display_help ;;
         -b | --build) buildDir="$2"; shift 2; ;;
+        -d | --distance) hamming="$2"; shift 2; ;;
         -v | --verbose) verbose=1; shift 1;;
         -l | --legacy) legacy=1; shift 1;;
         -s | --slow) multithread=1; shift 1;;
@@ -130,13 +132,13 @@ fi
 index=0
 
 # The number of possible IDs available
-n=$(($(./neclage $teethCount|cut -f 2 -d ' '|wc -l)-1))
+n=$(($(./neclage $teethCount $hamming|cut -f 2 -d ' '|wc -l)))
 
 # the width of an encoding
 w=$(echo "360/$teethCount/2"|bc -l)
 
     # for each ID
-    for id in $(./neclage $teethCount|cut -f 2 -d ' '|head -n $n);do 
+    for id in $(./neclage $teethCount $hamming|cut -f 2 -d ' '|head -n $n);do 
 
         # Used to keep track of marker index in order to name the output files
         index=$(( $index+1 ))
