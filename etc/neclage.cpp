@@ -18,7 +18,8 @@ class CNecklace{
         CNecklace(int bits,int minimalHamming);
         ~CNecklace();
         SNecklace get(int sequence);
-        void printAll();
+        int printAll(int a[]);
+	int verifyHamming(int a[],int bits,int len);
 
 
     private:
@@ -55,7 +56,7 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
 	minHam = 1000;
 	if (debug) printf("Testing %i\n",tempID);
         do{
-	    int ham = getMinimalHamming(tempID,id);
+	    ham = getMinimalHamming(tempID,id);
 	    if (minHam > ham) minHam = ham;
             bit = tempID%2;
             tempID=tempID/2+bit*pow(2,length-1);
@@ -71,8 +72,8 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
                 }
             }
             cached[rotations] = tempID; 
-	    ham = getMinimalHamming(tempID,id);
-	    if (minHam > ham) minHam = ham;
+	    //ham = getMinimalHamming(tempID,id);
+	    //if (minHam > ham) minHam = ham;
         //}while (rotations++<length-1 && id <= tempID && !isSymmetrical);
         }while (rotations++<length-1 && !isSymmetrical);
 	if (minHam < minimalHamming) isSymmetrical = true;
@@ -111,17 +112,19 @@ CNecklace::~CNecklace()
     free(idArray);
 }
 
-void CNecklace::printAll(){
+int CNecklace::printAll(int a[])
+{
 
     int count = 0;
 
     for (int i = 0; i <= idLength; i++)
     {
         if(get(i).id == count){
-            count++;
-            printf("%i %i %i\n", get(i).id, i,get(i).hamming);
+            a[count++] = i;
+            printf("%i %i\n", get(i).id, i);
         }
     }
+    return count;
 }
 
 int CNecklace::getHamming(int a, int b)
@@ -144,11 +147,43 @@ int CNecklace::getMinimalHamming(int a,int len)
 	for (int i = 1;i<len;i++){
 		if (get(i).rotation == 0){
 			int m = getHamming(a,i);
-			if (minDist > m) minDist = m;
+			if (minDist > m){
+			       	minDist = m;
+				//if (minDist < 3) printf("%i is same as %i\n",a,i);
+			}
+		
 		}
 	}
 	if (debug) printf("Minimal hamming of %i is %i\n",a,minDist);
 	return minDist;
+}
+
+int CNecklace::verifyHamming(int a[],int bits,int len)
+{
+	int overAll = 10000;
+	for (int i = 0;i<len;i++){
+		for (int j = 0;j<len;j++)
+		{
+			int minimal = 10000;
+			if (i!=j)
+			{
+				int bit;
+				int tempID = a[j];
+				int distance;
+				if (debug) printf("Testing %i vs %i\n",a[i],a[j]);
+				for (int r = 0;r<bits;r++){
+					distance = getHamming(a[i],tempID);
+					if (debug) printf("Test %i %i %i\n",a[i],tempID,distance);
+					if (minimal > distance) minimal = distance;
+					bit = tempID%2;
+					tempID=tempID/2+bit*pow(2,length-1);
+				}
+			}
+			if (debug) printf("%i vs %i has %i\n",a[i],a[j],minimal);
+			if (overAll > minimal) overAll = minimal;
+		}
+	}
+	return overAll;
 }
 
 SNecklace CNecklace::get(int sequence)
@@ -159,9 +194,11 @@ SNecklace CNecklace::get(int sequence)
 
 int main(int argc,char* argv[])
 {
-	int minimalHamming = 0;
-	if (argc > 1) minimalHamming = atoi(argv[2]); 
+	int minimalHamming = 1;
+	if (argc > 2) minimalHamming = atoi(argv[2]); 
 	CNecklace c = CNecklace(atoi(argv[1]),minimalHamming);
-	c.printAll();
+	int a[1000];
 
+	int number = c.printAll(a);
+	if (c.verifyHamming(a,atoi(argv[1]),number) < minimalHamming) fprintf(stderr,"Hamming distance too low!\n");
 }
