@@ -9,6 +9,7 @@ typedef struct
 {
     int id;
     int rotation;
+    int hamming;
 }SNecklace;
 
 class CNecklace{
@@ -18,6 +19,7 @@ class CNecklace{
         SNecklace get(int sequence);
         void printAll();
 
+
     private:
         // int bitshift(int a);
         int length;
@@ -25,6 +27,8 @@ class CNecklace{
         SNecklace *idArray;
         SNecklace unknown;
         int* finalList;
+	int getHamming(int a, int b);
+	int getMinimalHamming(int a,int len);
 };
 #endif
 
@@ -36,6 +40,8 @@ CNecklace::CNecklace(int bits)
 
     int currentID = 0;
     int tempID,bit,rotations;
+    int minHam = 1000;
+    int ham = 1000;
 
     /*for every possible id*/
     for (int id = 0;id<idLength;id++)
@@ -45,8 +51,11 @@ CNecklace::CNecklace(int bits)
         rotations = 0;
         int cached [length - 1];
         bool isSymmetrical = false;
-
+	minHam = 1000;
+	printf("Testing %i\n",tempID);
         do{
+	    int ham = getMinimalHamming(tempID,id);
+	    if (minHam > ham) minHam = ham;
             bit = tempID%2;
             tempID=tempID/2+bit*pow(2,length-1);
 
@@ -60,26 +69,32 @@ CNecklace::CNecklace(int bits)
                     }
                 }
             }
-
-            cached[rotations] = tempID;
-
-        }while (rotations++<length-1 && id <= tempID && !isSymmetrical);
-
+            cached[rotations] = tempID; 
+	    ham = getMinimalHamming(tempID,id);
+	    if (minHam > ham) minHam = ham;
+        //}while (rotations++<length-1 && id <= tempID && !isSymmetrical);
+        }while (rotations++<length-1 && !isSymmetrical);
+	if (minHam < 3) isSymmetrical = true;
         if(isSymmetrical)
         {
             idArray[id].id = -1;
             idArray[id].rotation = -1;
-        } else if (id > tempID)
+        } 
+	else if (id > tempID)
         {
             if(idArray[tempID].id != -1)
             {
                 idArray[id] = idArray[tempID];
                 idArray[id].rotation +=rotations;
+                idArray[id].rotation = 1;
             }
-        }else
+        }
+	else
         {
+	    printf("Adding %i\n",currentID);
             idArray[id].id =currentID++;
             idArray[id].rotation = 0;
+            idArray[id].hamming = minHam;
         }
     }
 
@@ -103,9 +118,36 @@ void CNecklace::printAll(){
     {
         if(get(i).id == count){
             count++;
-            printf("%i %i\n", get(i).id, i);
+            printf("%i %i %i\n", get(i).id, i,get(i).hamming);
         }
     }
+}
+
+int CNecklace::getHamming(int a, int b)
+{
+	int aa = a;
+	int bb = b;
+	int ham = 0;
+	do {
+		if (a%2 != b%2) ham++;
+		a = a/2;
+		b = b/2;
+	}while (a > 0 || b > 0);
+	printf("Hamming %i %i is %i\n",aa,bb,ham);
+	return ham;
+}
+
+int CNecklace::getMinimalHamming(int a,int len)
+{
+	int minDist = 10000;
+	for (int i = 1;i<len;i++){
+		if (get(i).rotation == 0){
+			int m = getHamming(a,i);
+			if (minDist > m) minDist = m;
+		}
+	}
+	printf("Minimal hamming of %i is %i\n",a,minDist);
+	return minDist;
 }
 
 SNecklace CNecklace::get(int sequence)
