@@ -12,6 +12,7 @@ display_help() {
     echo "   -v, --verbose      Print a message at each step explaining what is happening"
     echo "   -l, --legacy       Generating the original WhyCon Markers without encoding information"
     echo "   -s, --slow         Processing in a single thread"
+    echo "   -d, --distance     Set minimal Hamming distance"
     echo
     exit;
 }

@@ -101,10 +101,9 @@ int CNecklace::printAll(int a[])
 
     for (int i = 0; i <= idLength; i++)
     {
-	    printf("%i %i\n", get(i).id, i);
         if(get(i).rotation == 0){
             a[count++] = i;
-            //printf("%i %i\n", get(i).id, i);
+            printf("%i %i\n", get(i).id, i);
         }
     }
     return count;

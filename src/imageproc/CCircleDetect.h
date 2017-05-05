@@ -24,6 +24,7 @@
 //used for circle identification 
 #define ID_SAMPLES 360
 #define ID_BITS 9
+#define HAMMING_DISTANCE 4
 
 
 //this structure contains information related to image coordinates and dimensions of the detected pattern

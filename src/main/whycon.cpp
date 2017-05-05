@@ -33,9 +33,9 @@ int  screenWidth= 1920;
 int  screenHeight = 1080;
 
 /*robot detection variables*/
-int numBots = 0;		//num of robots to track
-int numFound = 0;		//num of robots detected in the last step
-int numStatic = 0;		//num of non-moving robots  
+int numBots = 0;				//num of robots to track
+int numFound = 0;				//num of robots detected in the last step
+int numStatic = 0;				//num of non-moving robots  
 CCircleDetect *detectorArray[MAX_PATTERNS];	//detector array (each pattern has its own detector)
 SSegment currentSegmentArray[MAX_PATTERNS];	//segment array (detected objects in image space)
 SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
@@ -43,8 +43,8 @@ STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in me
 CTransformation *trans;				//allows to transform from image to metric coordinates
 
 /*variables related to (auto) calibration*/
-const int calibrationSteps = 20;			//how many measurements to average to estimate calibration pattern position (manual calib)
-const int autoCalibrationSteps = 30; 			//how many measurements to average to estimate calibration pattern position (automatic calib)  
+const int calibrationSteps = 20;		//how many measurements to average to estimate calibration pattern position (manual calib)
+const int autoCalibrationSteps = 30; 		//how many measurements to average to estimate calibration pattern position (automatic calib)  
 const int autoCalibrationPreSteps = 10;		//how many measurements to discard before starting to actually auto-calibrating (automatic calib)  
 int calibNum = 5;				//number of objects acquired for calibration (5 means calibration winished inactive)
 STrackedObject calib[5];			//array to store calibration patterns positions
@@ -55,11 +55,11 @@ ETransformType lastTransformType = TRANSFORM_2D;//pre-calibration transform (use
 int wasBots = 1;				//pre-calibration number of robots to track (used to preserve pre-calibation number of robots to track)
 
 /*program flow control*/
-bool saveVideo = true;		//save video to output folder?
-bool saveLog = true;		//save log to output folder?
-bool stop = false;		//stop and exit ?
-int moveVal = 1;		//how many frames to process ?
-int moveOne = moveVal;		//how many frames to process now (setting moveOne to 0 or lower freezes the video stream) 
+bool saveVideo = true;				//save video to output folder?
+bool saveLog = true;				//save log to output folder?
+bool stop = false;				//stop and exit ?
+int moveVal = 1;				//how many frames to process ?
+int moveOne = moveVal;				//how many frames to process now (setting moveOne to 0 or lower freezes the video stream) 
 
 /*GUI-related stuff*/
 CGui* gui;			//drawing, events capture

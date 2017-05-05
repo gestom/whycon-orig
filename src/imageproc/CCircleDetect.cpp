@@ -20,7 +20,7 @@ int CCircleDetect::maskNum = 0;
 //Variable initialization
 CCircleDetect::CCircleDetect(int wi,int he,int idi)
 {
-	decoder = new CNecklace(ID_BITS);		//Neckace/bracelet code for tag identification  
+	decoder = new CNecklace(ID_BITS,HAMMING_DISTANCE);		//Neckace/bracelet code for tag identification  
 	identify = true;				//should we attempt to identify codes? 
 	localSearch = false;				//by default, search for the pattern eveywhere, true is used when position of the pattern is indicated by a click
 	ID = idi;					//pattern ID - not used in this case	
@@ -370,7 +370,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 	inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0)+1.5*M_PI/ID_BITS; 
 	while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
 	while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
-	//printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
+	printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
 	//printf("CODE %i %.3f\n",result.id,inner->angle);
 	for (int a = 0;a<ID_SAMPLES;a++){
 		pos = ((int)x[a]+((int)y[a])*image->width);
