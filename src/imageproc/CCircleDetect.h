@@ -22,8 +22,8 @@
 #define MAX_PATTERNS 50 
 
 //used for circle identification 
-#define ID_SAMPLES 320
-#define ID_BITS 8 
+#define ID_SAMPLES 360
+#define ID_BITS 9
 
 
 //this structure contains information related to image coordinates and dimensions of the detected pattern

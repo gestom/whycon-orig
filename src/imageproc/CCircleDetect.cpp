@@ -20,7 +20,7 @@ int CCircleDetect::maskNum = 0;
 //Variable initialization
 CCircleDetect::CCircleDetect(int wi,int he,int idi)
 {
-	decoder = new CNecklace(8);			//Neckace/bracelet code for tag identification  
+	decoder = new CNecklace(ID_BITS);		//Neckace/bracelet code for tag identification  
 	identify = true;				//should we attempt to identify codes? 
 	localSearch = false;				//by default, search for the pattern eveywhere, true is used when position of the pattern is indicated by a click
 	ID = idi;					//pattern ID - not used in this case	
@@ -609,10 +609,10 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 		if (debug > 5) drawAll = true;
 	}
 	if (outer.valid && identify){
-		/*inner.x = outer.x; 
+		inner.x = outer.x; 
 		inner.y = outer.y; 
 		inner.m0 = 0.50*outer.m0; 
-		inner.m1 = 0.50*outer.m1; */
+		inner.m1 = 0.50*outer.m1;
 		int segment = identifySegment(&inner,image);
 		outer.angle = init.angle;
 		outer.ID = init.ID;
