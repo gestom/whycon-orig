@@ -37,7 +37,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	centerDistanceToleranceRatio = 0.1;		//max allowd distance of the inner and outer circle centers (relative to pattern dimensions)
 	centerDistanceToleranceAbs = 15;		//max allowed distance of the inner and outer circle centers (in pixels)
 	circularTolerance = 2.5;			//maximal tolerance of bounding box dimensions vs expected pixel area - see equation 2 of the paper [1] 
-	ratioTolerance = 2.4;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
+	ratioTolerance = 0.0;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
 	threshold = maxThreshold/2;			//default tresholt
 
 	numFailed = maxFailed;				//used to decide when to start changing the threshold 
@@ -48,6 +48,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	width = wi;
 	height = he;
 	len = width*height;
+	maxPixels = len/20;
 	siz = len*3;
 	ownBuffer = false;
 	if (buffer == NULL){
@@ -117,7 +118,7 @@ bool CCircleDetect::examineSegment(CRawImage *image,SSegment *segmen,int ii,floa
 	//push segment coords to the queue
 	queue[queueEnd++] = ii;
 	//and until queue is empty
-	while (queueEnd > queueStart){
+	while (queueEnd > queueStart && queueEnd-queueOldStart < maxPixels){
 		//pull the coord from the queue
 		position = queue[queueStart++];
 		//search neighbours
@@ -423,15 +424,27 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 	tima += timer.getTime();
 	int pos = 0;
 	int ii = 0;
-	int start = 0;
-	bool cont = true;
-
+	int stop = len;
+	int initX,initY;
+	
 	//bufferCleanup(init);
-	if (init.valid && track){
-		ii = ((int)init.y)*image->width+init.x;
-		start = ii;
+	if (init.valid && track)
+	{
+		initX = init.x;
+		initY = init.y;
+		if (init.lastValid){
+			initX = init.x + (init.x - init.lastX);
+			initY = init.y + (init.y - init.lastY);
+		}
+		init.lastX = init.x;
+		init.lastY = init.y;
+		init.lastValid = init.valid;
+		ii = ((int)initY)*image->width+initX;
+		if (ii >= len) ii = 0;
 	}
-	while (cont) 
+	stop = (ii+maxPixels-1)%len;
+	outer = init;
+	while (ii != stop) 
 	{
 		if (buffer[ii] == 0){
 			ptr = &image->data[ii*3];
@@ -538,52 +551,50 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 									
 									outer.valid = inner.valid = true;
 									threshold = (outer.mean+inner.mean)/2;
-									if (track) ii = start -1;
+									if (track) ii = stop -1;
 								}else{
 									if (track && init.valid){
-										ii = start -1;
+										ii = stop -1;
 										if (debug > 0) fprintf(stdout,"Segment failed circularity test.\n");
 									}
 								}
 							}else{
 								if (track && init.valid){
-									ii = start -1;
+									ii = stop -1;
 									if (debug > 0) fprintf(stdout,"Segment failed concentricity test.\n");
 								}
 							}
 						}else{
 							//tracking failed
 							if (track && init.valid){
-								ii = start -1;
+								ii = stop -1;
 								if (debug >0) fprintf(stdout,"Segment failed BW test.\n");
 							}
 						}
 					}else{
 						//tracking failed
 						if (track && init.valid){
-							 ii = start -1;
+							 ii = stop -1;
 							 if (debug >0) printf("Inner segment not a circle\n");
 						}
 					}
 				}else{
 					if (track && init.valid){
-						ii = start -1;
+						ii = stop -1;
 						if (debug>0) printf("Inner segment not white %i %i %i\n",threshold,ptr[0]+ptr[1]+ptr[2],outer.size);
 					}
 				}
 			}else{
 				//tracking failed
 				if (track && init.valid){
-					ii = start -1;
+					ii = stop -1;
 					if (debug>0) printf("Outer segment %.0f %.0f %i not a circle\n",outer.x,outer.y,outer.size);
 				}
 			}
 		}
-		ii++;
-		if (ii >= len) ii = 0;
-		cont = (ii != start);
+		if (ii++ >= len) ii = 0;
 	}
-	if (debug > 5) printf("II: %i %i\n",ii,start);
+	if (debug > 5) printf("II: %i %i\n",ii,stop);
 	if (debug > 1)fprintf(stdout,"Inner %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f %03f %03f Axes: %03f \n",inner.x,inner.y,inner.size,inner.maxx-inner.minx,inner.maxy-inner.miny,inner.mean,threshold,inner.m0,inner.m1,inner.v0,inner.v1,inner.v0*outer.v0+inner.v1*outer.v1);
 	if (debug > 1)fprintf(stdout,"Outer %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f %03f %03f Ratios: %.3f %.3f %i\n",outer.x,outer.y,outer.size,outer.maxx-outer.minx,outer.maxy-outer.miny,outer.mean,threshold,outer.m0,outer.m1,outer.v0,outer.v1,outer.r0*150,outer.r1*150,outer.ID);
 	if (outer.valid){

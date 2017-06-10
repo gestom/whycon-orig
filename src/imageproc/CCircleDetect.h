@@ -29,8 +29,8 @@
 
 //this structure contains information related to image coordinates and dimensions of the detected pattern
 typedef struct{
-	float x;			//center in image coordinates
-	float y;			//center in image coordinates
+	float x,y;			//center in image coordinates
+	float lastX,lastY;		//center in image coordinates in the previous image
 	float angle,horizontal;		//orientation (not really used in this case, see the SwarmCon version of this software) 
 	int size;			//number of pixels
 	int maxy,maxx,miny,minx;	//bounding box dimensions
@@ -40,6 +40,7 @@ typedef struct{
 	float bwRatio;			//ratio of white to black pixels, see Algorithm 2 of paper [1] 
 	bool round;			//segment passed the initial roundness test
 	bool valid;			//marker passed all tests and will be passed to the transformation phase
+	bool lastValid;			//marker passed all tests in the previous rounds, so we can determine its velocity of tracking  
 	float m0,m1;			//eigenvalues of the pattern's covariance matrix, see Section 3.3 of [1]
 	float v0,v1;			//eigenvectors of the pattern's covariance matrix, see Section 3.3 of [1]
 	float r0,r1;			//ratio of inner vs outer ellipse dimensions (used to establish ID, see the SwarmCon version of this class)
@@ -127,6 +128,7 @@ class CCircleDetect
 		float idx[MAX_PATTERNS];
 		float idy[MAX_PATTERNS];
 		int numberIDs;
+		int maxPixels;
 };
 
 #endif

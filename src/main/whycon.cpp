@@ -38,7 +38,7 @@ int numFound = 0;				//num of robots detected in the last step
 int numStatic = 0;				//num of non-moving robots  
 CCircleDetect *detectorArray[MAX_PATTERNS];	//detector array (each pattern has its own detector)
 SSegment currentSegmentArray[MAX_PATTERNS];	//segment array (detected objects in image space)
-SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
+//SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
 STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in metric space)
 CTransformation *trans;				//allows to transform from image to metric coordinates
 
@@ -344,16 +344,17 @@ int main(int argc,char* argv[])
 		//track the robots found in the last attempt 
 		for (int i = 0;i<numBots;i++){
 			if (currentSegmentArray[i].valid){
-				lastSegmentArray[i] = currentSegmentArray[i];
-				currentSegmentArray[i] = detectorArray[i]->findSegment(image,lastSegmentArray[i]);
+				//currentSegmentArray[i].lastX = currentSegmentArray[i].x;
+				//currentSegmentArray[i].lastY = currentSegmentArray[i].y;
+				currentSegmentArray[i] = detectorArray[i]->findSegment(image,currentSegmentArray[i]);
 			}
 		}
 
 		//search for untracked (not detected in the last frame) robots 
 		for (int i = 0;i<numBots;i++){
 			if (currentSegmentArray[i].valid == false){
-				lastSegmentArray[i].valid = false;
-				currentSegmentArray[i] = detectorArray[i]->findSegment(image,lastSegmentArray[i]);
+				//lastSegmentArray[i].valid = false;
+				currentSegmentArray[i] = detectorArray[i]->findSegment(image,currentSegmentArray[i]);
 			}
 			if (currentSegmentArray[i].valid == false) break;		//does not make sense to search for more patterns if the last one was not found
 		}
@@ -363,7 +364,7 @@ int main(int argc,char* argv[])
 			if (currentSegmentArray[i].valid){
 				objectArray[i] = trans->transform(currentSegmentArray[i],false);
 				numFound++;
-				if (currentSegmentArray[i].x == lastSegmentArray[i].x) numStatic++;
+				if (currentSegmentArray[i].x == currentSegmentArray[i].lastX) numStatic++;
 			}
 		}
 		printf("Pattern detection time: %i us. Found: %i Static: %i. Clients %i.\n",globalTimer.getTime(),numFound,numStatic,server->numConnections);
