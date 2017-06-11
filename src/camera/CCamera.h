@@ -7,6 +7,7 @@
 #define __CWEBCAMERA_H__
 
 #include "CRawImage.h" 
+#include <dirent.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -99,7 +100,10 @@ class CCamera
 	bool save,readNextFrame;
 	avi_t *aviFile; 
 	char *aviBuffer1; 
-	unsigned char *aviBuffer2; 
+	unsigned char *aviBuffer2;
+
+	struct dirent **fileNameList;
+	int numImages; 
 };
 #endif
 /* end of CCamera.h */

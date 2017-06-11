@@ -3,7 +3,6 @@
  * Date:      2010
  * Author:    Tom Krajnik 
  */
-
 #include "CCamera.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,11 +27,15 @@ CCamera::CCamera()
 	videoIn = (struct vdIn*) calloc(1,sizeof(struct vdIn));
 	globalTimer.reset();
 	globalTimer.start();
+	fileNameList = NULL;
+	numImages = 0;
 	return;
 }
 
 CCamera::~CCamera()
 {
+	for (int i = 0;i<numImages;i++) free(fileNameList[i]);
+	free(fileNameList);
 	close_v4l2(videoIn);
 	free(videoIn);
 	free(aviBuffer1);
@@ -41,24 +44,37 @@ CCamera::~CCamera()
 	freeLut();
 }
 
+static int filterBmp (const struct dirent *entry)
+{
+	if (strstr(entry->d_name,".bmp")==NULL) return 0;
+	return 1;
+}
+
 int CCamera::initFileLoader(const char *deviceName,int *wi,int *he)
 {
-	char fileName[1000];
 	strcpy(directory,deviceName);
-	sprintf(fileName,"%s/00000001.bmp",directory);
 	fprintf(stdout,"Camera type: dummy camera\n");
-	FILE* file = fopen(fileName,"r");
-	if (file == NULL){
-		fprintf(stderr,"File %s not found.\n",fileName);
+	numImages = scandir(deviceName, &fileNameList,filterBmp, alphasort);
+	if (numImages < 0)
+	{
+		fprintf(stderr,"Could not open directory %s.\n",deviceName);
 		return -1;
-	}else{
-		fclose(file);
-		CRawImage *image = new CRawImage(*wi,*he);
-		image->loadBmp(fileName);
-		*wi = image->width;
-		*he = image->height;
-		delete image;
 	}
+	//for (int i = 0;i<numImages;i++) printf("%s\n", fileNameList[i]->d_name);
+
+
+	if (numImages <= 0){
+		fprintf(stderr,"Directory %s seems not to contain bmp files.\n",deviceName);
+		return -1;
+	}
+
+	char fileName[1000];
+	sprintf(fileName,"%s/%s",directory,fileNameList[0]->d_name);
+	CRawImage *image = new CRawImage(*wi,*he);
+	image->loadBmp(fileName);
+	*wi = image->width;
+	*he = image->height;
+	delete image;
 	return 0;
 }
 
@@ -192,12 +208,12 @@ int CCamera::renewImage(CRawImage* image,bool move)
 	}
 	if (cameraType == CT_FILELOADER){
 		char fileName[1000];
+		sprintf(fileName,"%s/%s",directory,fileNameList[fileNum]->d_name);
+		image->loadBmp(fileName);
 		if (move) fileNum++;
-		sprintf(fileName,"%s/%08i.bmp",directory,fileNum);
-		if (image->loadBmp(fileName)==false){
-			fileNum=1;
-			sprintf(fileName,"%s/%08i.bmp",directory,fileNum);
-			image->loadBmp(fileName);
+		if (fileNum >= numImages)
+		{
+			fileNum = 0;
 			return -1;
 		}
 		return 0; 
