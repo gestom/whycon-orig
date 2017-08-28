@@ -10,7 +10,8 @@ LXXLIBS+=-lpthread
 
 #----------ROS START: uncomment the following lines if you want to use ROS
 CXXDEFINE=-DUSE_ROS
-LXXLIBS+=-L/opt/ros/indigo/lib/ 
+CXXFLAGS=-I/opt/ros/kinetic/include/ 		#set the correct paths here
+LXXLIBS+=-L/opt/ros/kinetic/lib/ 		#set the correct paths here
 LXXLIBS+=-lroscpp -limage_transport -lrosconsole
 #----------ROS END 
 
@@ -31,7 +32,7 @@ all:
 	@for i in $(SUBDIRS) ;\
 	do \
 	echo "making" all "in $(CURRENT_DIR)/$$i..."; \
-	$(MAKE) CXXDEFINE=$(CXXDEFINE) -C $$i all; \
+	$(MAKE) CXXDEFINE=$(CXXDEFINE) CXXFLAGS=$(CXXFLAGS) -C $$i all; \
 	done
 
 gui: all
