@@ -375,7 +375,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 		for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",smooth[a]);
 		printf("\n");
 	}
-	SNecklace result = decoder->get(ID);
+	SNecklace result = decoder->get(ID, true, strength);
 	inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0)+1.5*M_PI/ID_BITS; 
 	while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
 	while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 

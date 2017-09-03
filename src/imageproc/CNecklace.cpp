@@ -7,6 +7,7 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
 	idArray = (SNecklace*)malloc(sizeof(SNecklace)*idLength);
 
 	int currentID = 0;
+    maxID = 0;
 	int tempID,bit,rotations;
 	int minHam = 1000;
 	int hamindex = 1000;
@@ -17,6 +18,7 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
 	/*for every possible id*/
 	for (int id = 0;id<idLength;id++)
 	{
+            idArray[id].confidence = 1./(float)idLength;
 		/*check if there is a lower number that could be created by bitshifting it*/
 		tempID  = id;
 		rotations = 0;
@@ -93,6 +95,10 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
 	unknown.id = -1;
 	unknown.rotation = -1;
 
+	for (int i = 0; i < idLength; i++)
+	{
+		if(maxID < idArray[i].id) maxID = idArray[i].id;
+	}
 }
 
 CNecklace::~CNecklace()
@@ -107,8 +113,8 @@ int CNecklace::printAll(int a[])
 
     for (int i = 0; i <= idLength; i++)
     {
-	    printf("%i %i\n", get(i).id, i);
-        if(get(i).rotation == 0){
+	    printf("%i %i\n", get(i,false).id, i);
+        if(get(i,false).rotation == 0){
             a[count++] = i;
             //printf("%i %i\n", get(i).id, i);
         }
@@ -135,7 +141,7 @@ int CNecklace::getMinimalHamming(int a,int len)
 	int minDist = 10000;
 	int mindex = 10000;
 	for (int i = 1;i<len;i++){
-		if (get(i).rotation == 0){
+		if (get(i,false).rotation == 0){
 			int m = getHamming(a,i);
 			if (minDist > m){
 			       	minDist = m;
@@ -178,8 +184,61 @@ int CNecklace::verifyHamming(int a[],int bits,int len)
 	return overAll;
 }
 
-SNecklace CNecklace::get(int sequence)
+SNecklace CNecklace::get(int sequence, bool probabilistic, float confidence)
 {
-    if (sequence > 0 && sequence < idLength) return idArray[sequence];
-    return unknown;
+	if (sequence > 0 && sequence < idLength)
+	{
+		if(probabilistic)
+		{
+			float oe = observationEstimation(confidence);
+			float o=.0;
+			for (int i = 0; i < idLength; i++)
+			{
+				if (idArray[sequence].id == i)
+					o = o + (oe*idArray[i].confidence);
+				else
+					o =  o + ((1.0-oe)/(float)(idLength-1)*idArray[i].confidence);
+			}
+
+			for (int i = 0; i < idLength; i++)
+			{
+				if (idArray[sequence].id ==i)
+					idArray[i].confidence = (oe/o)*idArray[i].confidence;
+				else
+					idArray[i].confidence = (1.0-oe)/(float)(idLength-1)/o*idArray[i].confidence;
+
+				if(idArray[i].confidence <= 1./idLength)
+				{
+					if (debug) printf("Confidence value too small, changing %.9f to %.9f\n", idArray[i].confidence, 1./idLength);
+					idArray[i].confidence = 1./idLength;
+				}
+				
+				if(idArray[i].confidence > 1.-(1./idLength))
+				{
+					if(debug) printf("Confidence value too big, changing %.9f to %.9f\n", idArray[i].confidence, 1.-(1./idLength));
+					idArray[i].confidence = 1.-(1./idLength);
+				}
+			}
+			return getEstimatedID();
+		}
+		return idArray[sequence];
+	}
+	return unknown;
+}
+
+float CNecklace::observationEstimation(float confidence)
+{
+	float a = 400.;
+	float s = 80.;
+	return atan2((confidence-a),s)*((1.-(1./(float)maxID))/M_PI)+(((float)maxID+1.)/(2.*(float)maxID));
+}
+
+SNecklace CNecklace::getEstimatedID()
+{
+	int hp = 0;
+	for (int i = 0; i < idLength; i++)
+	{
+        if(idArray[idLength].confidence > idArray[hp].confidence) hp = i;
+	}
+	return idArray[hp];
 }

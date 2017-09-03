@@ -17,13 +17,17 @@ class CNecklace{
     public:
         CNecklace(int bits,int minimalHamming);
         ~CNecklace();
-        SNecklace get(int sequence);
+        SNecklace get(int sequence, bool probabilistic=true, float confidence=1.0);
+        SNecklace getEstimatedID();
         int printAll(int a[]);
-	int verifyHamming(int a[],int bits,int len);
+		int verifyHamming(int a[],int bits,int len);
+        float observationEstimation(float confidence);
+
 
 
     private:
-	bool debug;
+        int maxID;
+        bool debug;
         int length;
         int idLength; 
         SNecklace *idArray;
