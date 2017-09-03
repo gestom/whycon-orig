@@ -129,6 +129,7 @@ class CCircleDetect
 		float idy[MAX_PATTERNS];
 		int numberIDs;
 		int maxPixels;
+		bool parameterAdaptation;
 };
 
 #endif

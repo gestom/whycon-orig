@@ -10,6 +10,7 @@ typedef struct
     int id;
     int rotation;
     int hamming;
+    float confidence;
 }SNecklace;
 
 class CNecklace{

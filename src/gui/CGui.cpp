@@ -14,7 +14,7 @@ CGui::CGui(int wi,int he,int sc)
 	screen = SDL_SetVideoMode(wi/sc,he/sc,24,SDL_SWSURFACE); 
 	if (screen == NULL)fprintf(stderr,"Couldn't set SDL video mode: %s\r\n",SDL_GetError());
 	SDL_WM_SetCaption("WHYCON","WhyCon localization system");
-	smallFont =  TTF_OpenFont("../etc/font.ttf",16);
+	smallFont =  TTF_OpenFont("../etc/font.ttf",46);
 	if(!smallFont)printf("Unable to open font: %s\n", TTF_GetError());
 	TTF_SetFontStyle(smallFont, TTF_STYLE_NORMAL);
 	num = 0;
@@ -171,14 +171,15 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
 	//	sprintf(info,"%.0f %.0f %.02f %.02f %.02f",x,y,d,phi,psi);
 	//sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
 
-	if (D2){
-		 sprintf(info,"%02i %03i",o.ID,(int)(o.yaw/M_PI*180));
+	//if (D2){
+		 //sprintf(info,"%02i %03i",o.ID,(int)(o.yaw/M_PI*180));
+		 sprintf(info,"%i",o.ID);
 		 text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
 		 rect.y = y/scale-14;
 		 SDL_BlitSurface(text, NULL, screen, &rect);
-	}
+	//}
 
-	if (D2) sprintf(info,"%03.0f %03.0f",1000*o.x,1000*o.y); else sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
+	/*if (D2) sprintf(info,"%03.0f %03.0f",1000*o.x,1000*o.y); else sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
 	text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
 	rect.y = y/scale;
 	SDL_BlitSurface(text, NULL, screen, &rect);
@@ -188,7 +189,7 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
 		text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
 		rect.y = y/scale+12;
 		SDL_BlitSurface(text, NULL, screen, &rect);
-	}
+	}*/
 	SDL_FreeSurface(text);
 	/*sprintf(info,"%.3f %.3f %.3f",o.roll,o.pitch,o.yaw);
 	text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);

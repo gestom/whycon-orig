@@ -367,8 +367,8 @@ int main(int argc,char* argv[])
 				if (currentSegmentArray[i].x == currentSegmentArray[i].lastX) numStatic++;
 			}
 		}
-		printf("Pattern detection time: %i us. Found: %i Static: %i. Clients %i.\n",globalTimer.getTime(),numFound,numStatic,server->numConnections);
 		evalTime = timer.getTime();
+		printf("Pattern detection time: %i us. Found: %i Static: %i. Clients %i.\n",evalTime,numFound,numStatic,server->numConnections);
 
 		//pack up the data for sending to other systems
 		server->setNumOfPatterns(numFound,numBots,frameTime);
@@ -378,7 +378,7 @@ int main(int argc,char* argv[])
 		//draw stuff on the GUI 
 		if (useGui){
 			gui->drawImage(image);
-			gui->drawTimeStats(evalTime,numBots);
+			gui->drawTimeStats(evalTime,camera->fileNum);
 			gui->displayHelp(displayHelp);
 			gui->guideCalibration(calibNum,fieldLength,fieldWidth);
 		}
@@ -400,7 +400,7 @@ int main(int argc,char* argv[])
 			moveOne = moveVal;
 			for (int i = 0;i<numBots;i++){
 			       	//printf("Frame %i Object %03i %03i %.5f %.5f %.5f \n",frameID,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
-			       	if (robotPositionLog != NULL) fprintf(robotPositionLog,"Frame %i Time %ld Object %03i %03i %.5f %.5f %.5f \n",frameID,frameTime,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
+			       	if (robotPositionLog != NULL) fprintf(robotPositionLog,"Frame %i Time %i Object %03i %03i %.5f %.5f %.5f \n",frameID,evalTime,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
 			}
 			if (moveVal > 0) frameID++;
 		}else{
@@ -408,18 +408,25 @@ int main(int argc,char* argv[])
 			if (numFound ==  numBots)
 			{
 				//gui->saveScreen(runs++);
-				for (int i = 0;i<numBots;i++){
-				       		//printf("Frame %i Object %03i %03i %.5f %.5f %.5f \n",frameID,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
-						if (robotPositionLog != NULL) fprintf(robotPositionLog,"Frame %i Time %ld Object %03i %03i %.5f %.5f %.5f \n",frameID,frameTime,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
-				}
+				/*for (int i = 0;i<numBots;i++){
+				//printf("Frame %i Object %03i %03i %.5f %.5f %.5f \n",frameID,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
+				//		if (robotPositionLog != NULL) fprintf(robotPositionLog,"Frame %i Time %i Object %03i %03i %.5f %.5f %.5f \n",frameID,evalTime,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
+				}*/
 				moveOne = moveVal; 
-				if (moveVal > 0) frameID++;
 			}else{
-				if (moveOne-- < -100) moveOne = moveVal;
+				if (moveOne-- < -10) moveOne = moveVal;
+			}
+			if (moveOne > 0){
+				for (int i = 0;i<numBots;i++){
+					if (currentSegmentArray[i].valid == false) currentSegmentArray[i].ID = -1;
+					if (robotPositionLog != NULL) fprintf(robotPositionLog,"Frame %i Time %i Object %03i %03i %.5f %.5f %.5f \n",frameID,evalTime,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
+				}
+
+				frameID++;
 			}
 		}
-
-		//gui->saveScreen(runs);
+		
+		//if (moveOne >0) gui->saveScreen(runs++);
 		if (useGui) gui->update();
 		if (useGui) processKeys();
 	}

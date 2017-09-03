@@ -37,18 +37,18 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	centerDistanceToleranceRatio = 0.1;		//max allowd distance of the inner and outer circle centers (relative to pattern dimensions)
 	centerDistanceToleranceAbs = 15;		//max allowed distance of the inner and outer circle centers (in pixels)
 	circularTolerance = 2.5;			//maximal tolerance of bounding box dimensions vs expected pixel area - see equation 2 of the paper [1] 
-	ratioTolerance = 0.0;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
+	ratioTolerance = 2.0;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
 	threshold = maxThreshold/2;			//default tresholt
-
 	numFailed = maxFailed;				//used to decide when to start changing the threshold 
 	track = true;					//initiate the search from the last position ?
+	parameterAdaptation = true;			//adapt areaRatio to the real values? 
 	circularityTolerance = 0.02;			//final circularity test, see Equation 5 of [1]
 
 	/*initialization of supporting structures according to the image size provided*/ 
 	width = wi;
 	height = he;
 	len = width*height;
-	maxPixels = len/20;
+	maxPixels = len;				//maximal number of pixels to be searched in a single step
 	siz = len*3;
 	ownBuffer = false;
 	if (buffer == NULL){
@@ -278,8 +278,12 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 		signal[a] += ptr[(pos+0)*3+1]*(1-gx)*(1-gy)+ptr[(pos+1)*3+1]*gx*(1-gy)+ptr[(pos+image->width)*3+1]*(1-gx)*gy+ptr[3*(pos+(image->width+1))+1]*gx*gy; 
 		signal[a] += ptr[(pos+0)*3+2]*(1-gx)*(1-gy)+ptr[(pos+1)*3+2]*gx*(1-gy)+ptr[(pos+image->width)*3+2]*(1-gx)*gy+ptr[3*(pos+(image->width+1))+2]*gx*gy;
 	}
+	
+	//printf("Signal:");
+	//for (int a = 0;a<ID_SAMPLES;a++) printf("%.3f ",signal[a]);  
+	//printf("\n");
 
-	//calculate signal gradient 
+	//calculate signal gradient  
 	for (int a = 1;a<ID_SAMPLES;a++) differ[a] = signal[a]-signal[a-1];  
 	differ[0] = signal[0] - signal[ID_SAMPLES-1];
 
@@ -287,6 +291,10 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 	smooth[0] = 0; 
 	for (int a = ID_SAMPLES-segmentWidth;a<ID_SAMPLES;a++) smooth[0] += differ[a];  
 	for (int a = 1;a<ID_SAMPLES;a++) smooth[a] = smooth[a-1] - differ[(a+ID_SAMPLES-segmentWidth)%ID_SAMPLES] + differ[a-1];
+
+	//printf("Smooth:");
+	//for (int a = 0;a<ID_SAMPLES;a++) printf("%.3f ",smooth[a]);  
+	//printf("\n");
 
 	//find the strongest edge response
 	int maxIndex = -1;
@@ -371,8 +379,8 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 	inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0)+1.5*M_PI/ID_BITS; 
 	while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
 	while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
-	printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
-	//printf("CODE %i %.3f\n",result.id,inner->angle);
+	//printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
+	//printf("CODE %i %.3f\n",result.id,strength);
 	for (int a = 0;a<ID_SAMPLES;a++){
 		pos = ((int)x[a]+((int)y[a])*image->width);
 		if (pos > 0 && pos < image->width*image->height){	
@@ -428,22 +436,23 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 	int initX,initY;
 	
 	//bufferCleanup(init);
-	if (init.valid && track)
+	if (true) //(init.valid && track || true)
 	{
 		initX = init.x;
 		initY = init.y;
-		if (init.lastValid){
+		/*if (init.lastValid){
 			initX = init.x + (init.x - init.lastX);
 			initY = init.y + (init.y - init.lastY);
-		}
+		}*/
 		init.lastX = init.x;
 		init.lastY = init.y;
 		init.lastValid = init.valid;
 		ii = ((int)initY)*image->width+initX;
-		if (ii >= len) ii = 0;
+		if (ii >= len || ii < 0) ii = 0;
 	}
 	stop = (ii+maxPixels-1)%len;
 	outer = init;
+	//printf("START: %.0f %.0f %i %i\n",init.x,init.y,ii,stop);
 	while (ii != stop) 
 	{
 		if (buffer[ii] == 0){
@@ -503,14 +512,17 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 									cm2+=ty*ty; 
 								}
 								outer=calcSegment(outer,queueEnd,six,siy,cm0,cm1,cm2);
-								outer.bwRatio = (float)inner.size/outer.size;
+								outer.bwRatio = (float)outer.size/inner.size;
 
 								sizer+=outer.size + inner.size; //for debugging
 								sizerAll+=len; 								    //for debugging
 								float circularity = M_PI*4*(outer.m0)*(outer.m1)/queueEnd;
 								if (debug > 5) fprintf(stdout,"Segment circularity: %i %03f %03f \n",queueEnd,M_PI*4*(outer.m0)*(outer.m1)/queueEnd,M_PI*4*(outer.m0)*(outer.m1));
 								if (circularity-1.0 < circularityTolerance && circularity-1.0 > -circularityTolerance){
-
+									//ALL OK, segment is valid
+									if (parameterAdaptation){
+										areasRatio = 0.9*areasRatio + 0.1*outer.bwRatio;
+									}
 									//chromatic aberation correction
 									if (enableCorrections){
 										float r = diameterRatio*diameterRatio;
@@ -548,7 +560,6 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 									outer.angle = atan2(outer.v1,outer.v0);
 									if (debug > 5) printf("Angle: %.3f %.3f \n",outer.angle,orient);
 									if (fabs(normalizeAngle(outer.angle-orient)) > M_PI/2) outer.angle = normalizeAngle(outer.angle+M_PI);
-									
 									outer.valid = inner.valid = true;
 									threshold = (outer.mean+inner.mean)/2;
 									if (track) ii = stop -1;
@@ -556,6 +567,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 									if (track && init.valid){
 										ii = stop -1;
 										if (debug > 0) fprintf(stdout,"Segment failed circularity test.\n");
+										if (parameterAdaptation) circularityTolerance = circularityTolerance*1.1;
 									}
 								}
 							}else{
@@ -606,6 +618,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 			if (localSearch) outer.valid = false;
 		}
 	}
+
 	//threshold management
 	if (outer.valid){
 		lastThreshold = threshold;
@@ -656,6 +669,11 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 				image->data[3*pos+2] = 255;
 			}
 		}
+	}
+	if (outer.valid == false){
+		outer.x = ii%width; 
+		outer.y = ii/width; 
+//		printf("outer: %f %f\n",outer.x,outer.y);
 	}
 	bufferCleanup(outer);
 	return outer;

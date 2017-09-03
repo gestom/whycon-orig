@@ -23,7 +23,7 @@ CCamera::CCamera()
 	gain = exposition = 0;
 	width = height = 0;
 	exposition = 0;
-	fileNum = 1;
+	fileNum = 0;
 	videoIn = (struct vdIn*) calloc(1,sizeof(struct vdIn));
 	globalTimer.reset();
 	globalTimer.start();
@@ -209,6 +209,7 @@ int CCamera::renewImage(CRawImage* image,bool move)
 	if (cameraType == CT_FILELOADER){
 		char fileName[1000];
 		sprintf(fileName,"%s/%s",directory,fileNameList[fileNum]->d_name);
+		//printf("%s/%s ",directory,fileNameList[fileNum]->d_name);
 		image->loadBmp(fileName);
 		if (move) fileNum++;
 		if (fileNum >= numImages)

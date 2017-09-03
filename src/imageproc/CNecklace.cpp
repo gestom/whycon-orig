@@ -12,6 +12,7 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
 	int hamindex = 1000;
 	int ham = 1000;
 	debug = false;
+	int maxID = -1;
 
 	/*for every possible id*/
 	for (int id = 0;id<idLength;id++)
@@ -79,7 +80,12 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
 		{
 			idArray[id].id = -1;
 			idArray[id].rotation = -1;
-		} 
+		}
+		if(idArray[id].id+1 > maxID)
+		{
+			maxID = idArray[id].id+1;
+		}
+		printf("ID %i \n",id);
 	}
 
 	//idArray[idLength-1].id = 0;
