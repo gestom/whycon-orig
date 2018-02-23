@@ -622,8 +622,8 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 	if (outer.valid && identify){
 		inner.x = outer.x; 
 		inner.y = outer.y; 
-		inner.m0 = 0.50*outer.m0; 
-		inner.m1 = 0.50*outer.m1;
+		inner.m0 = 0.33/0.70*outer.m0; 
+		inner.m1 = 0.33/0.70*outer.m1;
 		int segment = identifySegment(&inner,image);
 		outer.angle = init.angle;
 		outer.ID = init.ID;
