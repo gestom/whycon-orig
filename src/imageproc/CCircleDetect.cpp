@@ -37,7 +37,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	centerDistanceToleranceRatio = 0.1;		//max allowd distance of the inner and outer circle centers (relative to pattern dimensions)
 	centerDistanceToleranceAbs = 15;		//max allowed distance of the inner and outer circle centers (in pixels)
 	circularTolerance = 2.5;			//maximal tolerance of bounding box dimensions vs expected pixel area - see equation 2 of the paper [1] 
-	ratioTolerance = 0.0;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
+	ratioTolerance = 2.0;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
 	threshold = maxThreshold/2;			//default tresholt
 
 	numFailed = maxFailed;				//used to decide when to start changing the threshold 
@@ -48,7 +48,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	width = wi;
 	height = he;
 	len = width*height;
-	maxPixels = len/20;
+	maxPixels = len;
 	siz = len*3;
 	ownBuffer = false;
 	if (buffer == NULL){
