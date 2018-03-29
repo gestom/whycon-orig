@@ -184,7 +184,8 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
 	SDL_BlitSurface(text, NULL, screen, &rect);
 
 	if (D2 == false){
-		sprintf(info,"%.3f %.3f %.3f",o.pitch,o.roll,o.yaw);
+		//sprintf(info,"%.3f %.3f %.3f",o.pitch,o.roll,o.yaw);
+		sprintf(info,"%i %.3f %.3f",o.ID,o.roll,o.yaw);
 		text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
 		rect.y = y/scale+12;
 		SDL_BlitSurface(text, NULL, screen, &rect);
