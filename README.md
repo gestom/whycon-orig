@@ -24,7 +24,6 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 | [Caspa-WhyCon](http://robotics.fel.cvut.cz/faigl/caspa/) | UAVs | embedded, open HW-SW solution | [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en) |
 | [Social-card](https://github.com/strands-project/strands_social/tree/hydro-devel/social_card_reader) | HRI | ROS, allows to command a robot | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
 
-
 #### Where is it described ?
 
 <i>WhyCon</i> was first presented on International Conference on Advanced Robotics 2013 [[2](#references)], later in the Journal of Intelligent and Robotics Systems [[1](#references)] and finally at the Workshop on Open Source Aerial Robotics during the International Conference on Intelligent Robotic Systems, 2015 [[3](#references)]. Its early version was also presented at the International Conference of Robotics and Automation, 2013 [[4](#references)]. An extension of the system, which used a necklace code to add ID's to the tags, achieved a best paper award at the SAC 2017 conference [[5](#references)].
@@ -37,8 +36,8 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 #### Quick setup for initial testing
 
 1. Install the required <a href="#libraries">libraries</a>.
-1. Check the available resolutions, framerates and formats of your USB camera by running <b>luvcview -L</b>. 
-1. Run <b>luvcview</b> and adjust your camera settings (exposure, brightness etc).
+1. Check the available resolutions, framerates and formats of your USB camera by running <b>guvcview -L</b>. 
+1. Run <b>guvcview</b> and adjust your camera settings (exposure, brightness etc).
 1. Download the software from GitHub and go to the <b>src</b> directory.
 1. Adjust the camera resolution in the <b>main/whycon.cpp</b>.
 1. Compile the software - just type <b>make</b>.
