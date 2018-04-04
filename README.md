@@ -35,7 +35,8 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Quick setup for initial testing
 
-1. Install the required <a href="#libraries">libraries</a>.
+1. Install the required <a href="#dependencies">libraries</a>.: <i>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev guvcview</i>.
+
 1. Check the available resolutions, framerates and formats of your USB camera by running <b>guvcview -L</b>. 
 1. Run <b>guvcview</b> and adjust your camera settings (exposure, brightness etc).
 1. Download the software from GitHub and go to the <b>src</b> directory.
@@ -87,7 +88,7 @@ All the following libraries are probably in your packages.
 1. <b>libsdl1.2-dev</b> for graphical user interface.
 2. <b>libsdl-ttf2.0-dev</b> to print stuff in the GUI.
 3. <b>libncurses5-dev</b> to print stuff on the terminal.
-4. <b>luvcview</b> to set-up the camera.
+4. <b>guvcview</b> to set-up the camera.
 
 ### References
 1. T. Krajník, M. Nitsche et al.: <b>[A Practical Multirobot Localization System.](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_JINT_whycon.pdf)</b> Journal of Intelligent and Robotic Systems (JINT), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_JINT_whycon.bib)].
