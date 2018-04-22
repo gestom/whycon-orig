@@ -14,6 +14,9 @@ extern "C" {
 #include "color.h"
 }
 
+using namespace std;
+using namespace cv;
+
 //-----------------------------------------------------------------------------
 CCamera::CCamera()
 {
@@ -79,6 +82,7 @@ int CCamera::init(const char *deviceName,int *wi,int *he,bool saveI)
 	sprintf(avifilename,"output/%s.avi",timeStr);
 	if (strncmp(deviceName,"/dev/",5)==0) cameraType = CT_WEBCAM; else cameraType = CT_FILELOADER;
 	if (strncmp(&deviceName[strlen(deviceName)-4],".avi",4)==0) cameraType = CT_VIDEOLOADER;
+	if (strncmp(deviceName,"192",3)==0) cameraType = CT_OPENCV;
 	if (cameraType == CT_WEBCAM){
 		int ret = init_videoIn(videoIn,(char *)deviceName, wi,he,fps,format,grabemethod,avifilename);		
 		if (ret < 0) {
@@ -135,6 +139,13 @@ int CCamera::init(const char *deviceName,int *wi,int *he,bool saveI)
 		}else{
 			printf("Camera initialization failed.\n");
 		}
+	}
+	if (cameraType == CT_OPENCV)
+	{
+		char fullname[100];
+		sprintf(fullname,"rtsp://admin:123456@%s:554/H264?ch=1&subtype=0.avi",deviceName);
+		printf("%s",fullname);
+		capture = new VideoCapture(fullname);
 	}
 	return -1;
 }
@@ -223,6 +234,12 @@ int CCamera::renewImage(CRawImage* image,bool move)
 			if (move) readNextFrame = true; else readNextFrame=false; 
 			return 0;
 		}
+	}
+	if (cameraType == CT_OPENCV)
+	{
+		Mat frame;
+		*capture >> frame;
+		memcpy(image->data,frame.data,frame.cols*frame.rows*3);
 	}
 	return -1;
 }

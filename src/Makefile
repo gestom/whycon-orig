@@ -6,7 +6,7 @@ SUBDIRS+=gui
 
 OBJS=$(wildcard ../obj/*.o)
 LXXLIBS+=-L/usr/local/lib
-LXXLIBS+=-lpthread
+LXXLIBS+=-lpthread -g `pkg-config opencv --libs` 
 
 COPY_ETC_CMD=../etc/copy.sh
 COPY_ETC_SRC=../etc

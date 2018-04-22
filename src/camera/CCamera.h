@@ -17,6 +17,9 @@
 #include <time.h>
 #include <CTimer.h>
  
+#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+
 extern "C" {
 #include "v4l2uvc.h"
 }
@@ -28,11 +31,15 @@ extern "C" {
 /*! class to represent robot's camera
  */
 
+using namespace std;
+using namespace cv;
+
 typedef enum{
 	CT_UNKNOWN,
 	CT_WEBCAM,
 	CT_FILELOADER,
 	CT_VIDEOLOADER,
+	CT_OPENCV,
 	CT_NUMBER
 }ECameraType;
 
@@ -100,6 +107,7 @@ class CCamera
 	avi_t *aviFile; 
 	char *aviBuffer1; 
 	unsigned char *aviBuffer2; 
+	VideoCapture *capture;
 };
 #endif
 /* end of CCamera.h */
