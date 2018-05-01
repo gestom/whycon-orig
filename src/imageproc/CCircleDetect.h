@@ -19,12 +19,12 @@
 #define COLOR_STEP 8
 #define INNER 0
 #define OUTER 1
-#define MAX_PATTERNS 1
+#define MAX_PATTERNS 2
 
 //used for circle identification 
 #define ID_SAMPLES 360
-#define ID_BITS 8
-#define HAMMING_DISTANCE 1
+#define ID_BITS 6
+#define HAMMING_DISTANCE 2
 
 
 //this structure contains information related to image coordinates and dimensions of the detected pattern

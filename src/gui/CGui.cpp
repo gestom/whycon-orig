@@ -14,10 +14,13 @@ CGui::CGui(int wi,int he,int sc)
 	screen = SDL_SetVideoMode(wi/sc,he/sc,24,SDL_SWSURFACE); 
 	if (screen == NULL)fprintf(stderr,"Couldn't set SDL video mode: %s\r\n",SDL_GetError());
 	SDL_WM_SetCaption("WHYCON","WhyCon localization system");
-	smallFont =  TTF_OpenFont("../etc/font.ttf",46);
+	smallFont =  TTF_OpenFont("../etc/font.ttf",16);
 	if(!smallFont)printf("Unable to open font: %s\n", TTF_GetError());
 	TTF_SetFontStyle(smallFont, TTF_STYLE_NORMAL);
 	num = 0;
+	red = 0;
+	green = 255;
+	red = 0;
 }
 
 void CGui::clearStats()
@@ -51,7 +54,7 @@ void CGui::drawImage(CRawImage* image)
 			}
 		}
 	}
-	SDL_Surface *imageSDL = SDL_CreateRGBSurfaceFrom(imageSrc->data,imageSrc->width,imageSrc->height,imageSrc->bpp*8,imageSrc->bpp*imageSrc->width,0x000000ff,0x0000ff00,0x00ff0000,0x00000000);
+	SDL_Surface *imageSDL = SDL_CreateRGBSurfaceFrom(imageSrc->data,imageSrc->width,imageSrc->height,imageSrc->bpp*8,imageSrc->bpp*imageSrc->width,0x00ff0000,0x0000ff00,0x000000ff,0x00000000);
 	//	SDL_Surface *imageSDL = SDL_ScaleSurface(imageSDL, width/scale, height/scale);
 	if (imageSDL != NULL) SDL_BlitSurface(imageSDL, NULL, screen, NULL);
 	//	SDL_FreeSurface(imageSDLa);
@@ -148,7 +151,7 @@ void CGui::displayHelp(bool displayHelp)
 void CGui::saveScreen(int a)
 {
 	CRawImage image((unsigned char*)screen->pixels,width,height);
-	image.swapRGB();
+	//image.swapRGB();
 	char name[1000];
 	if (a == -1) num++; else num=a; 
 	sprintf(name,"output/%09i.bmp",num);
@@ -171,15 +174,15 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
 	//	sprintf(info,"%.0f %.0f %.02f %.02f %.02f",x,y,d,phi,psi);
 	//sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
 
-	//if (D2){
-		 //sprintf(info,"%02i %03i",o.ID,(int)(o.yaw/M_PI*180));
-		 sprintf(info,"%i",o.ID);
+	if (D2){
+		 sprintf(info,"%02i %03i",o.ID,(int)(o.yaw/M_PI*180));
+		 //sprintf(info,"%i",o.ID);
 		 text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
 		 rect.y = y/scale-14;
 		 SDL_BlitSurface(text, NULL, screen, &rect);
-	//}
+	}
 
-	/*if (D2) sprintf(info,"%03.0f %03.0f",1000*o.x,1000*o.y); else sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
+	if (D2) sprintf(info,"%03.0f %03.0f",1000*o.x,1000*o.y); else sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
 	text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
 	rect.y = y/scale;
 	SDL_BlitSurface(text, NULL, screen, &rect);
@@ -189,7 +192,7 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
 		text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
 		rect.y = y/scale+12;
 		SDL_BlitSurface(text, NULL, screen, &rect);
-	}*/
+	}
 	SDL_FreeSurface(text);
 	/*sprintf(info,"%.3f %.3f %.3f",o.roll,o.pitch,o.yaw);
 	text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
@@ -198,10 +201,19 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
 	SDL_FreeSurface(text);*/
 }
 
-void CGui::drawLine(float sx1,float sx2,float sy1,float sy2)
+void CGui::drawLine(float sx1,float sx2,float sy1,float sy2,int color)
 {
 	float d,r;
-
+	if (color == 0)
+	{
+		red = 0;
+		green = 255;	
+		blue = 0;	
+	}else{
+		red = 0;	
+		green =  0;
+		blue = 255;
+	}
 	r= (sy1-sy2)/(sx1-sx2);
 	if (fabs(r) < 1){
 		if (sx1 > sx2){
@@ -215,9 +227,9 @@ void CGui::drawLine(float sx1,float sx2,float sy1,float sy2)
 		for (float x=sx1;x<sx2;x++){
 			Uint8 *bufp;
 			bufp = (Uint8 *)screen->pixels + (int)((x-sx1)*r+sy1+0.5)*screen->pitch + (int)(x+0.5)*3;
-			*(bufp+screen->format->Rshift/8) = 255;
-			*(bufp+screen->format->Gshift/8) = 0;
-			*(bufp+screen->format->Bshift/8) = 0;
+			*(bufp+screen->format->Rshift/8) = red;
+			*(bufp+screen->format->Gshift/8) = green;
+			*(bufp+screen->format->Bshift/8) = blue;
 		}
 	}else{
 		if (sy1 > sy2){
@@ -231,11 +243,18 @@ void CGui::drawLine(float sx1,float sx2,float sy1,float sy2)
 		for (float y=sy1;y<sy2;y++){
 			Uint8 *bufp;
 			bufp = (Uint8 *)screen->pixels + (int)(y+0.5)*screen->pitch + (int)((y-sy1)/r+sx1+0.5)*3;
-			*(bufp+screen->format->Rshift/8) = 255;
-			*(bufp+screen->format->Gshift/8) = 0;
-			*(bufp+screen->format->Bshift/8) = 0;
+			*(bufp+screen->format->Rshift/8) = red;
+			*(bufp+screen->format->Gshift/8) = green;
+			*(bufp+screen->format->Bshift/8) = blue;
 		}
 	}
+}
+
+void CGui::setColor(int r,int g,int b)
+{
+	red = r;
+	green = g;
+	blue = b;
 }
 
 void CGui::drawEllipse(SSegment s,STrackedObject t)

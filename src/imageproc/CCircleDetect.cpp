@@ -41,7 +41,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	threshold = maxThreshold/2;			//default tresholt
 	numFailed = maxFailed;				//used to decide when to start changing the threshold 
 	track = true;					//initiate the search from the last position ?
-	parameterAdaptation = true;			//adapt areaRatio to the real values? 
+	parameterAdaptation = false;			//adapt areaRatio to the real values? 
 	circularityTolerance = 0.02;			//final circularity test, see Equation 5 of [1]
 
 	/*initialization of supporting structures according to the image size provided*/ 
@@ -376,6 +376,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image)
 		printf("\n");
 	}
 	SNecklace result = decoder->get(ID, true, strength);
+//	if (result.id == -1) 
 	inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0)+1.5*M_PI/ID_BITS; 
 	while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
 	while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
@@ -440,10 +441,10 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 	{
 		initX = init.x;
 		initY = init.y;
-		/*if (init.lastValid){
+		if (init.lastValid){
 			initX = init.x + (init.x - init.lastX);
 			initY = init.y + (init.y - init.lastY);
-		}*/
+		}
 		init.lastX = init.x;
 		init.lastY = init.y;
 		init.lastValid = init.valid;

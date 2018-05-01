@@ -29,7 +29,7 @@ float fieldWidth = 1.00;
 //----------------------------------------------------------------------------
 
 //Max GUI dimensions 
-int  screenWidth= 1920;
+int  screenWidth= 920;
 int  screenHeight = 1080;
 
 /*robot detection variables*/
@@ -80,6 +80,12 @@ CCamera* camera;
 CRawImage *image;
 CPositionServer* server;
 
+#include <vector>
+using namespace std;
+vector<float> historyX;
+vector<float> historyY;
+vector<int> historyColor;
+int color = 0;
 
 /*manual calibration can be initiated by pressing 'r' and then clicking circles at four positions (0,0)(fieldLength,0)...*/
 void manualcalibration()
@@ -261,6 +267,7 @@ void processKeys()
 	if (keys[SDLK_e] && shiftPressed == true) camera->changeExposition(1);
 	if (keys[SDLK_b] && shiftPressed == false) camera->changeBrightness(-1);
 	if (keys[SDLK_b] && shiftPressed == true) camera->changeBrightness(1);
+	if (keys[SDLK_m])  color = (color+1)%2;
 
 	//display help
 	if (keys[SDLK_h] && lastKeys[SDLK_h] == false) displayHelp = displayHelp == false; 
@@ -314,7 +321,7 @@ int main(int argc,char* argv[])
 	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale);
 	image = new CRawImage(imageWidth,imageHeight);
 	trans = new CTransformation(imageWidth,imageHeight,circleDiameter,true);
-	trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
+	trans->transformType = TRANSFORM_2D;		//in our case, 2D is the default
 
 	//initialize the circle detectors - each circle has its own detector instance 
 	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,i);
@@ -361,7 +368,9 @@ int main(int argc,char* argv[])
 
 		//perform transformations from camera to world coordinates
 		for (int i = 0;i<numBots;i++){
-			if (currentSegmentArray[i].valid){
+			if (currentSegmentArray[i].valid)
+			{
+				//if (numBots == 1) gui->addHistory(currentSegmentArray[i]);
 				objectArray[i] = trans->transform(currentSegmentArray[i],false);
 				numFound++;
 				if (currentSegmentArray[i].x == currentSegmentArray[i].lastX) numStatic++;
@@ -383,9 +392,26 @@ int main(int argc,char* argv[])
 			gui->guideCalibration(calibNum,fieldLength,fieldWidth);
 		}
 		for (int i = 0;i<numBots && useGui && drawCoords;i++){
-			if (currentSegmentArray[i].valid) gui->drawStats(currentSegmentArray[i].minx-30,currentSegmentArray[i].maxy,objectArray[i],trans->transformType == TRANSFORM_2D);
+			if (currentSegmentArray[i].valid){
+			//	gui->drawStats(currentSegmentArray[i].minx-30,currentSegmentArray[i].maxy,objectArray[i],trans->transformType == TRANSFORM_2D);
+				historyX.push_back(currentSegmentArray[0].x);
+				historyY.push_back(currentSegmentArray[0].y);
+				historyColor.push_back(color);
+			}
 		}
-
+		if (historyX.size()>1){
+			for (int i = 0;i<historyX.size()-1;i++){
+				float dx = (historyX[i]-historyX[i+1]);
+				float dy = (historyY[i]-historyY[i+1]);
+				if (sqrt(dx*dx +dy*dy) < 100){
+				for (int iX = -1;iX<2;iX++){
+					for (int iY = -1;iY<2;iY++){
+						gui->drawLine(historyX[i]+iX,historyX[i+1]+iX,historyY[i]+iY,historyY[i+1]+iY,historyColor[i]);
+					}
+				}
+				}
+			}
+		}
 		//establishing the coordinate system by manual or autocalibration
 		if (autocalibrate && numFound == numBots) autocalibration();
 		if (calibNum < 4) manualcalibration();
@@ -426,7 +452,7 @@ int main(int argc,char* argv[])
 			}
 		}
 		
-		//if (moveOne >0) gui->saveScreen(runs++);
+		if (moveOne >0) gui->saveScreen(runs++);
 		if (useGui) gui->update();
 		if (useGui) processKeys();
 	}

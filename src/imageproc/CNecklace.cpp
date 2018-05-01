@@ -87,7 +87,7 @@ CNecklace::CNecklace(int bits,int minimalHamming = 1)
 		{
 			maxID = idArray[id].id+1;
 		}
-		printf("ID %i \n",id);
+		printf("ID %i %i\n",id,idArray[id].id);
 	}
 
 	//idArray[idLength-1].id = 0;
@@ -188,7 +188,7 @@ SNecklace CNecklace::get(int sequence, bool probabilistic, float confidence)
 {
 	if (sequence > 0 && sequence < idLength)
 	{
-		if(probabilistic)
+		if(probabilistic && false)
 		{
 			float oe = observationEstimation(confidence);
 			float o=.0;
