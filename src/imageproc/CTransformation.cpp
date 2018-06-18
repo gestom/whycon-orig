@@ -434,15 +434,13 @@ int CTransformation::calibrate2D(STrackedObject *inp,float d01,float d12,float d
 	getTriangle(r[2].x,r[2].y,r[3].x,r[3].y,d02,d03,r[4].x,r[4].y);
 	getTriangle(r[2].x,r[2].y,r[3].x,r[3].y,d12,d13,r[5].x,r[5].y);
 	float d23a = sqrt((r[2].x-r[3].x)*(r[2].x-r[3].x)+(r[2].y-r[3].y)*(r[2].y-r[3].y));
-	printf("ERROR %.3f %.3f%%\n",fabs(d23a-d23),100*fabs(d23a-d23)/d23);
+	printf("SCENE SETTING ERROR %.3f %.3f%%\n",fabs(d23a-d23),100*fabs(d23a-d23)/d23);
 
 	for (int i = 0;i<4;i++){
 		o[i].x = -inp[i].y/inp[i].x;
 		o[i].y = -inp[i].z/inp[i].x;
 	}
 	
-	for (int i = 0;i<4;i++) printf("TRIAA %.3f %.3f %.3f %.3f\n",o[i].x,o[i].y,r[i].x,r[i].y);
-	//r[0].x = 0/0;
 	MAT est;
 	MAT1 vec;
 	REAL det;
