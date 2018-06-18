@@ -108,6 +108,7 @@ class CCamera
 	char *aviBuffer1; 
 	unsigned char *aviBuffer2; 
 	VideoCapture *capture;
+	Mat frame;
 };
 #endif
 /* end of CCamera.h */

@@ -82,6 +82,7 @@ int CCamera::init(const char *deviceName,int *wi,int *he,bool saveI)
 	sprintf(avifilename,"output/%s.avi",timeStr);
 	if (strncmp(deviceName,"/dev/",5)==0) cameraType = CT_WEBCAM; else cameraType = CT_FILELOADER;
 	if (strncmp(&deviceName[strlen(deviceName)-4],".avi",4)==0) cameraType = CT_VIDEOLOADER;
+	if (strncmp(deviceName,"loc",3)==0) cameraType = CT_OPENCV;
 	if (strncmp(deviceName,"192",3)==0) cameraType = CT_OPENCV;
 	if (cameraType == CT_WEBCAM){
 		int ret = init_videoIn(videoIn,(char *)deviceName, wi,he,fps,format,grabemethod,avifilename);		
@@ -144,6 +145,7 @@ int CCamera::init(const char *deviceName,int *wi,int *he,bool saveI)
 	{
 		char fullname[100];
 		sprintf(fullname,"rtsp://admin:123456@%s:554/H264?ch=1&subtype=0.avi",deviceName);
+		sprintf(fullname,"%s",deviceName);
 		printf("%s",fullname);
 		capture = new VideoCapture(fullname);
 	}
@@ -237,8 +239,11 @@ int CCamera::renewImage(CRawImage* image,bool move)
 	}
 	if (cameraType == CT_OPENCV)
 	{
-		Mat frame;
-		*capture >> frame;
+		if (move)
+		{
+			frame.release();
+			*capture >> frame;
+		}
 		memcpy(image->data,frame.data,frame.cols*frame.rows*3);
 	}
 	return -1;

@@ -28,6 +28,7 @@ typedef struct{
 	int size;			//number of pixels
 	int maxy,maxx,miny,minx;	//bounding box dimensions
 	int mean;			//mean brightness
+	int std;			//mean brightness
 	int type;			//black or white ?
 	float roundness;		//result of the first roundness test, see Eq. 2 of paper [1]
 	float bwRatio;			//ratio of white to black pixels, see Algorithm 2 of paper [1] 

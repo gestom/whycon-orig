@@ -68,6 +68,7 @@ class CTransformation
 		STrackedObject eigen(double data[]);
 		/*establish the user-defined coordinate system from four calibration patterns - see 4.4 of [1]*/
 		int calibrate2D(STrackedObject *inp,float dimX,float dimY,float robotRadius = 0,float robotHeight =0,float cameraHeight = 1.0);
+		int calibrate2D(STrackedObject *inp,float d01,float d12,float d23,float d30,float d02,float d13);
 		int calibrate3D(STrackedObject *o,float gridDimX,float gridDimY);
 		int calibrate4D(STrackedObject *o,float gridDimX,float gridDimY);
 		S3DTransform calibrate3D(STrackedObject o0,STrackedObject o1,STrackedObject o2,float gridDimX,float gridDimY);
@@ -81,6 +82,7 @@ class CTransformation
 		STrackedObject transformInv(STrackedObject o[]);
 
 	private:
+		void getTriangle(float x0,float y0,float x1,float y1,float d02,float d12,float &x,float &y);
 		STrackedObject  normalize(STrackedObject o);
 		float establishError(STrackedObject o);
 		STrackedObject transform2D(STrackedObject o);

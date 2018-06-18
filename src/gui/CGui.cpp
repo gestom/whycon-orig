@@ -18,6 +18,7 @@ CGui::CGui(int wi,int he,int sc)
 	if(!smallFont)printf("Unable to open font: %s\n", TTF_GetError());
 	TTF_SetFontStyle(smallFont, TTF_STYLE_NORMAL);
 	num = 0;
+	measureNum = 0;
 }
 
 void CGui::clearStats()
@@ -195,6 +196,74 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
 	rect.y = y/scale+15;
 	SDL_BlitSurface(text, NULL, screen, &rect);
 	SDL_FreeSurface(text);*/
+}
+
+void CGui::removeMeasurement()
+{
+	measureNum--;
+	if (measureNum < 0) measureNum = 0;
+}
+
+void CGui::addMeasurement(SSegment* segments,int numSegments,float mouseX,float mouseY)
+{
+	float maxDistance = 10000;
+	int mindex = -1;
+	for (int i = 0;i<numSegments;i++)
+	{
+		float dx = segments[i].x-mouseX*scale; 
+		float dy = segments[i].y-mouseY*scale;
+		float distance = sqrt(dx*dx+dy*dy);
+		if (distance < maxDistance){
+			mindex = i;
+			maxDistance = distance;
+		}
+	}
+	measureIndex[measureNum++] = mindex;
+}
+
+void CGui::drawMeasurement(SSegment* segment,STrackedObject* o,float mouseX,float mouseY)
+{
+	SDL_Rect rect;				// text position 
+	SDL_Surface *text;			// surface with text 
+	SDL_Color ok_col = {  0, 255, 0, 0 };
+
+	for (int m = 0;m<measureNum/2;m++){
+		int a = measureIndex[m*2+1];
+		int b = measureIndex[m*2+0];
+		float mx = (segment[a].x+segment[b].x)/2;
+		float my = (segment[a].y+segment[b].y)/2;
+		drawLine(segment[a].x,segment[b].x,segment[a].y,segment[b].y,1);
+		rect.x = mx;
+		rect.y = my;
+		rect.w = 0;
+		rect.h = 0;
+		SDL_FillRect(screen, &rect, SDL_MapRGB(screen->format, 0, 0, 0));
+
+		char info[1000];
+		float dx = o[a].x-o[b].x; 
+		float dy = o[a].y-o[b].y;
+		printf("%.3f %.3f %.3f \n",rect.x,rect.y,sqrt(dx*dx+dy*dy)); 
+		sprintf(info,"%.3f",sqrt(dx*dx+dy*dy));
+		text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
+		SDL_BlitSurface(text, NULL, screen, &rect);
+		SDL_FreeSurface(text);
+	}
+	if (measureNum%2 > 0){
+		int a = measureIndex[measureNum-1];
+		int b = measureIndex[measureNum-1];
+		drawLine(mouseX/scale,segment[a].x,mouseY/scale,segment[b].y,1);
+	}
+
+
+}
+
+void CGui::drawLine(float sx1,float sx2,float sy1,float sy2,int thickness)
+{
+	for (int ix = -thickness;ix<=thickness;ix++){
+		for (int iy = -thickness;iy<=thickness;iy++){
+			drawLine(sx1+ix,sx2+ix,sy1+iy,sy2+iy);
+		}
+	}
 }
 
 void CGui::drawLine(float sx1,float sx2,float sy1,float sy2)

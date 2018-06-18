@@ -77,7 +77,6 @@ CCamera* camera;
 CRawImage *image;
 CPositionServer* server;
 
-
 /*manual calibration can be initiated by pressing 'r' and then clicking circles at four positions (0,0)(fieldLength,0)...*/
 void manualcalibration()
 {
@@ -128,24 +127,46 @@ void autocalibration()
 	}
 	if (saveVals){
 		int index[] = {0,0,0,0};	
-		int maxEval = 0;
-		int eval = 0;
-		int sX[] = {-1,+1,-1,+1};
-		int sY[] = {+1,+1,-1,-1};
-		for (int b = 0;b<4;b++)
+		float maxEval = 1000;
+		float eval = 0;
+		float lastEval = 0;
+		maxEval = -10000000;
+		/*find the south-west-most point*/
+		for (int i = 0;i<numBots;i++)
 		{
-			maxEval = -10000000;
-			for (int i = 0;i<numBots;i++)
+			eval = 	-currentSegmentArray[i].x + currentSegmentArray[i].y;
+			if (eval > maxEval)
 			{
-				eval = 	sX[b]*currentSegmentArray[i].x +sY[b]*currentSegmentArray[i].y;
-				if (eval > maxEval)
-				{
-					maxEval = eval;
-					index[b] = i;
-				}
+				maxEval = eval;
+				index[0] = i;
 			}
 		}
+
+		/*calculate convex envelope*/	
+		int j = index[0];
+		int mindex = -1;
+		int a = 0;
+		do{
+			maxEval = 1000;
+			for (int i = 0;i<numBots;i++)
+			{
+				if (i != j){
+					eval = atan2(-currentSegmentArray[i].y+currentSegmentArray[j].y,currentSegmentArray[i].x-currentSegmentArray[j].x)-lastEval;
+					if (eval < 0) eval+=2*M_PI;
+					if (eval < maxEval)
+					{
+						maxEval = eval;
+						mindex = i;
+					}
+
+				}			
+			}
+			j = mindex;
+			index[++a] = j;
+		}while (j != index[0] && a < 4);
 		printf("INDEX: %i %i %i %i\n",index[0],index[1],index[2],index[3]);
+
+
 		for (int i = 0;i<4;i++){
 			if (calibStep <= autoCalibrationPreSteps) calib[i].x = calib[i].y = calib[i].z = 0;
 			calib[i].x+=objectArray[index[i]].x;
@@ -160,6 +181,7 @@ void autocalibration()
 				calib[i].z = calib[i].z/(autoCalibrationSteps-autoCalibrationPreSteps);
 			}
 			trans->calibrate2D(calib,fieldLength,fieldWidth);
+			trans->calibrate2D(calib,8.06,5.27,7.27,6.235,8.24,10.75);
 			trans->calibrate3D(calib,fieldLength,fieldWidth);
 			trans->calibrate4D(calib,fieldLength,fieldWidth);
 			calibNum++;
@@ -195,19 +217,21 @@ void processKeys()
 	//process mouse - mainly for manual calibration - by clicking four circles at the corners of the operational area 
 	while (SDL_PollEvent(&event)){
 		if (event.type == SDL_MOUSEBUTTONDOWN){
-			if (calibNum < 4 && calibStep > calibrationSteps){
-				 calibStep = 0;
-				 trans->transformType = TRANSFORM_NONE;
+			if (event.button.button == SDL_BUTTON_LEFT){
+				if (calibNum < 4 && calibStep > calibrationSteps){
+					calibStep = 0;
+					trans->transformType = TRANSFORM_NONE;
+				}
+				if (numBots > 0){
+					currentSegmentArray[numBots-1].x = event.motion.x*guiScale; 
+					currentSegmentArray[numBots-1].y = event.motion.y*guiScale;
+					currentSegmentArray[numBots-1].valid = true;
+					detectorArray[numBots-1]->localSearch = true;
+				}
 			}
-			if (numBots > 0){
-				currentSegmentArray[numBots-1].x = event.motion.x*guiScale; 
-				currentSegmentArray[numBots-1].y = event.motion.y*guiScale;
-				currentSegmentArray[numBots-1].valid = true;
-				detectorArray[numBots-1]->localSearch = true;
-			}
+			if (event.button.button == SDL_BUTTON_RIGHT)gui->addMeasurement(currentSegmentArray,numBots,event.motion.x,event.motion.y);
 		}
 	}
-
 	//process keys 
 	keys = SDL_GetKeyState(&keyNumber);
 	bool shiftPressed = keys[SDLK_RSHIFT] || keys[SDLK_LSHIFT];
@@ -217,7 +241,7 @@ void processKeys()
 	if (keys[SDLK_SPACE] && lastKeys[SDLK_SPACE] == false){ moveOne = 100000000; moveVal = 10000000;};
 	if (keys[SDLK_p] && lastKeys[SDLK_p] == false) {moveOne = 1; moveVal = 0;}
 
-	if (keys[SDLK_m] && lastKeys[SDLK_m] == false) printf("SAVE %03f %03f %03f %03f %03f %03f %03f\n",objectArray[0].x,objectArray[0].y,objectArray[0].z,objectArray[0].error,objectArray[0].d,currentSegmentArray[0].m0,currentSegmentArray[0].m1);
+	if (keys[SDLK_m] && lastKeys[SDLK_m] == false) gui->removeMeasurement();//printf("SAVE %03f %03f %03f %03f %03f %03f %03f\n",objectArray[0].x,objectArray[0].y,objectArray[0].z,objectArray[0].error,objectArray[0].d,currentSegmentArray[0].m0,currentSegmentArray[0].m1);
 	if (keys[SDLK_n] && lastKeys[SDLK_n] == false) printf("SEGM %03f %03f %03f\n",currentSegmentArray[0].x,currentSegmentArray[0].y,currentSegmentArray[0].m0);
 	if (keys[SDLK_s] && lastKeys[SDLK_s] == false) image->saveBmp();
 
@@ -371,6 +395,7 @@ int main(int argc,char* argv[])
 			gui->drawTimeStats(evalTime,numBots);
 			gui->displayHelp(displayHelp);
 			gui->guideCalibration(calibNum,fieldLength,fieldWidth);
+			gui->drawMeasurement(currentSegmentArray,objectArray,event.motion.x,event.motion.y);
 		}
 		for (int i = 0;i<numBots && useGui && drawCoords;i++){
 			if (currentSegmentArray[i].valid) gui->drawStats(currentSegmentArray[i].minx-30,currentSegmentArray[i].maxy,objectArray[i],trans->transformType == TRANSFORM_2D);

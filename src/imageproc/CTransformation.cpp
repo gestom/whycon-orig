@@ -418,10 +418,76 @@ STrackedObject CTransformation::normalize(STrackedObject o)
 	return r;
 }
 
+int CTransformation::calibrate2D(STrackedObject *inp,float d01,float d12,float d23,float d03,float d02,float d13)
+{
+	STrackedObject r[6];
+	STrackedObject o[6];
+
+	r[0].x = 0;
+	r[0].y = 0;
+	r[1].x = d01;
+	r[1].y = 0;
+
+	getTriangle(r[0].x,r[0].y,r[1].x,r[1].y,d02,d12,r[2].x,r[2].y);
+	getTriangle(r[0].x,r[0].y,r[1].x,r[1].y,d03,d13,r[3].x,r[3].y);
+	
+	getTriangle(r[2].x,r[2].y,r[3].x,r[3].y,d02,d03,r[4].x,r[4].y);
+	getTriangle(r[2].x,r[2].y,r[3].x,r[3].y,d12,d13,r[5].x,r[5].y);
+	float d23a = sqrt((r[2].x-r[3].x)*(r[2].x-r[3].x)+(r[2].y-r[3].y)*(r[2].y-r[3].y));
+	printf("ERROR %.3f %.3f%%\n",fabs(d23a-d23),100*fabs(d23a-d23)/d23);
+
+	for (int i = 0;i<4;i++){
+		o[i].x = -inp[i].y/inp[i].x;
+		o[i].y = -inp[i].z/inp[i].x;
+	}
+	
+	for (int i = 0;i<4;i++) printf("TRIAA %.3f %.3f %.3f %.3f\n",o[i].x,o[i].y,r[i].x,r[i].y);
+	//r[0].x = 0/0;
+	MAT est;
+	MAT1 vec;
+	REAL det;
+	for (int i = 0;i<4;i++){
+		est[2*i][0]=-o[i].x;
+		est[2*i][1]=-o[i].y;
+		est[2*i][2]=-1;
+		est[2*i][3]=0;
+		est[2*i][4]=0;
+		est[2*i][5]=0;
+		est[2*i][6]=r[i].x*o[i].x;
+		est[2*i][7]=r[i].x*o[i].y;
+		est[2*i+1][0]=0;
+		est[2*i+1][1]=0;
+		est[2*i+1][2]=0;
+		est[2*i+1][3]=-o[i].x;
+		est[2*i+1][4]=-o[i].y;
+		est[2*i+1][5]=-1;
+		est[2*i+1][6]=r[i].y*o[i].x;
+		est[2*i+1][7]=r[i].y*o[i].y;
+		vec[2*i][0]=-r[i].x;
+		vec[2*i+1][0]=-r[i].y;
+	}
+	MATINV(8,1,est,vec,&det); 
+	for (int i = 0;i<8;i++)  hom[i] = vec[i][0];
+	hom[8] = 1;
+	transformType = TRANSFORM_2D;
+	return 0;
+}
+
+void CTransformation::getTriangle(float x0,float y0,float x1,float y1,float d02,float d12,float &x,float &y)
+{
+	float d01 = sqrt((y1-y0)*(y1-y0)+(x1-x0)*(x1-x0));
+	float xx = (d02*d02+d01*d01-d12*d12)/2/d01;
+	float yy = sqrt(d02*d02-xx*xx);
+	float aa = atan2(y1-y0,x1-x0);
+	x = xx*cos(aa)-yy*sin(aa)+x0;
+	y = xx*sin(aa)+yy*cos(aa)+y0;
+}
+
 int CTransformation::calibrate2D(STrackedObject *inp,float dimX,float dimY,float robotRadius,float robotHeight,float cameraHeight)
 {
 	STrackedObject r[4];
 	STrackedObject o[4];
+
 	/*specific to the pheromone system - compensates the fact, that the calibration patterns are displayed in a lower position than the robots
 	assumes that the camera above the field centre*/
 	float iX = dimX/cameraHeight*robotHeight/2;

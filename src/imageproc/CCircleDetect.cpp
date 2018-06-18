@@ -35,7 +35,7 @@ CCircleDetect::CCircleDetect(int wi,int he,int idi)
 	centerDistanceToleranceRatio = 0.1;		//max allowd distance of the inner and outer circle centers (relative to pattern dimensions)
 	centerDistanceToleranceAbs = 15;		//max allowed distance of the inner and outer circle centers (in pixels)
 	circularTolerance = 1.5;			//maximal tolerance of bounding box dimensions vs expected pixel area - see equation 2 of the paper [1] 
-	ratioTolerance = 1.4;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
+	ratioTolerance = 0.4;				//maximal tolerance of black to white pixel ratios - see Algorithm 2 of [1]
 	threshold = maxThreshold/2;			//default tresholt
 
 	numFailed = maxFailed;				//used to decide when to start changing the threshold 
@@ -180,11 +180,18 @@ bool CCircleDetect::examineSegment(CRawImage *image,SSegment *segmen,int ii,floa
 			//if its round, we compute yet another properties 
 			segmen->round = true;
 			segmen->mean = 0;
+			segmen->std = 0;
 			for (int p = queueOldStart;p<queueEnd;p++){
 				pos = queue[p];
 				segmen->mean += image->data[pos*3]+image->data[pos*3+1]+image->data[pos*3+2];
 			}
 			segmen->mean = segmen->mean/segmen->size;
+			for (int p = queueOldStart;p<queueEnd;p++){
+				pos = queue[p];
+				int b =  (image->data[pos*3]+image->data[pos*3+1]+image->data[pos*3+2]-segmen->mean);
+				segmen->std += b*b;
+			}
+			segmen->std = sqrt(segmen->std/(segmen->size-1));
 			result = true;	
 		}
 	}
@@ -420,7 +427,8 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init)
 									//if (lastTrackOK == false) identifySegment(&outer);
 									//outer.ID =ID;
 									outer.valid = inner.valid = true;
-									threshold = (outer.mean+inner.mean)/2;
+									//threshold = (outer.mean*outer.std+inner.mean*inner.std)/(outer.std+inner.std);
+									threshold = (outer.mean*inner.std+inner.mean*outer.std)/(outer.std+inner.std);
 									if (track) ii = start -1;
 								}else{
 									if (track && init.valid){

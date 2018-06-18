@@ -22,14 +22,21 @@ public:
   void update();
   void drawEllipse(SSegment s,STrackedObject t);
   void drawLine(float sx1,float sx2,float sy1,float sy2);
+  void drawLine(float sx1,float sx2,float sy1,float sy2,int thickness);
   void displayHelp(bool extended);
   void drawStats(int x,int y,STrackedObject o, bool D2);
+
+  void addMeasurement(SSegment* segments,int numSegments,float mouseX,float mouseY);
+  void drawMeasurement(SSegment* segments,STrackedObject* o,float mouseX,float mouseY);
+  void removeMeasurement();
 
 private:
   SDL_Surface *screen;
   int width,height,scale;
   TTF_Font *smallFont;
   int averageTime,maxTime,numStats,num;	
+  int measureIndex[100];
+  int measureNum;
 };
 
 #endif
