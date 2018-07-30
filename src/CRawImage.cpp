@@ -2,7 +2,7 @@
 
 static unsigned char sth[] = {66,77,54,16,14,0,0,0,0,0,54,0,0,0,40,0,0,0,128,2,0,0,224,1,0,0,1,0,24,0,0,0,0,0,0,16,14,0,18,11,0,0,18,11,0,0,0,0,0,0,0,0,0,0};
 
-CRawImage::CRawImage(int wi,int he,int bppi)
+CRawImage::CRawImage(int wi,int he, int bppi)
 {
 	width =  wi;
 	height = he;
@@ -28,7 +28,7 @@ CRawImage::CRawImage(int wi,int he,int bppi)
 	ownData = true;
 }
 
-CRawImage::CRawImage(unsigned char *datai,int wi,int he,int bppi)
+CRawImage::CRawImage(unsigned char *datai,int wi,int he, int bppi)
 {
 	ownData = false;
 	width =  wi;
@@ -71,6 +71,17 @@ int CRawImage::getSaveNumber()
 CRawImage::~CRawImage()
 {
 	if (ownData) free(data);
+}
+
+void CRawImage::swapRGB()
+{
+  for (int j = 0;j<height;j++){
+	  for (int i = 0;i<width;i++){
+		  char a = data[(width*j+i)*3]; 
+		  data[(width*j+i)*3] = data[(width*j+i)*3+2];
+		  data[(width*j+i)*3+2] = a; 
+	  }
+  }
 }
 
 void CRawImage::swap()

@@ -23,8 +23,8 @@ class CTimer
 		int getTime();
 		bool timeOut();
 
+		int64_t getRealTime();
 	private:
-		int getRealTime();
 		int startTime;
 		int pauseTime;
 		bool running;

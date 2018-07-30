@@ -17,11 +17,11 @@ void CTimer::reset(int timeout)
   pauseTime = startTime;
 }
 
-int CTimer::getRealTime()
+int64_t CTimer::getRealTime()
 {
   struct  timeval currentTime;
   gettimeofday(&currentTime, NULL);
-  return currentTime.tv_sec*1000+currentTime.tv_usec/1000;
+  return currentTime.tv_sec*1000000 + currentTime.tv_usec;
 }
 
 int CTimer::getTime()
