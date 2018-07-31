@@ -1,10 +1,8 @@
 #include "CGui.h"
 
-#include <string>
-
 #define THICK_CROSS
 
-CGui::CGui(int wi,int he,int sc)
+CGui::CGui(int wi,int he,int sc, const char* font_path)
 {
 	averageTime=maxTime=numStats=0;
 	height = he/sc;
@@ -16,12 +14,8 @@ CGui::CGui(int wi,int he,int sc)
 	screen = SDL_SetVideoMode(wi/sc,he/sc,24,SDL_SWSURFACE); 
 	if (screen == NULL)fprintf(stderr,"Couldn't set SDL video mode: %s\r\n",SDL_GetError());
 	SDL_WM_SetCaption("WHYCON","WhyCon localization system");
-	
-	//smallFont =  TTF_OpenFont("../etc/font.ttf",16);
-	std::string home = getenv("HOME");
-	std::string path = home + "/.whycon-orig-ros/font.ttf";
-	smallFont =  TTF_OpenFont(path.c_str() ,16);  // file path has to be solved later
-	
+
+	smallFont =  TTF_OpenFont(font_path ,16);
 	if(!smallFont)printf("Unable to open font: %s\n", TTF_GetError());
 	TTF_SetFontStyle(smallFont, TTF_STYLE_NORMAL);
 	num = 0;

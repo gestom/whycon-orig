@@ -8,7 +8,7 @@ int* CCircleDetect::queue = NULL;
 
 //Variable initialization
 CCircleDetect::CCircleDetect(int wi, int he, bool id) {
-    decoder = new CNecklace(ID_BITS);
+    decoder = new CNecklace(ID_BITS, HAMMING_DISTANCE);
     identify = id;
     step = -1;
     ID = -1;
@@ -47,6 +47,17 @@ CCircleDetect::CCircleDetect(int wi, int he, bool id) {
     innerAreaRatio = M_PI / 4.0;
     areasRatio = (1.0 - areaRatioInner_Outer) / areaRatioInner_Outer;
     sizer = sizerAll = 0;
+}
+
+void CCircleDetect::reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id)
+{
+	circularTolerance = ict/100.0;
+	circularityTolerance = fct/100.0;
+	ratioTolerance = 1+art/100.0;
+	centerDistanceToleranceRatio = cdtr/100.0;
+	centerDistanceToleranceAbs = cdta;
+	
+	identify = id;
 }
 
 int CCircleDetect::adjustDimensions(int wi, int he) {

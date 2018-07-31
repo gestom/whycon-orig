@@ -14,7 +14,7 @@
 
 //used for circle identification 
 #define ID_SAMPLES 360
-#define ID_BITS 5
+#define ID_BITS 4
 #define HAMMING_DISTANCE 1
 
 
@@ -46,6 +46,9 @@ class CCircleDetect
 
 		//deallocate the detector's structures
 		~CCircleDetect();
+		
+		// dynamic reconfigure of parameters
+		void reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id);
 
 		//main detection method, implements Algorithm 2 of [1] 
 		SSegment findSegment(CRawImage* image, SSegment init);

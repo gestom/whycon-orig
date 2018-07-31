@@ -121,6 +121,11 @@ CTransformation::~CTransformation()
 	}
 }
 
+void CTransformation::reconfigure(float circleDiam)
+{
+	trackedObjectDiameter = circleDiam / 100.0;
+}
+
 float CTransformation::barrelX(float x,float y)
 {
 	x = (x-cc[0])/fc[0];

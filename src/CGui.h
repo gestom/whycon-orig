@@ -10,7 +10,7 @@
 class CGui
 {
 public:
-  CGui(int wi,int he,int scale);
+  CGui(int wi,int he,int scale, const char* font_path);
   ~CGui();
 
   void drawImage(CRawImage* image);

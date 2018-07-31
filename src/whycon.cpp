@@ -2,6 +2,7 @@
 #define _FILE_OFFSET_BITS 64
 
 #include <stdlib.h>
+#include <string>
 #include "CGui.h"
 #include "CTimer.h"
 #include "CCircleDetect.h"
@@ -14,7 +15,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <dynamic_reconfigure/server.h>
-//#include <whycon_ros/whyconConfig.h>
+#include <whycon_ros/whyconConfig.h>
 
 //-----These parameters need to be adjusted by the user -----------------------
 
@@ -44,7 +45,7 @@ SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (al
 STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in metric space)
 CTransformation *trans;				//allows to transform from image to metric coordinates
 
-bool detectID = true;
+bool identify = false;			//identify ID of tags ?
 
 /*variables related to (auto) calibration*/
 const int calibrationSteps = 20;			//how many measurements to average to estimate calibration pattern position (manual calib)
@@ -59,15 +60,15 @@ ETransformType lastTransformType = TRANSFORM_2D;//pre-calibration transform (use
 int wasBots = 1;				//pre-calibration number of robots to track (used to preserve pre-calibation number of robots to track)
 
 /*program flow control*/
-bool saveVideo = false;		//save video to output folder?
-bool saveLog = false;		//save log to output folder?
+bool saveVideo;			//save video to output folder?
+bool saveLog;			//save log to output folder?
 bool stop = false;		//stop and exit ?
 int moveVal = 1;		//how many frames to process ?
 int moveOne = moveVal;		//how many frames to process now (setting moveOne to 0 or lower freezes the video stream) 
 
 /*GUI-related stuff*/
 CGui* gui;			//drawing, events capture
-bool useGui = true;		//use graphic interface at all?
+bool useGui;			//use graphic interface at all?
 int guiScale = 1;		//in case camera resolution exceeds screen one, gui is scaled down
 SDL_Event event;		//store mouse and keyboard events
 int keyNumber = 10000;		//number of keys pressed in the last step	
@@ -277,15 +278,28 @@ void processKeys()
 	memcpy(lastKeys,keys,keyNumber);
 }
 
-//process command line arguments 
+//process command line arguments
+/*
 void processArgs(int argc,char* argv[]) 
 {
-	if (argc > 1) numBots = atoi(argv[1]);
-	for (int i = 2;i<argc;i++){
+	for (int i = 1;i<argc;i++){
 		if (strcmp(argv[i],"nogui")==0) useGui=false;
 		if (strcmp(argv[i],"log")==0) saveLog=true;
 		if (strcmp(argv[i],"video")==0) saveVideo=true;
 	}
+}
+*/
+
+//parameter reconfiguration
+void reconfigureCallback(whycon_ros::whyconConfig &config, uint32_t level) 
+{
+	ROS_INFO("Reconfigure Request: %d %lf %d %lf %lf %lf %lf %lf", config.numBots, config.circleDiameter, config.identify, config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs);
+	numBots = (config.numBots > MAX_PATTERNS) ? MAX_PATTERNS : config.numBots;
+	trans->reconfigure(config.circleDiameter);
+	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i]->reconfigure(config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs, config.identify);
+	/*outerDimUser = config.userDiameter/100.0;
+	outerDimMaster = config.masterDiameter/100.0;
+	distanceTolerance = config.distanceTolerance/100.0;*/
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -428,19 +442,21 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 int main(int argc,char* argv[])
 {
 	// process arguments, initialize logging system, image transport and processing, and ROS
-	processArgs(argc,argv);
-	if (saveLog) initializeLogging();
-	ros::init(argc, argv, "whycon_orig_ros");
+	//processArgs(argc,argv);
+	
+	ros::init(argc, argv, "whycon_ros");
 	ros::NodeHandle n;
 	image_transport::ImageTransport it(n);
 	image = new CRawImage(imageWidth,imageHeight, 3);
-
-	// initialize dynamic reconfiguration feedback
-	/*dynamic_reconfigure::Server<whycon_ros::whyconConfig> server;
-	dynamic_reconfigure::Server<whycon_ros::whyconConfig>::CallbackType dynSer;
-	dynSer = boost::bind(&reconfigureCallback, _1, _2);
-	server.setCallback(dynSer);*/
-
+	
+	// loading params and args from launch file
+	std::string font_path = argv[1];
+	n.param("useGui", useGui, true);
+	n.param("saveLog", saveLog, false);
+	n.param("saveVideo", saveVideo, false);
+	
+	if (saveLog) initializeLogging();
+	
 	moveOne = moveVal;
 	moveOne  = 0;
 
@@ -448,20 +464,25 @@ int main(int argc,char* argv[])
 	while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
 
 	// initialize GUI, image structures, coordinate transformation modules
-	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale);
+	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale, font_path.c_str());
 	trans = new CTransformation(imageWidth,imageHeight,circleDiameter,true);
 	trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
 	// initialize the circle detectors - each circle has its own detector instance 
-	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,detectID);
-	
+	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify);
 	image->getSaveNumber();
+
+	// initialize dynamic reconfiguration feedback
+	dynamic_reconfigure::Server<whycon_ros::whyconConfig> server;
+	dynamic_reconfigure::Server<whycon_ros::whyconConfig>::CallbackType dynSer;
+	dynSer = boost::bind(&reconfigureCallback, _1, _2);
+	server.setCallback(dynSer);
 
 	// subscribe to camera topic, publish topis with card position and card ID
 	image_transport::Subscriber subimg = it.subscribe("/cv_camera/image_raw", 1, imageCallback);
-	pose_pub = n.advertise<geometry_msgs::PoseStamped>("/whycon_orig_ros/card_position", 1);
-	rotation_pub = n.advertise<geometry_msgs::Vector3Stamped>("/whycon_orig_ros/card_rotation", 1);
-	id_pub = n.advertise<std_msgs::Int16>("/whycon_orig_ros/card_id", 1);
+	pose_pub = n.advertise<geometry_msgs::PoseStamped>("/whycon_ros/card_position", 1);
+	rotation_pub = n.advertise<geometry_msgs::Vector3Stamped>("/whycon_ros/card_rotation", 1);
+	id_pub = n.advertise<std_msgs::Int16>("/whycon_ros/card_id", 1);
 
 	// ROS infinite loop that refreshes data in topics, checks if stop signal was sent
 	while (ros::ok()){

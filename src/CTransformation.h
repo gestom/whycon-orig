@@ -48,6 +48,9 @@ class CTransformation
 		CTransformation(int widthi,int heighti,float diam,bool fullUnbarreli = false);
 		~CTransformation();
 
+		// parameters dynamic reconfigure
+		void reconfigure(float circleDiam);
+
 		//radial (un)distortion functions
 		float barrelX(float x,float y);
 		float barrelY(float x,float y);

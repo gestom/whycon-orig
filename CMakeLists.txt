@@ -142,6 +142,7 @@ target_link_libraries (whycon_transform whycon_sysmath)
 target_link_libraries (whycon_ros whycon_timer whycon_image whycon_detector whycon_transform whycon_sysmath whycon_gui whycon_necklace SDL SDL_ttf)
 
 add_dependencies(whycon_ros ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
+
 target_link_libraries (whycon_ros  ${catkin_LIBRARIES})
 
 install(TARGETS
