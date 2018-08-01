@@ -39,34 +39,34 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 1. Install the required <a href="#dependencies">libraries</a>:<br><i>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev</i>.
 2. Download the software from GitHub into a catkin workspace.
 3. Open <a href="launch/whycon.launch">whycon.launch</a> file in the <i>launch/</i> folder and change <i>remap</i> tag so attribute <i>to</i> will match Your camera image_raw topic.
-4. Compile the software - just type <b>catkin_make</b> in workspace directory.
+4. Compile the software - just type <i>catkin_make</i> in workspace directory.
 5. Source setup script in package directory into shell enviroment<br>e.g. <i>source devel/setup.bash</i>
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
 6. Run code by<br><i>roslaunch whycon_ros whycon.launch</i>
-7. You should see the image with some numbers below the circle. Pressing <b>D</b> shows the segmentation result.
-8. You can change the parameters in rqt_reconfigure which should open together with whycon GUI.
+7. You should see the image with some numbers below the circle. Pressing <i>D</i> shows the segmentation result.
+8. You can change the parameters in <i>rqt_reconfigure</i> which should open together with whycon GUI.
 
 #### Generating tags with ID
 
-0. <b>Right now works only with 5 bit ID. Otherwise the ID_BITS (CCircleDetect.h) has to be changed and recompiled. WILL BE RESOLVED SOON.</b>
+0. <i>Right now works only with 5 bit ID. Otherwise the ID_BITS (CCircleDetect.h) has to be changed and recompiled. WILL BE RESOLVED SOON.</i>
 1. Folder <a href="id/">id/</a> contains a script <i>create.sh</i> which generates tags with IDs.
 2. Run the script with parameter <i>-n</i> followed by a number of bits will create tags in working directory.
 3. Other script parameters are specified in help - <i>create.sh -h</i>
-4. Number of ID bits has to be then adjusted in rqt_reconfigure.
+4. Number of ID bits has to be then adjusted in <i>rqt_reconfigure</i>.
 
 #### Setting up the coordinate system
 
-1. Calibrate your camera using the MATLAB (or Octave) calibration toolbox and put the <b>Calib_Results.m</b> in the <b>etc/</b> directory.
-2. If you have resized the markers (their default size is 122mm), then adjust their diameter in the rqt_reconfigure.
+1. Calibrate your camera using the MATLAB (or Octave) calibration toolbox and put the <i>Calib_Results.m</i> in the <i>etc/</i> directory.
+2. If you have resized the markers (their default size is 122mm), then adjust their diameter in the <i>rqt_reconfigure</i>.
 3. Print additional four circular <a href="id/test.pdf">markers</a> and place to the corners of your (reclangular) operational space.
 4. Position and fixate your camera so that it has all four circles in it's field of view.
-5. <b>Right now works with fieldLength and fieldWidth 1.0. Otherwise it has to be changed in whycon.cpp and recompiled. WILL BE RESOLVED SOON.</b>
-5. Run whycon and modify the dimensions of the operation space in the rqt_reconfigure - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
+5. <i>Right now works with fieldLength and fieldWidth 1.0. Otherwise it has to be changed in whycon.cpp and recompiled. WILL BE RESOLVED SOON.</i>
+5. Run whycon and modify the dimensions of the operation space in the <i>rqt_reconfigure</i> - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
 6. Adjust the parameter <i>numBots</i> - the number of patterns you want to track plus 4.
-7. Once all the patterns are found, press <b>a</b> and the four outermost patterns will be used to calculate the coordinate system.
-8. Alternatively, you can press <b>r</b> and then click the four circles that define the coordinate system.
+7. Once all the patterns are found, press <i>a</i> and the four outermost patterns will be used to calculate the coordinate system.
+8. Alternatively, you can press <i>r</i> and then click the four circles that define the coordinate system.
 9. Pressing 1 should show you the patterns' positions in camera-centric coordinates (x-axis equals to camera optical axis), pressing 2 and 3 will display marker coordinates in user-defined 2D or 3D coordinate systems.
-10. Pressing <b>+</b>,<b>-</b> changes the number of localized patterns.
+10. Pressing <i>+</i>,<i>-</i> changes the number of localized patterns.
 
 #### Logs, GUI, recording topics
 
