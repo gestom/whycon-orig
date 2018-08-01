@@ -20,16 +20,14 @@ int sortByDistance(const void* m1,const void* m2)
         return 0;
 }
 
-CTransformation::CTransformation(int widthi,int heighti,float diam,bool fullUnbarreli)
+CTransformation::CTransformation(int widthi,int heighti,float diam, const char* calibResPath, const char* calibDefPath, bool fullUnbarreli)
 {
 	transformType = TRANSFORM_NONE;
 	fullUnbarrel = fullUnbarreli;
 	width = widthi;
 	height = heighti;
 	char dummy[1000];
-	std::string home = getenv("HOME");
-	std::string path = home +"/.whycon-orig-ros/Calib_Results.m";
-	FILE* file = fopen(path.c_str() ,"r");
+	FILE* file = fopen(calibResPath ,"r");
 	trackedObjectDiameter = diam;
 	while (feof(file)== false){
 		int err = fscanf(file,"%s",dummy);
@@ -106,8 +104,7 @@ CTransformation::CTransformation(int widthi,int heighti,float diam,bool fullUnba
 			}
 		}
 	}
-	path = home +"/.whycon-orig-ros/default.cal";
-	loadCalibration(path.c_str());
+	loadCalibration(calibDefPath);
 }
 
 CTransformation::~CTransformation()

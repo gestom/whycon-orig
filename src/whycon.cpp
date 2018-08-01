@@ -9,6 +9,7 @@
 #include "CTransformation.h"
 #include <SDL/SDL.h>
 
+// ROS libraries
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <std_msgs/Int16.h>
@@ -17,25 +18,23 @@
 #include <dynamic_reconfigure/server.h>
 #include <whycon_ros/whyconConfig.h>
 
-//-----These parameters need to be adjusted by the user -----------------------
-
-//Adjust camera resolution here
+//default camera resolution
 int  imageWidth= 640;
 int  imageHeight = 480;
 
-//Adjust the black circle diameter [m] 
+//default black circle diameter [m] 
 float circleDiameter = 0.122;
 
-/*Adjust the X and Y dimensions of the coordinate system*/ 
+// X and Y dimensions of the coordinate system
 float fieldLength = 1.00;
 float fieldWidth = 1.00;
-//----------------------------------------------------------------------------
 
 //Max GUI dimensions 
 int  screenWidth= 1920;
 int  screenHeight = 1080;
 
 /*robot detection variables*/
+bool identify = false;		//identify ID of tags ?
 int numBots = 0;		//num of robots to track
 int numFound = 0;		//num of robots detected in the last step
 int numStatic = 0;		//num of non-moving robots  
@@ -44,8 +43,6 @@ SSegment currentSegmentArray[MAX_PATTERNS];	//segment array (detected objects in
 SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
 STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in metric space)
 CTransformation *trans;				//allows to transform from image to metric coordinates
-
-bool identify = false;			//identify ID of tags ?
 
 /*variables related to (auto) calibration*/
 const int calibrationSteps = 20;			//how many measurements to average to estimate calibration pattern position (manual calib)
@@ -80,13 +77,17 @@ int runs = 0;			//number of gui updates/detections performed
 int evalTime = 0;		//time required to detect the patterns
 FILE *robotPositionLog = NULL;	//file to log robot positions
 
-// communication input (camera) and ROS publishers
+// communication input (camera), ROS publishers & image transport
 CRawImage *image;
 image_transport::Publisher imdebug;
 ros::Publisher pose_pub;
 ros::Publisher rotation_pub;
 ros::Publisher id_pub;
 
+// etc file paths
+std::string fontPath;
+std::string calibResPath;
+std::string calibDefPath;
 
 /*manual calibration can be initiated by pressing 'r' and then clicking circles at four positions (0,0)(fieldLength,0)...*/
 void manualcalibration()
@@ -120,7 +121,7 @@ void manualcalibration()
 				trans->calibrate3D(calib,fieldLength,fieldWidth);
 				calibNum++;
 				numBots = wasBots;
-				trans->saveCalibration("../etc/default.cal");
+				trans->saveCalibration(calibDefPath.c_str());
 				trans->transformType = lastTransformType;
 				detectorArray[0]->localSearch = false;
 			}
@@ -142,14 +143,11 @@ void autocalibration()
 		int eval = 0;
 		int sX[] = {-1,+1,-1,+1};
 		int sY[] = {+1,+1,-1,-1};
-		for (int b = 0;b<4;b++)
-		{
+		for (int b = 0;b<4;b++){
 			maxEval = -10000000;
-			for (int i = 0;i<numBots;i++)
-			{
+			for (int i = 0;i<numBots;i++){
 				eval = 	sX[b]*currentSegmentArray[i].x +sY[b]*currentSegmentArray[i].y;
-				if (eval > maxEval)
-				{
+				if (eval > maxEval){
 					maxEval = eval;
 					index[b] = i;
 				}
@@ -174,10 +172,9 @@ void autocalibration()
 			trans->calibrate4D(calib,fieldLength,fieldWidth);
 			calibNum++;
 			numBots = wasBots;
-			trans->saveCalibration("../etc/default.cal");
+			trans->saveCalibration(calibDefPath.c_str());
 			trans->transformType = lastTransformType;
 			autocalibrate = false;
-			//server->finishCalibration();
 		}
 	}
 }
@@ -192,13 +189,13 @@ bool initializeLogging()
 	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S",localtime(&timeNow));
 	sprintf(logFileName,"output/WhyCon_%s.txt",timeStr);
 	robotPositionLog = fopen(logFileName,"w");
-	if (robotPositionLog == NULL)
-	{
+	if (robotPositionLog == NULL){
 		fprintf(stderr,"Cannot write to log file %s. Does the \"output\" directory exist?\n",logFileName);
 		return false;
 	}
 	return true;
 }
+
 /*process events coming from GUI*/
 void processKeys()
 {
@@ -278,19 +275,7 @@ void processKeys()
 	memcpy(lastKeys,keys,keyNumber);
 }
 
-//process command line arguments
-/*
-void processArgs(int argc,char* argv[]) 
-{
-	for (int i = 1;i<argc;i++){
-		if (strcmp(argv[i],"nogui")==0) useGui=false;
-		if (strcmp(argv[i],"log")==0) saveLog=true;
-		if (strcmp(argv[i],"video")==0) saveVideo=true;
-	}
-}
-*/
-
-//parameter reconfiguration
+// dynamic parameter reconfiguration
 void reconfigureCallback(whycon_ros::whyconConfig &config, uint32_t level) 
 {
 	ROS_INFO("Reconfigure Request: %d %lf %d %lf %lf %lf %lf %lf", config.numBots, config.circleDiameter, config.identify, config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs);
@@ -321,7 +306,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	// check if readjusting of camera is needed
 	if (image->bpp != msg->step/msg->width || image->width != msg->width || image->height != msg->height){
 		delete image;
-		//ROS_DEBUG("Readjusting image format from %ix%i %ibpp, to %ix%i %ibpp.",image->width,image->height,image->bpp,msg->width,msg->height,msg->step/msg->width);
 		ROS_INFO("Readjusting image format from %ix%i %ibpp, to %ix%i %ibpp.",image->width,image->height,image->bpp,msg->width,msg->height,msg->step/msg->width);
 		image = new CRawImage(msg->width,msg->height,msg->step/msg->width);
 	}
@@ -357,18 +341,17 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			if (currentSegmentArray[i].x == lastSegmentArray[i].x) numStatic++;
 		}
 	}
-	printf("Pattern detection time: %i us. Found: %i Static: %i.\n",globalTimer.getTime(),numFound,numStatic);
+	if(numFound > 0) ROS_INFO("Pattern detection time: %i us. Found: %i Static: %i.\n",globalTimer.getTime(),numFound,numStatic);
 	evalTime = timer.getTime();
 
-	// publish information about cards
+	// publishing information about cards
 	for (int i = 0;i<numBots && useGui && drawCoords;i++){
 		if (currentSegmentArray[i].valid){
-			printf("ID: %d\n", currentSegmentArray[i].ID);
+			printf("ID %d\n", currentSegmentArray[i].ID);
 			
 			std_msgs::Int16 cardID;
 			cardID.data = currentSegmentArray[i].ID;
 			id_pub.publish(cardID);
-			
 			
 			geometry_msgs::PoseStamped cardPose;
 			cardPose.pose.position.x = -objectArray[i].y;
@@ -441,16 +424,16 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
 int main(int argc,char* argv[])
 {
-	// process arguments, initialize logging system, image transport and processing, and ROS
-	//processArgs(argc,argv);
-	
+	// initialization of image transport, img processing, and ROS
 	ros::init(argc, argv, "whycon_ros");
 	ros::NodeHandle n;
 	image_transport::ImageTransport it(n);
 	image = new CRawImage(imageWidth,imageHeight, 3);
 	
 	// loading params and args from launch file
-	std::string font_path = argv[1];
+	fontPath = argv[1];
+	calibResPath = argv[2];
+	calibDefPath = argv[3];
 	n.param("useGui", useGui, true);
 	n.param("saveLog", saveLog, false);
 	n.param("saveVideo", saveVideo, false);
@@ -464,8 +447,8 @@ int main(int argc,char* argv[])
 	while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
 
 	// initialize GUI, image structures, coordinate transformation modules
-	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale, font_path.c_str());
-	trans = new CTransformation(imageWidth,imageHeight,circleDiameter,true);
+	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale, fontPath.c_str());
+	trans = new CTransformation(imageWidth,imageHeight,circleDiameter, calibResPath.c_str(), calibDefPath.c_str(), true);
 	trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
 	// initialize the circle detectors - each circle has its own detector instance 
@@ -478,7 +461,7 @@ int main(int argc,char* argv[])
 	dynSer = boost::bind(&reconfigureCallback, _1, _2);
 	server.setCallback(dynSer);
 
-	// subscribe to camera topic, publish topis with card position and card ID
+	// subscribe to camera topic, publish topis with card position, rotation and ID
 	image_transport::Subscriber subimg = it.subscribe("/cv_camera/image_raw", 1, imageCallback);
 	pose_pub = n.advertise<geometry_msgs::PoseStamped>("/whycon_ros/card_position", 1);
 	rotation_pub = n.advertise<geometry_msgs::Vector3Stamped>("/whycon_ros/card_rotation", 1);

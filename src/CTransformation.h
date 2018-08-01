@@ -45,7 +45,7 @@ class CTransformation
 {
 	public:
 		/*initialization: width and height of the image, diameter of the pattern, 'unbarrel the entire image' flag*/
-		CTransformation(int widthi,int heighti,float diam,bool fullUnbarreli = false);
+		CTransformation(int widthi,int heighti,float diam, const char* calibResPath, const char* calibDefPath, bool fullUnbarreli = false);
 		~CTransformation();
 
 		// parameters dynamic reconfigure

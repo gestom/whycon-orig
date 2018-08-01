@@ -14,7 +14,7 @@
 
 //used for circle identification 
 #define ID_SAMPLES 360
-#define ID_BITS 4
+#define ID_BITS 5
 #define HAMMING_DISTANCE 1
 
 
