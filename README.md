@@ -42,7 +42,7 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 4. Compile the software - just type <b>catkin_make</b> in workspace directory.
 5. Source setup script in package directory into shell enviroment<br>e.g. <i>source devel/setup.bash</i>
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
-6. Run code by<br><i>roslaunch whycon_ros whycon.launch
+6. Run code by<br><i>roslaunch whycon_ros whycon.launch</i>
 7. You should see the image with some numbers below the circle. Pressing <b>D</b> shows the segmentation result.
 8. You can change the parameters in rqt_reconfigure which should open together with whycon GUI.
 
