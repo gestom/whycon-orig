@@ -72,7 +72,7 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 1. Logging is not implemented yet.
 2. GUI can omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up .
-3. Video and communication topics can be save using <i>rosbeg</i>.
+3. Video and communication topics can be save using <i>rosbag</i>.
 
 #### Some additional remarks
 
