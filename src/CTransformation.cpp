@@ -696,6 +696,7 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 	if (transformType == TRANSFORM_NONE)
 	{
 		result = eigen(data);
+		result.yaw = segment.angle;
 	}
 	//user-defined 3D coordinate system, see 4.4.1 of [1]
 	if (transformType == TRANSFORM_3D){

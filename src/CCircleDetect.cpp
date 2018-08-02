@@ -515,13 +515,29 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     }
 
     //calculate signal gradient 
-    for (int a = 1;a<ID_SAMPLES;a++) differ[a] = signal[a]-signal[a-1];  
+    float avg = 0;
+    for (int a = 0;a<ID_SAMPLES;a++) avg += signal[a];  
+    avg = avg/ID_SAMPLES;
+    for (int a = 0;a<ID_SAMPLES;a++) if (signal[a] > avg) smooth[a] = 1; else smooth[a] = 0;
+
+    int maxIndex = 0;
+    int numEdges = 0;
+    if (smooth[ID_SAMPLES-1] != smooth[0]) numEdges = 1;
+    for (int a = 1;a<ID_SAMPLES;a++){
+	    if (smooth[a] != smooth[a-1]){
+		    maxIndex += (a+segmentWidth/2)%segmentWidth-segmentWidth/2;
+		    numEdges++; 
+	    }
+    }
+    maxIndex = maxIndex/numEdges+segmentWidth/2;
+
+    /*for (int a = 1;a<ID_SAMPLES;a++) differ[a] = signal[a]-signal[a-1];  
     differ[0] = signal[0] - signal[ID_SAMPLES-1];
 
     //and smooth the gradient out
     smooth[0] = 0; 
     for (int a = ID_SAMPLES-segmentWidth;a<ID_SAMPLES;a++) smooth[0] += differ[a];  
-    for (int a = 1;a<ID_SAMPLES;a++) smooth[a] = smooth[a-1] - differ[(a+ID_SAMPLES-segmentWidth)%ID_SAMPLES] + differ[a-1];
+    for (int a = 1;a<ID_SAMPLES;a++) smooth[a] = smooth[a-1] - signal[(a+ID_SAMPLES-segmentWidth)%ID_SAMPLES] + signal[a-1];
 
     //find the strongest edge response
     int maxIndex = -1;
@@ -533,7 +549,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
             maxIndex = a; 
         }
     }
-
+*/
     //and determine the following edges
     int a = 1;
     int state = 0;
@@ -598,6 +614,8 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     if (debug){
         printf("ORIG: ");
         for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",signal[a]);
+        printf("\n");
+        for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",differ[a]);
         printf("\n");
         for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",smooth[a]);
         printf("\n");
