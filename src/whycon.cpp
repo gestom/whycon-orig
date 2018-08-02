@@ -241,6 +241,7 @@ void processKeys()
 	{ 
 		for (int i = 0;i<numBots;i++){
 			detectorArray[i]->draw = detectorArray[i]->draw==false;
+			detectorArray[i]->debug = detectorArray[i]->debug==false;
 		}
 	}
 

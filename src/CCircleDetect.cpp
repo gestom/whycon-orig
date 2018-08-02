@@ -173,7 +173,7 @@ bool CCircleDetect::examineSegment(CRawImage *image, SSegment *segmen, int ii, f
         segmen->y = (segmen->maxy + segmen->miny) / 2;
         segmen->roundness = vx * vy * areaRatio / segmen->size;
         //we check if the segment is likely to be a ring
-        if (segmen->roundness - circularTolerance < 1.0 && segmen->roundness + circularTolerance > 1.0) {
+        if (segmen->roundness - circularTolerance < 1.0 && segmen->roundness + circularTolerance > 1.0 || true) {//TODO
             //if its round, we compute yet another properties 
             segmen->round = true;
             segmen->mean = 0;
@@ -607,7 +607,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
     while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
     //printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
-    //printf("CODE %i %.3f\n",result.id,inner->angle);
+    printf("CODE %i %.3f\n",result.id,inner->angle);
     for (int a = 0;a<ID_SAMPLES;a++){
         pos = ((int)x[a]+((int)y[a])*image->width);
         if (pos > 0 && pos < image->width*image->height){   
