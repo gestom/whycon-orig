@@ -4,7 +4,8 @@ project(whycon_ros)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS  image_transport roscpp std_msgs geometry_msgs dynamic_reconfigure) 
+find_package(catkin REQUIRED COMPONENTS  image_transport roscpp std_msgs geometry_msgs message_generation dynamic_reconfigure) 
+  
 
 generate_dynamic_reconfigure_options(
 	cfg/whycon.cfg
@@ -26,11 +27,11 @@ set ( CMAKE_CXX_FLAGS "-Ofast -march=native -mno-avx -ggdb")
 #######################################
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+ add_message_files(
+   FILES
+   Marker.msg
+   MarkerArray.msg
+ )
 
 # Generate services in the 'srv' folder
 # add_service_files(
@@ -39,10 +40,11 @@ set ( CMAKE_CXX_FLAGS "-Ofast -march=native -mno-avx -ggdb")
  #)
 
 ## Generate added messages and services with any dependencies listed here
- #generate_messages(
-	#	 DEPENDENCIES
-		# std_msgs 
-		 #)
+ generate_messages(
+		 DEPENDENCIES
+		 std_msgs 
+		 geometry_msgs 
+		 )
 
 ###################################
 ## catkin specific configuration ##
