@@ -48,11 +48,10 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Generating tags with ID
 
-0. <i>Right now works only with 5 bit ID. Otherwise the ID_BITS (CCircleDetect.h) has to be changed and recompiled. WILL BE RESOLVED SOON.</i>
 1. Folder <a href="id/">id/</a> contains a script <i>create.sh</i> which generates tags with IDs.
-2. Run the script with parameter <i>-n</i> followed by a number of bits will create tags in working directory.
+2. Run the script followed by a number of bits and it will create tags in the working directory.
 3. Other script parameters are specified in help - <i>create.sh -h</i>
-4. Number of ID bits has to be then adjusted in <i>rqt_reconfigure</i>.
+4. Number of ID bits has to be then passed to whycon as a private paratemer on start up.
 
 #### Setting up the coordinate system
 
@@ -60,7 +59,6 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 2. If you have resized the markers (their default size is 122mm), then adjust their diameter in the <i>rqt_reconfigure</i>.
 3. Print additional four circular <a href="id/test.pdf">markers</a> and place to the corners of your (reclangular) operational space.
 4. Position and fixate your camera so that it has all four circles in it's field of view.
-5. <i>Right now works with fieldLength and fieldWidth 1.0. Otherwise it has to be changed in whycon.cpp and recompiled. WILL BE RESOLVED SOON.</i>
 5. Run whycon and modify the dimensions of the operation space in the <i>rqt_reconfigure</i> - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
 6. Adjust the parameter <i>numBots</i> - the number of patterns you want to track plus 4.
 7. Once all the patterns are found, press <i>a</i> and the four outermost patterns will be used to calculate the coordinate system.
