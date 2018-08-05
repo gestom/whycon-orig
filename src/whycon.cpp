@@ -68,7 +68,7 @@ int moveOne = moveVal;		//how many frames to process now (setting moveOne to 0 o
 
 /*GUI-related stuff*/
 CGui* gui;			//drawing, events capture
-bool useGui;			//use graphic interface at all?
+bool useGui = true;			//use graphic interface at all?
 int guiScale = 1;		//in case camera resolution exceeds screen one, gui is scaled down
 SDL_Event event;		//store mouse and keyboard events
 int keyNumber = 10000;		//number of keys pressed in the last step	
@@ -444,7 +444,7 @@ int main(int argc,char* argv[])
 {
 	// initialization of image transport, img processing, and ROS
 	ros::init(argc, argv, "whycon_ros");
-	ros::NodeHandle n;
+	ros::NodeHandle n("~");
 	image_transport::ImageTransport it(n);
 	image = new CRawImage(imageWidth,imageHeight, 3);
 	
