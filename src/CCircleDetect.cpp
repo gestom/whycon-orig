@@ -542,16 +542,16 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     maxIndex = atan2(sy,sx)/2/M_PI*segmentWidth+segmentWidth/2;
 
     //determine raw code
-    char code[ID_BITS*4];
-    for (int i = 0;i<ID_BITS*2;i++) code[i] = smooth[(maxIndex+i*segmentWidth)%ID_SAMPLES]+'0'; 
+    char code[idBits*4];
+    for (int i = 0;i<idBits*2;i++) code[i] = smooth[(maxIndex+i*segmentWidth)%ID_SAMPLES]+'0'; 
     
-    code[ID_BITS*2] = 0;
+    code[idBits*2] = 0;
   
     //determine the control edges' positions
     int edgeIndex = 0;
-    for (unsigned int a=0;a<ID_BITS*2;a++)
+    for (unsigned int a=0;a<idBits*2;a++)
     {
-	int p = (a+1)%(ID_BITS*2);
+	int p = (a+1)%(idBits*2);
         if (code[a]=='0' && code[p]=='0') edgeIndex = a;
     }
     char realCode[idBits*4];
@@ -565,10 +565,10 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
             if (realCode[a]=='1') ID++;
         }
     }
-    realCode[ID_BITS] = 0;
+    realCode[idBits] = 0;
     SNecklace result = decoder->get(ID);
-    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0)+1.5*M_PI/ID_BITS; 
-    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES-(float)edgeIndex/ID_BITS/2.0+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0);//+1.5*M_PI/ID_BITS; 
+    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/idBits)+atan2(inner->v1,inner->v0)+1.5*M_PI/idBits; 
+    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES-(float)edgeIndex/idBits/2.0+(float)result.rotation/idBits)+atan2(inner->v1,inner->v0);//+1.5*M_PI/idBits; 
     while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
     while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
     //printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
