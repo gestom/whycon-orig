@@ -7,8 +7,9 @@ int* CCircleDetect::buffer = NULL;
 int* CCircleDetect::queue = NULL;
 
 //Variable initialization
-CCircleDetect::CCircleDetect(int wi, int he, bool id) {
-    decoder = new CNecklace(ID_BITS, HAMMING_DISTANCE);
+CCircleDetect::CCircleDetect(int wi, int he, bool id, int bits) {
+    idBits = bits;
+    decoder = new CNecklace(idBits, HAMMING_DISTANCE);
     identify = id;
     step = -1;
     ID = -1;
@@ -489,7 +490,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     float signal[ID_SAMPLES];
     float differ[ID_SAMPLES];
     float smooth[ID_SAMPLES];
-    int segmentWidth = ID_SAMPLES/ID_BITS/2;
+    int segmentWidth = ID_SAMPLES/idBits/2;
     //calculate appropriate positions
     for (int a = 0;a<ID_SAMPLES;a++){
         x[a] = inner->x+(inner->m0*cos((float)a/ID_SAMPLES*2*M_PI)*inner->v0+inner->m1*sin((float)a/ID_SAMPLES*2*M_PI)*inner->v1)*2.0;
@@ -539,10 +540,10 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     int state = 0;
     int position0 = (maxIndex + segmentWidth)%ID_SAMPLES;
     int position1 = (maxIndex + 2*segmentWidth)%ID_SAMPLES;
-    char code[ID_BITS*4];
+    char code[idBits*4];
     code[0] = '0';
 
-    while (a<ID_BITS*2)
+    while (a<idBits*2)
     {
         /*is the following edge a local minimum?*/
         if (state==0)
@@ -575,7 +576,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
         position1 = (position0+segmentWidth)%ID_SAMPLES;
         a++;
     }
-    code[ID_BITS*2] = 0;
+    code[idBits*2] = 0;
 
     //determine the control edges' positions
     int edgeIndex = 0;
@@ -583,10 +584,10 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     {
         if (code[a] == 'X') edgeIndex = a;
     }
-    char realCode[ID_BITS*4];
+    char realCode[idBits*4];
     edgeIndex = 1-(edgeIndex%2);
     int ID = 0; 
-    for (unsigned int a=0;a<ID_BITS;a++){
+    for (unsigned int a=0;a<idBits;a++){
             realCode[a] = code[edgeIndex+2*a];
         if (realCode[a] == 'X') ID = -1; 
         if (ID > -1){
@@ -594,7 +595,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
             if (realCode[a]=='1') ID++;
         }
     }
-    realCode[ID_BITS] = 0;
+    realCode[idBits] = 0;
     if (debug){
         printf("ORIG: ");
         for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",signal[a]);
@@ -603,7 +604,7 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
         printf("\n");
     }
     SNecklace result = decoder->get(ID);
-    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0)+1.5*M_PI/ID_BITS; 
+    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/idBits)+atan2(inner->v1,inner->v0)+1.5*M_PI/idBits; 
     while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
     while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
     //printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));

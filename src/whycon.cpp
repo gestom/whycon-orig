@@ -286,6 +286,9 @@ void reconfigureCallback(whycon_ros::whyconConfig &config, uint32_t level)
 	/*outerDimUser = config.userDiameter/100.0;
 	outerDimMaster = config.masterDiameter/100.0;
 	distanceTolerance = config.distanceTolerance/100.0;*/
+
+	fieldLength = config.fieldLength;
+	fieldWidth = config.fieldWidth;
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -354,14 +357,25 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			cardID.data = currentSegmentArray[i].ID;
 			id_pub.publish(cardID);
 			
+			// Convert to ROS standard Coordinate System
 			geometry_msgs::PoseStamped cardPose;
+			cardPose.header = msg->header;
 			cardPose.pose.position.x = -objectArray[i].y;
 			cardPose.pose.position.y = -objectArray[i].z;
 			cardPose.pose.position.z = objectArray[i].x;
 			pose_pub.publish(cardPose);
-			
+		
+
+            		tf::Quaternion q;
+		        q.setRPY(objectArray[i].roll, objectArray[i].pitch, objectArray[i].yaw);
+		        objectsToAdd.pose.orientation.x = q.getX();
+		        objectsToAdd.pose.orientation.y = q.getY();
+		        objectsToAdd.pose.orientation.z = q.getZ();
+		        objectsToAdd.pose.orientation.w = q.getW();
+	
 			if(trans->transformType != TRANSFORM_2D){
 				geometry_msgs::Vector3Stamped cardRotation;
+				cardRotation.header = msg->header;
 				cardRotation.vector.x = objectArray[i].pitch;
 				cardRotation.vector.y = objectArray[i].roll;
 				cardRotation.vector.z = objectArray[i].yaw;
@@ -438,6 +452,7 @@ int main(int argc,char* argv[])
 	n.param("useGui", useGui, true);
 	n.param("saveLog", saveLog, false);
 	n.param("saveVideo", saveVideo, false);
+	n.param("idBits", idBits, 5);
 	
 	if (saveLog) initializeLogging();
 	
@@ -453,7 +468,7 @@ int main(int argc,char* argv[])
 	trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
 	// initialize the circle detectors - each circle has its own detector instance 
-	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify);
+	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits);
 	image->getSaveNumber();
 
 	// initialize dynamic reconfiguration feedback

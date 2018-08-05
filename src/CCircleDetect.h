@@ -1,4 +1,3 @@
-
 #ifndef __CCIRCLEDETECT_H__
 #define __CCIRCLEDETECT_H__
 
@@ -14,9 +13,8 @@
 
 //used for circle identification 
 #define ID_SAMPLES 360
-#define ID_BITS 4
+//#define ID_BITS 8
 #define HAMMING_DISTANCE 1
-
 
 //this structure contains information related to image coordinates and dimensions of the detected pattern
 typedef struct{
@@ -42,7 +40,7 @@ class CCircleDetect
 
 	public:
 		//constructor, wi and he correspond to the image dimensions 
-		CCircleDetect(int wi,int he, bool ID);
+		CCircleDetect(int wi,int he, bool id, int bits);
 
 		//deallocate the detector's structures
 		~CCircleDetect();
@@ -89,6 +87,7 @@ class CCircleDetect
 		bool identify;
 	private:
 		//see the constructor in CCircleDetection.cpp for description of the following parameters
+		int idBits;
 		CNecklace *decoder;
 		bool track;
 		int maxFailed;
