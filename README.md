@@ -68,9 +68,16 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Logs, GUI, recording topics
 
-1. Logging is not implemented yet.
-2. GUI can omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up .
+1. Custom logging is not implemented yet. Use the default ROS logging.
+2. GUI can omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up or by using whycon-nogui.launch
 3. Video and communication topics can be save using <i>rosbag</i>.
+
+#### Published topics
+
+1. /whycon_ros/markers - recommended, you can find its structure in <a href="msg/">msg</a> folder
+2. /whycon_ros/card_position
+3. /whycon_ros/card_rotation
+4. /whycon_ros/card_id
 
 #### Some additional remarks
 
