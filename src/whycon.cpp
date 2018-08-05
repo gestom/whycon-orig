@@ -37,6 +37,7 @@ int  screenHeight = 1080;
 
 /*robot detection variables*/
 bool identify = false;		//identify ID of tags ?
+int idBits = 0;			//num of ID bits
 int numBots = 0;		//num of robots to track
 int numFound = 0;		//num of robots detected in the last step
 int numStatic = 0;		//num of non-moving robots  
