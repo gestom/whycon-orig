@@ -445,6 +445,8 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
         inner.y = outer.y;
         inner.m0 = 0.33/0.70*outer.m0;
         inner.m1 = 0.33/0.70*outer.m1;
+        inner.v0 = outer.v0;
+        inner.v1 = outer.v1;
         int segment = identifySegment(&inner,image)+1;
         if (debug) printf("SEGMENT ID: %i\n", segment);
         outer.angle = init.angle;
@@ -492,11 +494,12 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
     float smooth[ID_SAMPLES];
     int segmentWidth = ID_SAMPLES/idBits/2;
     //calculate appropriate positions
+    float topY = 0;
+    int topIndex = 0;
     for (int a = 0;a<ID_SAMPLES;a++){
         x[a] = inner->x+(inner->m0*cos((float)a/ID_SAMPLES*2*M_PI)*inner->v0+inner->m1*sin((float)a/ID_SAMPLES*2*M_PI)*inner->v1)*2.0;
         y[a] = inner->y+(inner->m0*cos((float)a/ID_SAMPLES*2*M_PI)*inner->v1-inner->m1*sin((float)a/ID_SAMPLES*2*M_PI)*inner->v0)*2.0;
     }
-
     //retrieve the image brightness on these using bilinear transformation
     float gx,gy; 
     int px,py;
@@ -510,79 +513,46 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
         pos = (px+py*image->width);
 
         /*detection from the image*/
-        signal[a]  = ptr[(pos+0)*step+0]*(1-gx)*(1-gy)+ptr[(pos+1)*step+0]*gx*(1-gy)+ptr[(pos+image->width)*step+0]*(1-gx)*gy+ptr[step*(pos+(image->width+1))+0]*gx*gy; 
-        signal[a] += ptr[(pos+0)*step+1]*(1-gx)*(1-gy)+ptr[(pos+1)*step+1]*gx*(1-gy)+ptr[(pos+image->width)*step+1]*(1-gx)*gy+ptr[step*(pos+(image->width+1))+1]*gx*gy; 
-        signal[a] += ptr[(pos+0)*step+2]*(1-gx)*(1-gy)+ptr[(pos+1)*step+2]*gx*(1-gy)+ptr[(pos+image->width)*step+2]*(1-gx)*gy+ptr[step*(pos+(image->width+1))+2]*gx*gy;
+        signal[a]  = ptr[(pos+0)*step+0]*(1-gx)*(1-gy)+ptr[(pos+1)*step+0]*gx*(1-gy)+ptr[(pos+image->width)*step+0]*(1-gx)*gy+ptr[step*(pos+image->width+1)+0]*gx*gy; 
+        signal[a] += ptr[(pos+0)*step+1]*(1-gx)*(1-gy)+ptr[(pos+1)*step+1]*gx*(1-gy)+ptr[(pos+image->width)*step+1]*(1-gx)*gy+ptr[step*(pos+image->width+1)+1]*gx*gy; 
+        signal[a] += ptr[(pos+0)*step+2]*(1-gx)*(1-gy)+ptr[(pos+1)*step+2]*gx*(1-gy)+ptr[(pos+image->width)*step+2]*(1-gx)*gy+ptr[step*(pos+image->width+1)+2]*gx*gy;
     }
 
-    //calculate signal gradient 
-    for (int a = 1;a<ID_SAMPLES;a++) differ[a] = signal[a]-signal[a-1];  
-    differ[0] = signal[0] - signal[ID_SAMPLES-1];
+    //binarize the signal 
+    float avg = 0;
+    for (int a = 0;a<ID_SAMPLES;a++) avg += signal[a];  
+    avg = avg/ID_SAMPLES;
+    for (int a = 0;a<ID_SAMPLES;a++) if (signal[a] > avg) smooth[a] = 1; else smooth[a] = 0;
 
-    //and smooth the gradient out
-    smooth[0] = 0; 
-    for (int a = ID_SAMPLES-segmentWidth;a<ID_SAMPLES;a++) smooth[0] += differ[a];  
-    for (int a = 1;a<ID_SAMPLES;a++) smooth[a] = smooth[a-1] - differ[(a+ID_SAMPLES-segmentWidth)%ID_SAMPLES] + differ[a-1];
-
-    //find the strongest edge response
-    int maxIndex = -1;
-    float strength = -1000;
-    for (int a = 0;a<ID_SAMPLES;a++){
-        if (smooth[a] > strength)
-        {
-            strength = smooth[a]; 
-            maxIndex = a; 
-        }
+    //find the edge's locations
+    int maxIndex = 0;
+    int numEdges = 0;
+    float sx,sy;
+    sx = sy = 0;
+    if (smooth[ID_SAMPLES-1] != smooth[0])sx = 1;
+    for (int a = 1;a<ID_SAMPLES;a++){
+	    if (smooth[a] != smooth[a-1])
+	    {
+		    sx += cos(2*M_PI*a/segmentWidth);
+		    sy += sin(2*M_PI*a/segmentWidth);
+		    if (debug) printf("%i ",a);
+	    }
     }
+    if (debug) printf("\n");
+    maxIndex = atan2(sy,sx)/2/M_PI*segmentWidth+segmentWidth/2;
 
-    //and determine the following edges
-    int a = 1;
-    int state = 0;
-    int position0 = (maxIndex + segmentWidth)%ID_SAMPLES;
-    int position1 = (maxIndex + 2*segmentWidth)%ID_SAMPLES;
-    char code[idBits*4];
-    code[0] = '0';
-
-    while (a<idBits*2)
-    {
-        /*is the following edge a local minimum?*/
-        if (state==0)
-        {
-            if (smooth[position0] > smooth[position1]){
-                code[a++]='X';
-                position0 += segmentWidth;
-            }
-            state=1;
-            code[a]='1';
-        }else{
-            if (smooth[position0] < smooth[position1]){
-                code[a++]='X';
-                position0 += segmentWidth;
-            }
-            state=+0;
-            code[a]='0';
-        }
-        if (code[a] == '0'){
-            while (smooth[position0] < smooth[(position0+ID_SAMPLES-1)%ID_SAMPLES]) position0=(position0+ID_SAMPLES-1)%ID_SAMPLES; 
-            while (smooth[position0] < smooth[(position0+ID_SAMPLES+1)%ID_SAMPLES]) position0=(position0+ID_SAMPLES+1)%ID_SAMPLES;
-        }
-        if (code[a] == '1')
-        {
-            while (smooth[position0] > smooth[(position0+ID_SAMPLES-1)%ID_SAMPLES]) position0=(position0+ID_SAMPLES-1)%ID_SAMPLES; 
-            while (smooth[position0] > smooth[(position0+ID_SAMPLES+1)%ID_SAMPLES]) position0=(position0+ID_SAMPLES+1)%ID_SAMPLES;
-        }
-        position0 += segmentWidth;
-        position0 = position0%ID_SAMPLES;
-        position1 = (position0+segmentWidth)%ID_SAMPLES;
-        a++;
-    }
-    code[idBits*2] = 0;
-
+    //determine raw code
+    char code[ID_BITS*4];
+    for (int i = 0;i<ID_BITS*2;i++) code[i] = smooth[(maxIndex+i*segmentWidth)%ID_SAMPLES]+'0'; 
+    
+    code[ID_BITS*2] = 0;
+  
     //determine the control edges' positions
     int edgeIndex = 0;
-    for (unsigned int a=0;a<strlen(code);a++)
+    for (unsigned int a=0;a<ID_BITS*2;a++)
     {
-        if (code[a] == 'X') edgeIndex = a;
+	int p = (a+1)%(ID_BITS*2);
+        if (code[a]=='0' && code[p]=='0') edgeIndex = a;
     }
     char realCode[idBits*4];
     edgeIndex = 1-(edgeIndex%2);
@@ -595,20 +565,25 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
             if (realCode[a]=='1') ID++;
         }
     }
-    realCode[idBits] = 0;
-    if (debug){
-        printf("ORIG: ");
-        for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",signal[a]);
-        printf("\n");
-        for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",smooth[a]);
-        printf("\n");
-    }
+    realCode[ID_BITS] = 0;
     SNecklace result = decoder->get(ID);
-    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/idBits)+atan2(inner->v1,inner->v0)+1.5*M_PI/idBits; 
+    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0)+1.5*M_PI/ID_BITS; 
+    inner->angle = 2*M_PI*(-(float)maxIndex/ID_SAMPLES-(float)edgeIndex/ID_BITS/2.0+(float)result.rotation/ID_BITS)+atan2(inner->v1,inner->v0);//+1.5*M_PI/ID_BITS; 
     while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
     while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
     //printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
-    printf("CODE %i %.3f\n",result.id,inner->angle);
+	    if (debug){
+		    printf("CODE %i %i %.3f\n",result.id,maxIndex,inner->angle);
+		    printf("Realcode %s %i %s\n",code,edgeIndex,realCode);
+		    printf("ORIG: ");
+		    for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",signal[a]);
+		    printf("\n");
+		    //for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",differ[a]);
+		    //printf("\n");
+		    for (int a = 0;a<ID_SAMPLES;a++)printf("%.2f ",smooth[a]);
+		    printf("\n");
+	    }
+
     for (int a = 0;a<ID_SAMPLES;a++){
         pos = ((int)x[a]+((int)y[a])*image->width);
         if (pos > 0 && pos < image->width*image->height){   

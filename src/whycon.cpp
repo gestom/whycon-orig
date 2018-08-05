@@ -17,6 +17,8 @@
 #include <geometry_msgs/Vector3Stamped.h>
 #include <dynamic_reconfigure/server.h>
 #include <whycon_ros/whyconConfig.h>
+#include <whycon_ros/MarkerArray.h>
+#include <whycon_ros/Marker.h>
 
 //default camera resolution
 int  imageWidth= 640;
@@ -83,6 +85,7 @@ image_transport::Publisher imdebug;
 ros::Publisher pose_pub;
 ros::Publisher rotation_pub;
 ros::Publisher id_pub;
+ros::Publisher markers_pub;
 
 // etc file paths
 std::string fontPath;
@@ -345,43 +348,42 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			if (currentSegmentArray[i].x == lastSegmentArray[i].x) numStatic++;
 		}
 	}
-	if(numFound > 0) ROS_INFO("Pattern detection time: %i us. Found: %i Static: %i.\n",globalTimer.getTime(),numFound,numStatic);
+	if(numFound > 0) ROS_INFO("Pattern detection time: %i us. Found: %i Static: %i.",globalTimer.getTime(),numFound,numStatic);
 	evalTime = timer.getTime();
 
-	// publishing information about cards
+	// publishing information about tags 
+
+	whycon_ros::MarkerArray markerArray;
+	markerArray.header.stamp = msg->header.stamp; 
 	for (int i = 0;i<numBots && useGui && drawCoords;i++){
 		if (currentSegmentArray[i].valid){
-			printf("ID %d\n", currentSegmentArray[i].ID);
-			
-			std_msgs::Int16 cardID;
-			cardID.data = currentSegmentArray[i].ID;
-			id_pub.publish(cardID);
+			//printf("ID %d\n", currentSegmentArray[i].ID);
+			whycon_ros::Marker marker;
+	
+			std_msgs::Int16 tagID;
+			marker.id = tagID.data = currentSegmentArray[i].ID;
+			marker.u = currentSegmentArray[i].x;
+			marker.v = currentSegmentArray[i].y;
+			marker.size = currentSegmentArray[i].size;
+			id_pub.publish(tagID);
 			
 			// Convert to ROS standard Coordinate System
-			geometry_msgs::PoseStamped cardPose;
-			cardPose.header = msg->header;
-			cardPose.pose.position.x = -objectArray[i].y;
-			cardPose.pose.position.y = -objectArray[i].z;
-			cardPose.pose.position.z = objectArray[i].x;
-			pose_pub.publish(cardPose);
-		
-
-            		tf::Quaternion q;
-		        q.setRPY(objectArray[i].roll, objectArray[i].pitch, objectArray[i].yaw);
-		        objectsToAdd.pose.orientation.x = q.getX();
-		        objectsToAdd.pose.orientation.y = q.getY();
-		        objectsToAdd.pose.orientation.z = q.getZ();
-		        objectsToAdd.pose.orientation.w = q.getW();
-	
-			if(trans->transformType != TRANSFORM_2D){
-				geometry_msgs::Vector3Stamped cardRotation;
-				cardRotation.header = msg->header;
-				cardRotation.vector.x = objectArray[i].pitch;
-				cardRotation.vector.y = objectArray[i].roll;
-				cardRotation.vector.z = objectArray[i].yaw;
-				rotation_pub.publish(cardRotation);
-			}
+			geometry_msgs::Pose tagPose;
+			tagPose.position.x = -objectArray[i].y;
+			tagPose.position.y = -objectArray[i].z;
+			tagPose.position.z = objectArray[i].x;
+			pose_pub.publish(tagPose);
+			marker.position = tagPose;
+			
+			geometry_msgs::Vector3 tagRotation;
+			tagRotation.x = objectArray[i].pitch;
+			tagRotation.y = objectArray[i].roll;
+			tagRotation.z = objectArray[i].yaw;
+			rotation_pub.publish(tagRotation);
+			marker.rotation = tagRotation;
+			markerArray.markers.push_back(marker);
 		}
+		markers_pub.publish(markerArray);
 	}
 	
 
@@ -479,9 +481,10 @@ int main(int argc,char* argv[])
 
 	// subscribe to camera topic, publish topis with card position, rotation and ID
 	image_transport::Subscriber subimg = it.subscribe("/cv_camera/image_raw", 1, imageCallback);
-	pose_pub = n.advertise<geometry_msgs::PoseStamped>("/whycon_ros/card_position", 1);
-	rotation_pub = n.advertise<geometry_msgs::Vector3Stamped>("/whycon_ros/card_rotation", 1);
+	pose_pub = n.advertise<geometry_msgs::Pose>("/whycon_ros/card_position", 1);
+	rotation_pub = n.advertise<geometry_msgs::Vector3>("/whycon_ros/card_rotation", 1);
 	id_pub = n.advertise<std_msgs::Int16>("/whycon_ros/card_id", 1);
+	markers_pub = n.advertise<whycon_ros::MarkerArray>("/whycon_ros/markers", 1);
 
 	// ROS infinite loop that refreshes data in topics, checks if stop signal was sent
 	while (ros::ok()){
