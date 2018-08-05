@@ -16,6 +16,8 @@
 	<param name="useGui" value="true"/>
 	<param name="saveLog" value="false"/>
 	<param name="saveVideo" value="false"/>
+	
+	<param name="idBits" value="5"/>
         
     </node>
 
