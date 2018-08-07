@@ -1,21 +1,25 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(whycon_ros)
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS  image_transport roscpp std_msgs geometry_msgs message_generation dynamic_reconfigure) 
-  
+find_package(catkin REQUIRED
+	COMPONENTS
+	image_transport
+	roscpp
+	std_msgs
+	geometry_msgs
+	message_generation
+	dynamic_reconfigure
+)
+
 
 generate_dynamic_reconfigure_options(
 	cfg/whycon.cfg
 )
 
-set ( CMAKE_CXX_FLAGS "-Ofast -march=native -mno-avx -ggdb")
+set(CMAKE_CXX_FLAGS "-Ofast -march=native -mno-avx -ggdb")
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -27,24 +31,24 @@ set ( CMAKE_CXX_FLAGS "-Ofast -march=native -mno-avx -ggdb")
 #######################################
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   Marker.msg
-   MarkerArray.msg
- )
+add_message_files(DIRECTORY msg
+		FILES
+		Marker.msg
+		MarkerArray.msg
+)
 
 # Generate services in the 'srv' folder
 # add_service_files(
- #  FILES
-  # Charging.srv
- #)
+#  FILES
+# Charging.srv
+#)
 
 ## Generate added messages and services with any dependencies listed here
- generate_messages(
-		 DEPENDENCIES
-		 std_msgs 
-		 geometry_msgs 
-		 )
+generate_messages(
+	DEPENDENCIES
+	std_msgs 
+	geometry_msgs 
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -58,6 +62,7 @@ catkin_package(
 #   INCLUDE_DIRS include
 #  LIBRARIES charging
 #  CATKIN_DEPENDS image_transport roscpp rospy std_msgs
+	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -65,27 +70,41 @@ catkin_package(
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
 include_directories(include
-  ${catkin_INCLUDE_DIRS}
+	${catkin_INCLUDE_DIRS}
 )
 
-## Declare a cpp library
-# add_library(charging
-#   src/${PROJECT_NAME}/charging.cpp
-# )
+add_library(whycon_detector src/CCircleDetect.cpp)
+add_library(whycon_image src/CRawImage.cpp)
+add_library(whycon_timer src/CTimer.cpp)
+add_library(whycon_sysmath src/sysmat.cpp)
+add_library(whycon_transform src/CTransformation.cpp)
 
-## Declare a cpp executable
-# add_executable(charging_node src/charging_node.cpp)
+add_library(whycon_necklace src/CNecklace.cpp)
+add_library(whycon_gui src/CGui.cpp)
 
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
+add_executable(whycon_ros src/whycon.cpp)
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(charging_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(whycon_ros
+	whycon_timer
+	whycon_image
+	whycon_detector
+	whycon_transform
+	whycon_sysmath
+	whycon_gui
+	whycon_necklace
+	SDL
+	SDL_ttf
+)
+
+add_dependencies(whycon_ros
+	${catkin_EXPORTED_TARGETS}
+	${PROJECT_NAME}_gencfg
+)
+
+target_link_libraries(whycon_ros
+	${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -116,37 +135,6 @@ include_directories(include
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
-#############
-## Testing ##
-#############
-
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_charging.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
-
-add_library(whycon_detector src/CCircleDetect.cpp)
-add_library(whycon_image src/CRawImage.cpp)
-add_library(whycon_timer src/CTimer.cpp)
-add_library(whycon_sysmath src/sysmat.cpp)
-add_library(whycon_transform src/CTransformation.cpp)
-
-add_library(whycon_necklace src/CNecklace.cpp)
-add_library(whycon_gui src/CGui.cpp)
-
-add_executable(whycon_ros src/whycon.cpp)
-
-target_link_libraries (whycon_transform whycon_sysmath)
-target_link_libraries (whycon_ros whycon_timer whycon_image whycon_detector whycon_transform whycon_sysmath whycon_gui whycon_necklace SDL SDL_ttf)
-
-add_dependencies(whycon_ros ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
-
-target_link_libraries (whycon_ros  ${catkin_LIBRARIES})
-
 install(TARGETS
 		whycon_detector
 		whycon_image
@@ -170,3 +158,17 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY doc
 		DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_charging.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)
+
