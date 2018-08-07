@@ -74,10 +74,7 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Published topics
 
-1. /whycon_ros/markers - recommended, you can find its structure in <a href="msg/">msg</a> folder
-2. /whycon_ros/card_position
-3. /whycon_ros/card_rotation
-4. /whycon_ros/card_id
+1. /whycon_ros/markers - you can find its structure in <a href="msg/">msg</a> folder
 
 #### Some additional remarks
 
