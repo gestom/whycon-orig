@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include "sysmat.h" 
 
-#include <string>
-
 /*
  * File name: CTransformation.h
  * Date:      2014

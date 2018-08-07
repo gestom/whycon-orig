@@ -7,13 +7,13 @@
  * References: [1] Krajnik, Nitsche et al.: A practical multirobot localization system. Journal of Intelligent and Robotic Systems, 2014.
  */
 
-
 #ifndef __CTRANSFORMATION_H__
 #define __CTRANSFORMATION_H__
 
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#include <opencv2/opencv.hpp>
 #include "CCircleDetect.h"
 
 /*which transform to use*/
@@ -110,6 +110,9 @@ class CTransformation
 		float cc[2];
 		float error2D;
 		STrackedObject c2D[4];
+
+		Mat intrinsic;
+		Mat distCoeffs;
 };
 
 #endif

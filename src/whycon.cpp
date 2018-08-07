@@ -12,7 +12,6 @@
 // ROS libraries
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
-#include <std_msgs/Int16.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
 #include <dynamic_reconfigure/server.h>
@@ -37,7 +36,6 @@ int  screenHeight = 1080;
 
 /*robot detection variables*/
 bool identify = false;		//identify ID of tags ?
-int idBits = 0;			//num of ID bits
 int numBots = 0;		//num of robots to track
 int numFound = 0;		//num of robots detected in the last step
 int numStatic = 0;		//num of non-moving robots  
@@ -46,6 +44,11 @@ SSegment currentSegmentArray[MAX_PATTERNS];	//segment array (detected objects in
 SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
 STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in metric space)
 CTransformation *trans;				//allows to transform from image to metric coordinates
+
+//circle identification
+int idBits = 0;			//num of ID bits
+int idSamples = 360;		//num of samples to identify ID
+int hammingDist = 1;		//hamming distance of ID code
 
 /*variables related to (auto) calibration*/
 const int calibrationSteps = 20;			//how many measurements to average to estimate calibration pattern position (manual calib)
@@ -83,9 +86,6 @@ FILE *robotPositionLog = NULL;	//file to log robot positions
 // communication input (camera), ROS publishers & image transport
 CRawImage *image;
 image_transport::Publisher imdebug;
-ros::Publisher pose_pub;
-ros::Publisher rotation_pub;
-ros::Publisher id_pub;
 ros::Publisher markers_pub;
 
 // etc file paths
@@ -353,40 +353,33 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	evalTime = timer.getTime();
 
 	// publishing information about tags 
-
 	whycon_ros::MarkerArray markerArray;
-	markerArray.header.stamp = msg->header.stamp; 
+	markerArray.header = msg->header;
+
 	for (int i = 0;i<numBots && useGui && drawCoords;i++){
 		if (currentSegmentArray[i].valid){
 			//printf("ID %d\n", currentSegmentArray[i].ID);
 			whycon_ros::Marker marker;
 	
-			std_msgs::Int16 tagID;
-			marker.id = tagID.data = currentSegmentArray[i].ID;
+			marker.id = currentSegmentArray[i].ID;
 			marker.u = currentSegmentArray[i].x;
 			marker.v = currentSegmentArray[i].y;
 			marker.size = currentSegmentArray[i].size;
-			id_pub.publish(tagID);
 			
 			// Convert to ROS standard Coordinate System
-			geometry_msgs::Pose tagPose;
-			tagPose.position.x = -objectArray[i].y;
-			tagPose.position.y = -objectArray[i].z;
-			tagPose.position.z = objectArray[i].x;
-			pose_pub.publish(tagPose);
-			marker.position = tagPose;
-			
-			geometry_msgs::Vector3 tagRotation;
-			tagRotation.x = objectArray[i].pitch;
-			tagRotation.y = objectArray[i].roll;
-			tagRotation.z = objectArray[i].yaw;
-			rotation_pub.publish(tagRotation);
-			marker.rotation = tagRotation;
+			marker.position.position.x = -objectArray[i].y;
+			marker.position.position.y = -objectArray[i].z;
+			marker.position.position.z = objectArray[i].x;
+
+			marker.rotation.x = objectArray[i].pitch;
+			marker.rotation.y = objectArray[i].roll;
+			marker.rotation.z = objectArray[i].yaw;
+
 			markerArray.markers.push_back(marker);
 		}
-		markers_pub.publish(markerArray);
 	}
-	
+
+	if(markerArray.markers.size() > 0) markers_pub.publish(markerArray);
 
 	//draw stuff on the GUI 
 	if (useGui){
@@ -456,6 +449,8 @@ int main(int argc,char* argv[])
 	n.param("saveLog", saveLog, false);
 	n.param("saveVideo", saveVideo, false);
 	n.param("idBits", idBits, 5);
+	n.param("idSamples", idSamples, 360);
+	n.param("hammingDist", hammingDist, 1);
 	
 	if (saveLog) initializeLogging();
 	
@@ -471,7 +466,7 @@ int main(int argc,char* argv[])
 	trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
 	// initialize the circle detectors - each circle has its own detector instance 
-	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits);
+	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits, idSamples, hammingDist);
 	image->getSaveNumber();
 
 	// initialize dynamic reconfiguration feedback
@@ -482,9 +477,6 @@ int main(int argc,char* argv[])
 
 	// subscribe to camera topic, publish topis with card position, rotation and ID
 	image_transport::Subscriber subimg = it.subscribe("/cv_camera/image_raw", 1, imageCallback);
-	pose_pub = n.advertise<geometry_msgs::Pose>("/whycon_ros/card_position", 1);
-	rotation_pub = n.advertise<geometry_msgs::Vector3>("/whycon_ros/card_rotation", 1);
-	id_pub = n.advertise<std_msgs::Int16>("/whycon_ros/card_id", 1);
 	markers_pub = n.advertise<whycon_ros::MarkerArray>("/whycon_ros/markers", 1);
 
 	// ROS infinite loop that refreshes data in topics, checks if stop signal was sent
