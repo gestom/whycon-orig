@@ -11,6 +11,7 @@
  * References: [1] Krajnik, Nitsche et al.: A practical multirobot localization system. Journal of Intelligent and Robotic Systems, 2014.
  */
 
+
 int sortByDistance(const void* m1,const void* m2)
 {
         if (((STrackedObject*)m1)->d > ((STrackedObject*)m2)->d) return -1;
