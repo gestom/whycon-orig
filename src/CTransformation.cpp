@@ -319,7 +319,7 @@ STrackedObject CTransformation::eigen(double data[])
 	//detected pattern position
 	float z = trackedObjectDiameter/sqrt(-L2*L3)/2.0;
 	float c0 =  sqrt((L2-L1)/(L2-L3));
-	float c0x = c0*V[2][V2];
+	float c0x = c0*V[0][V2];
 	float c0y = c0*V[1][V2];
 	float c0z = c0*V[2][V2];
 	float c1 =  sqrt((L1-L3)/(L2-L3));
