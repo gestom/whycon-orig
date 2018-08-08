@@ -9,8 +9,10 @@ find_package(catkin REQUIRED
 	geometry_msgs
 	message_generation
 	dynamic_reconfigure
+	cv_bridge
 )
 
+find_package(OpenCV REQUIRED)
 
 generate_dynamic_reconfigure_options(
 	cfg/whycon.cfg
@@ -85,6 +87,8 @@ add_library(whycon_gui src/CGui.cpp)
 
 add_executable(whycon_ros src/whycon.cpp)
 
+target_link_libraries(whycon_transform ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+
 target_link_libraries(whycon_ros
 	whycon_timer
 	whycon_image
@@ -104,28 +108,18 @@ add_dependencies(whycon_ros
 
 target_link_libraries(whycon_ros
 	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
 )
 
 #############
 ## Install ##
 #############
 
-# all install targets should use catkin DESTINATION variables
-# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
-
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 # install(PROGRAMS
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
@@ -155,8 +149,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
 		PATTERN ".svn" EXCLUDE
 )
 
-install(DIRECTORY doc
-		DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(DIRECTORY
+	launch
+	etc
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############
