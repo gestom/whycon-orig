@@ -18,102 +18,18 @@ int sortByDistance(const void* m1,const void* m2)
         return 0;
 }
 
-CTransformation::CTransformation(int widthi,int heighti,float diam, const char* calibResPath, const char* calibDefPath, bool fullUnbarreli)
+CTransformation::CTransformation(int widthi,int heighti,float diam, const char* calibDefPath)
 {
 	transformType = TRANSFORM_NONE;
-	fullUnbarrel = fullUnbarreli;
 	width = widthi;
 	height = heighti;
-	char dummy[1000];
-	FILE* file = fopen(calibResPath ,"r");
 	trackedObjectDiameter = diam;
-	while (feof(file)== false){
-		int err = fscanf(file,"%s",dummy);
-		if (strcmp(dummy,"fc") == 0){
-			for (int j = 0;j<10;j++){
-				if (fscanf(file,"%s\n",dummy)!=1) fprintf(stderr,"Transformation: error reading camera calibration file, %i.\n",err);
-				if (j==2) fc[0] = atof(dummy);
-				if (j==4) fc[1] = atof(dummy);
-			}
-		}
-		if (strcmp(dummy,"cc") == 0){
-			for (int j = 0;j<10;j++){
-				if(fscanf(file,"%s\n",dummy)!=1) fprintf(stderr,"Transformation: error reading camera calibration file.\n");
-				if (j==2) cc[0] = atof(dummy);
-				if (j==4) cc[1] = atof(dummy);
-			}
-		}
-		if (strcmp(dummy,"kc") == 0){
-			for (int j = 0;j<12;j++){
-				if(fscanf(file,"%s\n",dummy)!=1) fprintf(stderr,"Transformation: error reading camera calibration file.\n");
-				if (j>1 && j%2 == 0) kc[j/2] = atof(dummy);
-			}
-		}
-		if (strcmp(dummy,"kc_error") == 0){
-			for (int j = 0;j<12;j++){
-				if(fscanf(file,"%s\n",dummy)!=1) fprintf(stderr,"Transformation: error reading camera calibration file.\n");
-				if (j>1 && j%2 == 0) kcerr[j/2] = atof(dummy);
-			}
-		}
-		if (strcmp(dummy,"fc_error") == 0){
-			for (int j = 0;j<10;j++){
-				if (fscanf(file,"%s\n",dummy)!=1) fprintf(stderr,"Transformation: error reading camera calibration file, %i.\n",err);
-				if (j==2) fcerr[0] = atof(dummy);
-				if (j==4) fcerr[1] = atof(dummy);
-			}
-		}
-	}
-	kc[0] = 1.0;
-	for (int i = 0;i<6;i++) printf("%05f,",kc[i]);
-	printf("\n");
-	for (int i = 0;i<2;i++) printf("%05f,",fc[i]);
-	printf("\n");
-	for (int i = 0;i<2;i++) printf("%05f,",cc[i]);
-	printf("\n");
-	unbarrelInitialized = false;
-
-	if (fullUnbarrel){
-		unbarrelInitialized = true;
-		float ix,iy; 
-		float gx,gy,ux,uy;
-		xArray = (float*)malloc(width*height*sizeof(float));
-		yArray = (float*)malloc(width*height*sizeof(float));
-		gArrayX = (float*)malloc(width*height*sizeof(float));
-		gArrayY = (float*)malloc(width*height*sizeof(float));
-		pArray = (int*)malloc(width*height*sizeof(int)*4);
-
-		for (int x = 0;x<width;x++){
-			for (int y = 0;y<height;y++){
-				xArray[y*width+x] = barrelX(x,y);
-				yArray[y*width+x] = barrelY(x,y);
-				if (xArray[y*width+x] < 0 || xArray[y*width+x] > (width-1) || yArray[y*width+x] < 0 || yArray[y*width+x] > (height-1)){
-					xArray[y*width+x] = 0; 
-					yArray[y*width+x] = 0; 
-				}	
-				ux = trunc(xArray[y*width+x]);
-				uy = trunc(yArray[y*width+x]);
-				gx = xArray[y*width+x]-ux;
-				gy = yArray[y*width+x]-uy;
-				ix = (int)ux;
-				iy = (int)uy;
-				pArray[y*width+x] = width*iy+ix;
-				gArrayX[y*width+x] = gx; 
-				gArrayY[y*width+x] = gy; 
-			}
-		}
-	}
 	loadCalibration(calibDefPath);
 }
 
 CTransformation::~CTransformation()
 {
-	if (unbarrelInitialized){
-		free(xArray);
-		free(yArray);
-		free(gArrayX);
-		free(gArrayY);
-		free(pArray);
-	}
+	
 }
 
 void CTransformation::reconfigure(float circleDiam)
@@ -121,123 +37,21 @@ void CTransformation::reconfigure(float circleDiam)
 	trackedObjectDiameter = circleDiam / 100.0;
 }
 
-float CTransformation::barrelX(float x,float y)
+void CTransformation::updateParams(Mat intri, Mat dist)
 {
-	x = (x-cc[0])/fc[0];
-	y = (y-cc[1])/fc[1];
-	float cx,dx;
-	float r = x*x+y*y;
-	dx = 2*kc[3]*x*y + kc[4]*(r + 2*x*x);
-	cx = (1+kc[1]*r+kc[2]*r*r+kc[5]*r*r*r)*x+dx;
-	cx = cx*fc[0]+cc[0];
-	return cx;
-}
-
-float CTransformation::barrelY(float x,float y)
-{
-	x = (x-cc[0])/fc[0];
-	y = (y-cc[1])/fc[1];
-	float cy,dy;
-	float r = x*x+y*y;
-	dy = 2*kc[4]*x*y + kc[3]*(r + 2*y*y);
-	cy = (1+kc[1]*r+kc[2]*r*r+kc[5]*r*r*r)*y+dy;
-	cy = cy*fc[1]+cc[1];
-	return cy;
-}
-
-float CTransformation::unbarrelX(float x,float y)
-{
-	if (fullUnbarrel)return x;
-	float ix,iy,dx,dy,r,rad;
-	ix = x = (x-cc[0])/fc[0];
-	iy = y = (y-cc[1])/fc[1];
-	for (int i= 0;i<5;i++){
-		r = x*x+y*y;
-		dx = 2*kc[3]*x*y + kc[4]*(r + 2*x*x);
-		dy = 2*kc[4]*x*y + kc[3]*(r + 2*y*y);
-		rad = 1+kc[1]*r+kc[2]*r*r+kc[5]*r*r*r;
-		x = (ix-dx)/rad;
-		y = (iy-dy)/rad;
-	}
-	return (x*fc[0]+cc[0]);
-}
-
-float CTransformation::unbarrelY(float x,float y)
-{
-	if (fullUnbarrel) return y;
-	float ix,iy,dx,dy,r,rad;
-	ix = x = (x-cc[0])/fc[0];
-	iy = y = (y-cc[1])/fc[1];
-	for (int i= 0;i<5;i++){
-		r = x*x+y*y;
-		dx = 2*kc[3]*x*y + kc[4]*(r + 2*x*x);
-		dy = 2*kc[4]*x*y + kc[3]*(r + 2*y*y);
-		rad = 1+kc[1]*r+kc[2]*r*r+kc[5]*r*r*r;
-		x = (ix-dx)/rad;
-		y = (iy-dy)/rad;
-	}
-	return (y*fc[1]+cc[1]);
-}
-
-void CTransformation::transformXYerr(float *ax,float *ay)
-{
-	float x,y,dx,dy,r,rad;
-	//*ax = x = (*ax-cc[0])/fc[0];
-	//*ay = y = (*ay-cc[1])/fc[1];
-	x = *ax;
-	y = *ay;
-	if (fullUnbarrel)return;
-	r = x*x+y*y;
-	dx = 2*kcerr[3]*x*y + kcerr[4]*(r + 2*x*x);
-	dy = 2*kcerr[4]*x*y + kcerr[3]*(r + 2*y*y);
-	rad = kcerr[1]*r+kcerr[2]*r*r+kcerr[5]*r*r*r;
-	*ax=rad*x+dx;
-	*ay=rad*y+dy;
+	intrinsic = intri;
+	distCoeffs = dist;
 }
 
 void CTransformation::transformXY(float *ax,float *ay)
 {
-	float x,y,ix,iy,dx,dy,r,rad;
-	*ax = ix = x = (*ax-cc[0])/fc[0];
-	*ay = iy = y = (*ay-cc[1])/fc[1];
-	if (fullUnbarrel)return;
-	for (int i= 0;i<5;i++){
-		r = x*x+y*y;
-		dx = 2*kc[3]*x*y + kc[4]*(r + 2*x*x);
-		dy = 2*kc[4]*x*y + kc[3]*(r + 2*y*y);
-		rad = 1+kc[1]*r+kc[2]*r*r+kc[5]*r*r*r;
-		x = (ix-dx)/rad;
-		y = (iy-dy)/rad;
-	}
-	*ax=x;
-	*ay=y;
-}
-
-float CTransformation::transformX(float xc,float yc)
-{
-	return (unbarrelX(xc,yc)-cc[0])/fc[0];
-}
-
-float CTransformation::transformY(float xc,float yc)
-{
-	return (unbarrelY(xc,yc)-cc[1])/fc[1];
-}
-
-void CTransformation::unbarrel(unsigned char *dst,unsigned char *src)
-{
-	src[0] = src[1] = src[2] = 255;
-	if (fullUnbarrel){
-		float gx,gy;
-		for (int p = 0;p<width*(height-1);p++){
-			gx = gArrayX[p];
-			gy = gArrayY[p];
-			dst[3*p] = src[3*pArray[p]]*(1-gx)*(1-gy)+src[3*pArray[p]+3]*gx*(1-gy)+src[3*pArray[p]+width*3]*(1-gx)*gy+src[3*pArray[p]+(width+1)*3]*gx*gy; 
-			dst[3*p+1] = src[3*pArray[p]+1]*(1-gx)*(1-gy)+src[3*pArray[p]+3+1]*gx*(1-gy)+src[3*pArray[p]+width*3+1]*(1-gx)*gy+src[3*pArray[p]+(width+1)*3+1]*gx*gy; 
-			dst[3*p+2] = src[3*pArray[p]+2]*(1-gx)*(1-gy)+src[3*pArray[p]+3+2]*gx*(1-gy)+src[3*pArray[p]+width*3+2]*(1-gx)*gy+src[3*pArray[p]+(width+1)*3+2]*gx*gy; 
-		}
-	}else{
-		fprintf(stdout,"Image unbarrel was not enabled\n");
-	}
+	Mat coords = Mat::ones(1, 1, CV_32FC2);
+	Mat metric = Mat::ones(1, 1, CV_32FC2);
+	coords.at<float>(0) = *ax;
+	coords.at<float>(1) = *ay;
+	undistortPoints(coords,metric,intrinsic,distCoeffs);
+	*ax = metric.at<float>(0);
+	*ay = metric.at<float>(1);
 }
 
 STrackedObject CTransformation::transform4D(STrackedObject o)
@@ -250,7 +64,6 @@ STrackedObject CTransformation::transform4D(STrackedObject o)
 	r.x = r.x/s;
 	r.y = r.y/s;
 	r.z = r.z/s;
-	r.error = establishError(r);
 	return r; 	
 }
 
@@ -264,31 +77,12 @@ STrackedObject CTransformation::transform2D(STrackedObject o)
 	r.y = r.y/r.z;
 	r.z = 0;
 	//printf("%.3f %.3f\n",r.x,r.y);
-	r.error = establishError(r);
 	return r; 	
 }
 
 float CTransformation::distance(STrackedObject o1,STrackedObject o2)
 {
 	return sqrt((o1.x-o2.x)*(o1.x-o2.x)+(o1.y-o2.y)*(o1.y-o2.y)+(o1.z-o2.z)*(o1.z-o2.z));
-}
-
-STrackedObject CTransformation::transformInv(STrackedObject o[])
-{
-	STrackedObject trk[4];
-	trk[3].x = trk[3].y = trk[3].z = 0;
-	for (int i=0;i<3;i++) trk[i] = o[i];
-	for (int i=0;i<3;i++) trk[i].d = distance(trk[(i+1)%3],trk[(i+2)%3]);
-	qsort(trk,3,sizeof(STrackedObject),sortByDistance);
-	float an = atan2(trk[2].x-trk[0].x,trk[2].y-trk[0].y);
-	fprintf(stdout,"Dock position: %.3f %.3f %.3f %.3f\n",trk[0].x,trk[0].y,trk[0].z,180*an/M_PI);
-	/*for (int i=0;i<3;i++) fprintf(stdout,"%.3f ",trk[i].d);
-	fprintf(stdout,"%.3f \n",sqrt(trk[1].d*trk[1].d+trk[2].d*trk[2].d));
-	D3transform[0] =  calibrate3D(trk[0],trk[2],trk[1],trk[2].d,trk[1].d);
-	transformType = TRANSFORM_INV;
-	trk[3] = transform3D(trk[3],1);
-	fprintf(stdout,"Robot: %.3f %.3f %.3f\n",trk[3].x,trk[3].y,trk[3].z);*/
-	return o[0];
 }
 
 STrackedObject CTransformation::transform3D(STrackedObject o,int num)
@@ -322,23 +116,7 @@ STrackedObject CTransformation::transform3D(STrackedObject o,int num)
 	final.x=final.x/strAll;
 	final.y=final.y/strAll;	
 	final.z=final.z/strAll;	
-
- 	
-	float x,y,z;
-	final.esterror = 0;
-	for (int k = 0;k<num;k++){
-		x = final.x-result[k].x;
-		y = final.y-result[k].y;
-		z = final.z-result[k].z,
-		final.esterror+=sqrt(x*x+y*y+z*z);
-	}
-	float xerr0 = -o.z/o.x;
-	float yerr0 = -o.y/o.x;
-	transformXYerr(&xerr0,&yerr0);
-	final.esterror= sqrt(xerr0*xerr0+yerr0*yerr0)*30+fcerr[0]/fc[0]*30;
 	
-	//final.esterror = final.esterror/num;
-	final.error = establishError(final);
 	return final;
 }
 
@@ -400,17 +178,6 @@ void CTransformation::saveCalibration(const char *str)
 		if (i%3 == 2) fprintf(file,"\n");
 	}
 	fclose(file);
-}
-
-//this function if meant for debugging
-float CTransformation::establishError(STrackedObject o)
-{
-	STrackedObject result;
-	float scale = 0.625;
-	result.x = (o.x/scale-rintf(o.x/scale))*scale;
-	result.y = (o.y/scale-rintf(o.y/scale))*scale;
-	result.z = (o.z/scale-rintf(o.z/scale))*scale;
-	return sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 }
 
 STrackedObject CTransformation::normalize(STrackedObject o)
@@ -478,31 +245,6 @@ int CTransformation::calibrate2D(STrackedObject *inp,float dimX,float dimY,float
 	return 0;
 }
 
-STrackedObject CTransformation::crossPrd(STrackedObject o0,STrackedObject o1,STrackedObject o2,float gridDimX,float gridDimY)
-{
-	STrackedObject v[3];
-	v[0].x = o1.x-o0.x;
-	v[0].y = o1.y-o0.y;
-	v[0].z = o1.z-o0.z;
-	v[0] = normalize(v[0]);
-
-	v[1].x = o2.x-o0.x;
-	v[1].y = o2.y-o0.y;
-	v[1].z = o2.z-o0.z;
-	v[1] = normalize(v[1]);
-
-	v[2].x = +v[0].y*v[1].z-v[1].y*v[0].z+o0.x;
-	v[2].y = +v[0].z*v[1].x-v[1].z*v[0].x+o0.y;
-	v[2].z = +v[0].x*v[1].y-v[1].x*v[0].y+o0.z;
-	return v[2];
-}
-
-int CTransformation::calibrate4D(STrackedObject o[],float gridDimX,float gridDimY)
-{
-	//OBSOLETE
-	return 0;
-}
-
 S3DTransform CTransformation::calibrate3D(STrackedObject o0,STrackedObject o1,STrackedObject o2,float gridDimX,float gridDimY)
 {
 	S3DTransform result;
@@ -559,7 +301,6 @@ int CTransformation::calibrate3D(STrackedObject *o,float gridDimX,float gridDimY
 STrackedObject CTransformation::eigen(double data[])
 {
 	STrackedObject result;
-	result.error = 0;
 	double d[3];
 	double V[3][3];
 	double dat[3][3];
@@ -621,11 +362,10 @@ STrackedObject CTransformation::eigen(double data[])
 	return result;
 }
 
-STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
+STrackedObject CTransformation::transform(SSegment segment)
 {
 	float x,y,x1,x2,y1,y2,major,minor,v0,v1;
 	STrackedObject result;
-	fullUnbarrel = unbarreli;
 	
 	/* transformation to the canonical camera coordinates, see 4.1 of [1]*/
 	x = segment.x;
@@ -682,10 +422,6 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 		result = transform2D(result);
 		result.d = d;
 
-		float xerr = x;
-		float yerr = y;
-		transformXYerr(&xerr,&yerr);
-		result.esterror = fabs(sqrt(xerr*xerr+yerr*yerr))*30; 
 		result.yaw = atan2(segment.v0,segment.v1);
 		result.yaw = segment.angle;
 		result.ID = segment.ID;
@@ -701,7 +437,6 @@ STrackedObject CTransformation::transform(SSegment segment,bool unbarreli)
 		result = eigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 		result = transform3D(result);
-		result.esterror += 15.0/(segment.m1*4);
 		result.d = d;
 	}
 	//alternative calculation of 3D->3D transform

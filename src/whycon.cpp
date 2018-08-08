@@ -3,36 +3,30 @@
 
 #include <stdlib.h>
 #include <string>
+#include <SDL/SDL.h>
+#include <opencv2/opencv.hpp>
 #include "CGui.h"
 #include "CTimer.h"
 #include "CCircleDetect.h"
 #include "CTransformation.h"
-#include <SDL/SDL.h>
 
 // ROS libraries
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Vector3Stamped.h>
 #include <dynamic_reconfigure/server.h>
 #include <whycon_ros/whyconConfig.h>
 #include <whycon_ros/MarkerArray.h>
 #include <whycon_ros/Marker.h>
 
-//default camera resolution
-int  imageWidth= 640;
-int  imageHeight = 480;
+using namespace cv;
 
-//default black circle diameter [m] 
-float circleDiameter = 0.122;
-
-// X and Y dimensions of the coordinate system
-float fieldLength = 1.00;
-float fieldWidth = 1.00;
-
-//Max GUI dimensions 
-int  screenWidth= 1920;
-int  screenHeight = 1080;
+int  imageWidth = 640;		//default camera resolution
+int  imageHeight = 480;		//default camera resolution
+float circleDiameter = 0.122;	//default black circle diameter [m];
+float fieldLength = 1.00;	//X dimension of the coordinate system
+float fieldWidth = 1.00;	//Y dimension of the coordinate system
+int  screenWidth= 1920;		//max GUI width
+int  screenHeight = 1080;	//max GUI height
 
 /*robot detection variables*/
 bool identify = false;		//identify ID of tags ?
@@ -53,25 +47,25 @@ int hammingDist = 1;		//hamming distance of ID code
 /*variables related to (auto) calibration*/
 const int calibrationSteps = 20;			//how many measurements to average to estimate calibration pattern position (manual calib)
 const int autoCalibrationSteps = 30; 			//how many measurements to average to estimate calibration pattern position (automatic calib)  
-const int autoCalibrationPreSteps = 10;		//how many measurements to discard before starting to actually auto-calibrating (automatic calib)  
-int calibNum = 5;				//number of objects acquired for calibration (5 means calibration winished inactive)
-STrackedObject calib[5];			//array to store calibration patterns positions
-STrackedObject calibTmp[calibrationSteps];	//array to store several measurements of a given calibration pattern
-int calibStep = calibrationSteps+2;		//actual calibration step (num of measurements of the actual pattern)
-bool autocalibrate = false;			//is the autocalibration in progress ?
-ETransformType lastTransformType = TRANSFORM_2D;//pre-calibration transform (used to preserve pre-calibation transform type)
-int wasBots = 1;				//pre-calibration number of robots to track (used to preserve pre-calibation number of robots to track)
+const int autoCalibrationPreSteps = 10;			//how many measurements to discard before starting to actually auto-calibrating (automatic calib)  
+int calibNum = 5;					//number of objects acquired for calibration (5 means calibration winished inactive)
+STrackedObject calib[5];				//array to store calibration patterns positions
+STrackedObject calibTmp[calibrationSteps];		//array to store several measurements of a given calibration pattern
+int calibStep = calibrationSteps+2;			//actual calibration step (num of measurements of the actual pattern)
+bool autocalibrate = false;				//is the autocalibration in progress ?
+ETransformType lastTransformType = TRANSFORM_2D;	//pre-calibration transform (used to preserve pre-calibation transform type)
+int wasBots = 1;					//pre-calibration number of robots to track (used to preserve pre-calibation number of robots to track)
 
 /*program flow control*/
-bool saveVideo;			//save video to output folder?
-bool saveLog;			//save log to output folder?
+bool saveVideo = false;		//save video to output folder?
+bool saveLog = false;		//save log to output folder?
 bool stop = false;		//stop and exit ?
 int moveVal = 1;		//how many frames to process ?
 int moveOne = moveVal;		//how many frames to process now (setting moveOne to 0 or lower freezes the video stream) 
 
 /*GUI-related stuff*/
 CGui* gui;			//drawing, events capture
-bool useGui = true;			//use graphic interface at all?
+bool useGui = true;		//use graphic interface at all?
 int guiScale = 1;		//in case camera resolution exceeds screen one, gui is scaled down
 SDL_Event event;		//store mouse and keyboard events
 int keyNumber = 10000;		//number of keys pressed in the last step	
@@ -83,15 +77,18 @@ int runs = 0;			//number of gui updates/detections performed
 int evalTime = 0;		//time required to detect the patterns
 FILE *robotPositionLog = NULL;	//file to log robot positions
 
-// communication input (camera), ROS publishers & image transport
+// communication input (camera), ROS publishers
 CRawImage *image;
-image_transport::Publisher imdebug;
 ros::Publisher markers_pub;
 
 // etc file paths
 std::string fontPath;
 std::string calibResPath;
 std::string calibDefPath;
+
+// intrisic and distortion params from camera_info
+Mat distCoeffs = Mat(1,5, CV_32FC1);	
+Mat intrinsic = Mat(3,3, CV_32FC1);
 
 /*manual calibration can be initiated by pressing 'r' and then clicking circles at four positions (0,0)(fieldLength,0)...*/
 void manualcalibration()
@@ -173,7 +170,6 @@ void autocalibration()
 			}
 			trans->calibrate2D(calib,fieldLength,fieldWidth);
 			trans->calibrate3D(calib,fieldLength,fieldWidth);
-			trans->calibrate4D(calib,fieldLength,fieldWidth);
 			calibNum++;
 			numBots = wasBots;
 			trans->saveCalibration(calibDefPath.c_str());
@@ -228,7 +224,7 @@ void processKeys()
 	if (keys[SDLK_SPACE] && lastKeys[SDLK_SPACE] == false){ moveOne = 100000000; moveVal = 10000000;};
 	if (keys[SDLK_p] && lastKeys[SDLK_p] == false) {moveOne = 1; moveVal = 0;}
 
-	if (keys[SDLK_m] && lastKeys[SDLK_m] == false) printf("SAVE %03f %03f %03f %03f %03f %03f %03f\n",objectArray[0].x,objectArray[0].y,objectArray[0].z,objectArray[0].error,objectArray[0].d,currentSegmentArray[0].m0,currentSegmentArray[0].m1);
+	if (keys[SDLK_m] && lastKeys[SDLK_m] == false) printf("SAVE %03f %03f %03f %03f %03f %03f\n",objectArray[0].x,objectArray[0].y,objectArray[0].z,objectArray[0].d,currentSegmentArray[0].m0,currentSegmentArray[0].m1);
 	if (keys[SDLK_n] && lastKeys[SDLK_n] == false) printf("SEGM %03f %03f %03f\n",currentSegmentArray[0].x,currentSegmentArray[0].y,currentSegmentArray[0].m0);
 	if (keys[SDLK_s] && lastKeys[SDLK_s] == false) image->saveBmp();
 
@@ -243,7 +239,7 @@ void processKeys()
 	if (keys[SDLK_v] && lastKeys[SDLK_v] == false) for (int i = 0;i<numBots;i++) detectorArray[i]->drawAll = detectorArray[i]->drawAll==false;
 	if (keys[SDLK_d] && lastKeys[SDLK_d] == false)
 	{ 
-		for (int i = 0;i<numBots;i++){
+			for (int i = 0;i<numBots;i++){
 			detectorArray[i]->draw = detectorArray[i]->draw==false;
 			detectorArray[i]->debug = detectorArray[i]->debug==false;
 		}
@@ -254,17 +250,7 @@ void processKeys()
 	if (keys[SDLK_2] && lastKeys[SDLK_2] == false) trans->transformType = TRANSFORM_2D;
 	if (keys[SDLK_3] && lastKeys[SDLK_3] == false) trans->transformType = TRANSFORM_3D;
 
-	//camera low-level settings 
-	/* will solve later
-	if (keys[SDLK_c] && shiftPressed == false) camera->changeContrast(-1);
-	if (keys[SDLK_c] && shiftPressed == true) camera->changeContrast(1);
-	if (keys[SDLK_g] && shiftPressed == false) camera->changeGain(-1);
-	if (keys[SDLK_g] && shiftPressed == true) camera->changeGain(1);
-	if (keys[SDLK_e] && shiftPressed == false) camera->changeExposition(-1);
-	if (keys[SDLK_e] && shiftPressed == true) camera->changeExposition(1);
-	if (keys[SDLK_b] && shiftPressed == false) camera->changeBrightness(-1);
-	if (keys[SDLK_b] && shiftPressed == true) camera->changeBrightness(1);
-	*/
+	//todo camera low-level settings 
 
 	//display help
 	if (keys[SDLK_h] && lastKeys[SDLK_h] == false) displayHelp = displayHelp == false; 
@@ -287,12 +273,22 @@ void reconfigureCallback(whycon_ros::whyconConfig &config, uint32_t level)
 	numBots = (config.numBots > MAX_PATTERNS) ? MAX_PATTERNS : config.numBots;
 	trans->reconfigure(config.circleDiameter);
 	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i]->reconfigure(config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs, config.identify);
-	/*outerDimUser = config.userDiameter/100.0;
-	outerDimMaster = config.masterDiameter/100.0;
-	distanceTolerance = config.distanceTolerance/100.0;*/
-
 	fieldLength = config.fieldLength;
 	fieldWidth = config.fieldWidth;
+}
+
+void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg)
+{
+	if(msg->K[0] != intrinsic.at<float>(0,0) || msg->K[2] != intrinsic.at<float>(0,2) || msg->K[4] != intrinsic.at<float>(1,1) ||  msg->K[5] != intrinsic.at<float>(1,2)){
+		for(int i = 0; i < 5; i++) distCoeffs.at<float>(i) = msg->D[i];
+		int tmpIdx = 0;
+		for(int i = 0; i < 3; i++){
+			for(int j = 0; j < 3; j++){
+				intrinsic.at<float>(i, j) = msg->K[tmpIdx++];
+			}
+		}
+		trans->updateParams(intrinsic, distCoeffs);
+	}
 }
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -306,11 +302,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	globalTimer.reset();
 	globalTimer.start();
 
-	/* logging will be implemented later
-	int frameID =0;
-	int64_t frameTime = 0;
-	*/
-	
 	// check if readjusting of camera is needed
 	if (image->bpp != msg->step/msg->width || image->width != msg->width || image->height != msg->height){
 		delete image;
@@ -322,7 +313,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	
 	numFound = numStatic = 0;
 	timer.reset();
-	// logging later // frameTime = globalTimer.getRealTime();
 	
 	// track the robots found in the last attempt 
 	for (int i = 0;i<numBots;i++){
@@ -344,7 +334,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	// perform transformations from camera to world coordinates
 	for (int i = 0;i<numBots;i++){
 		if (currentSegmentArray[i].valid){
-			objectArray[i] = trans->transform(currentSegmentArray[i],false);
+			objectArray[i] = trans->transform(currentSegmentArray[i]);
 			numFound++;
 			if (currentSegmentArray[i].x == lastSegmentArray[i].x) numStatic++;
 		}
@@ -399,34 +389,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	/* empty for-cycle that isn't used even in master orig version
 	for (int i = 0;i<numBots;i++){
 		//if (currentSegmentArray[i].valid) printf("Object %i %03f %03f %03f %03f %03f\n",i,objectArray[i].x,objectArray[i].y,objectArray[i].z,objectArray[i].error,objectArray[i].esterror);
-	}
-	*/
-
-	/* will be implemented later
-	if (camera->cameraType == CT_WEBCAM){
-		//for real camera, continue with capturing of another frame even if not all robots have been found
-		moveOne = moveVal;
-		for (int i = 0;i<numBots;i++){
-		       	//printf("Frame %i Object %03i %03i %.5f %.5f %.5f \n",frameID,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
-		       	if (robotPositionLog != NULL) fprintf(robotPositionLog,"Frame %i Time %ld Object %03i %03i %.5f %.5f %.5f \n",frameID,frameTime,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
-		}
-		if (moveVal > 0) frameID++;
-	}else{
-		//for postprocessing, try to find all robots before loading next frame
-		if (numFound ==  numBots)
-		{
-			//gui->saveScreen(runs++);
-			for (int i = 0;i<numBots;i++){
-			       		//printf("Frame %i Object %03i %03i %.5f %.5f %.5f \n",frameID,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
-					if (robotPositionLog != NULL) fprintf(robotPositionLog,"Frame %i Time %ld Object %03i %03i %.5f %.5f %.5f \n",frameID,frameTime,i,currentSegmentArray[i].ID,objectArray[i].x,objectArray[i].y,objectArray[i].yaw);
-			}
-			moveOne = moveVal; 
-			if (moveVal > 0) frameID++;
-		}else{
-			if (moveOne-- < -100) moveOne = moveVal;
-		}
-	}
-	*/
+	}*/
 
 	//gui->saveScreen(runs);
 	if (useGui) gui->update();
@@ -443,8 +406,7 @@ int main(int argc,char* argv[])
 	
 	// loading params and args from launch file
 	fontPath = argv[1];
-	calibResPath = argv[2];
-	calibDefPath = argv[3];
+	calibDefPath = argv[2];
 	n.param("useGui", useGui, true);
 	n.param("saveLog", saveLog, false);
 	n.param("saveVideo", saveVideo, false);
@@ -462,7 +424,7 @@ int main(int argc,char* argv[])
 
 	// initialize GUI, image structures, coordinate transformation modules
 	if (useGui) gui = new CGui(imageWidth,imageHeight,guiScale, fontPath.c_str());
-	trans = new CTransformation(imageWidth,imageHeight,circleDiameter, calibResPath.c_str(), calibDefPath.c_str(), true);
+	trans = new CTransformation(imageWidth,imageHeight,circleDiameter, calibDefPath.c_str());
 	trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
 	// initialize the circle detectors - each circle has its own detector instance 
@@ -476,7 +438,8 @@ int main(int argc,char* argv[])
 	server.setCallback(dynSer);
 
 	// subscribe to camera topic, publish topis with card position, rotation and ID
-	image_transport::Subscriber subimg = it.subscribe("/cv_camera/image_raw", 1, imageCallback);
+	ros::Subscriber subInfo = n.subscribe("/camera/camera_info", 1, cameraInfoCallback);
+	image_transport::Subscriber subImg = it.subscribe("/camera/image_raw", 1, imageCallback);
 	markers_pub = n.advertise<whycon_ros::MarkerArray>("/whycon_ros/markers", 1);
 
 	// ROS infinite loop that refreshes data in topics, checks if stop signal was sent
