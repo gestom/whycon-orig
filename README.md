@@ -35,10 +35,10 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Quick setup for initial testing
 
-0. Have Your ros kinetic and appropriate ros camera driver installed.
+0. Have Your ros kinetic and appropriate ros camera driver installed. Also You need to have calibrated camera with distortion model "plumb bob".
 1. Install the required <a href="#dependencies">libraries</a>:<br><i>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev</i>.
 2. Download the software from GitHub into a catkin workspace.
-3. Open <a href="launch/whycon.launch">whycon.launch</a> file in the <i>launch/</i> folder and change <i>remap</i> tag so attribute <i>to</i> will match Your camera image_raw topic.
+3. Open <a href="launch/whycon.launch">whycon.launch</a> file in the <i>launch/</i> folder and change <i>remap</i> tag so attribute <i>to</i> will match Your camera image_raw topic. Do the same with camera_info topic which is used for obtaining camera calibration data.
 4. Compile the software - just type <i>catkin_make</i> in workspace directory.
 5. Source setup script in package directory into shell enviroment<br>e.g. <i>source devel/setup.bash</i>
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
@@ -55,21 +55,20 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Setting up the coordinate system
 
-1. Calibrate your camera using the MATLAB (or Octave) calibration toolbox and put the <i>Calib_Results.m</i> in the <i>etc/</i> directory.
-2. If you have resized the markers (their default size is 122mm), then adjust their diameter in the <i>rqt_reconfigure</i>.
-3. Print additional four circular <a href="id/test.pdf">markers</a> and place to the corners of your (reclangular) operational space.
-4. Position and fixate your camera so that it has all four circles in it's field of view.
-5. Run whycon and modify the dimensions of the operation space in the <i>rqt_reconfigure</i> - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
-6. Adjust the parameter <i>numBots</i> - the number of patterns you want to track plus 4.
-7. Once all the patterns are found, press <i>a</i> and the four outermost patterns will be used to calculate the coordinate system.
-8. Alternatively, you can press <i>r</i> and then click the four circles that define the coordinate system.
-9. Pressing 1 should show you the patterns' positions in camera-centric coordinates (x-axis equals to camera optical axis), pressing 2 and 3 will display marker coordinates in user-defined 2D or 3D coordinate systems.
-10. Pressing <i>+</i>,<i>-</i> changes the number of localized patterns.
+1. If you have resized the markers (their default size is 122mm), then adjust their diameter in the <i>rqt_reconfigure</i>.
+2. Print additional four circular <a href="id/test.pdf">markers</a> and place to the corners of your (reclangular) operational space.
+3. Position and fixate your camera so that it has all four circles in it's field of view.
+4. Run whycon and modify the dimensions of the operation space in the <i>rqt_reconfigure</i> - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
+5. Adjust the parameter <i>numBots</i> - the number of patterns you want to track plus 4.
+6. Once all the patterns are found, press <i>a</i> and the four outermost patterns will be used to calculate the coordinate system.
+7. Alternatively, you can press <i>r</i> and then click the four circles that define the coordinate system.
+8. Pressing 1 should show you the patterns' positions in camera-centric coordinates (x-axis equals to camera optical axis), pressing 2 and 3 will display marker coordinates in user-defined 2D or 3D coordinate systems.
+9. Pressing <i>+</i>,<i>-</i> changes the number of localized patterns.
 
 #### Logs, GUI, recording topics
 
 1. Custom logging is not implemented yet. Use the default ROS logging.
-2. GUI can omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up or by using whycon-nogui.launch
+2. GUI can omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up.
 3. Video and communication topics can be save using <i>rosbag</i>.
 
 #### Published topics
