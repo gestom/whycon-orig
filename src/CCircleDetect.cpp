@@ -52,14 +52,14 @@ CCircleDetect::CCircleDetect(int wi, int he, bool id, int bits, int samples, int
     sizer = sizerAll = 0;
 }
 
-void CCircleDetect::reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id)
+void CCircleDetect::reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id, int minS)
 {
 	circularTolerance = ict/100.0;
 	circularityTolerance = fct/100.0;
 	ratioTolerance = 1+art/100.0;
 	centerDistanceToleranceRatio = cdtr/100.0;
 	centerDistanceToleranceAbs = cdta;
-	
+	minSize = minS;
 	identify = id;
 }
 
@@ -389,7 +389,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
                             if (track && init.valid){
                                 ii = start -1;
                                 if (debug) fprintf(stdout,"Segment failed BW test.\n");
-                            }
+				    }
                         }
                     }else{
                         //tracking failed

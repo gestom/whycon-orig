@@ -11,11 +11,6 @@
 #define OUTER 1
 #define MAX_PATTERNS 50
 
-//used for circle identification 
-//#define ID_SAMPLES 360
-//#define ID_BITS 8
-//#define HAMMING_DISTANCE 1
-
 //this structure contains information related to image coordinates and dimensions of the detected pattern
 typedef struct{
 	float x;			//center in image coordinates
@@ -46,7 +41,7 @@ class CCircleDetect
 		~CCircleDetect();
 		
 		// dynamic reconfigure of parameters
-		void reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id);
+		void reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id, int minS);
 
 		//main detection method, implements Algorithm 2 of [1] 
 		SSegment findSegment(CRawImage* image, SSegment init);

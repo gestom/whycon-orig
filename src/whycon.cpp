@@ -272,7 +272,7 @@ void reconfigureCallback(whycon_ros::whyconConfig &config, uint32_t level)
 	ROS_INFO("Reconfigure Request: %d %lf %d %lf %lf %lf %lf %lf", config.numBots, config.circleDiameter, config.identify, config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs);
 	numBots = (config.numBots > MAX_PATTERNS) ? MAX_PATTERNS : config.numBots;
 	trans->reconfigure(config.circleDiameter);
-	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i]->reconfigure(config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs, config.identify);
+	for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i]->reconfigure(config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs, config.identify, config.minSize);
 	fieldLength = config.fieldLength;
 	fieldWidth = config.fieldWidth;
 }

@@ -331,7 +331,8 @@ STrackedObject CTransformation::eigen(double data[])
 	float z1 = -L3*c0y+L2*c1y;
 	float z2 = -L3*c0z+L2*c1z;
 	float s1,s2;
-	s1=s2=1;
+	s1= 1;
+	s2= 1;
 	float n0 = +s1*c0x+s2*c1x;
 	float n1 = +s1*c0y+s2*c1y;
 	float n2 = +s1*c0z+s2*c1z;
@@ -349,6 +350,7 @@ STrackedObject CTransformation::eigen(double data[])
 	//	 n1 = -n1;
 	//	 n2 = -n2;
 	}
+
 	result.x = z2*z;	
 	result.y = -z0*z;	
 	result.z = -z1*z;
@@ -358,8 +360,7 @@ STrackedObject CTransformation::eigen(double data[])
 	//result.roll = n2*z;	
 	//result.pitch = -n0*z;	
 	//result.yaw = -n1*z;
-
-
+	
 	return result;
 }
 
@@ -408,7 +409,7 @@ STrackedObject CTransformation::transform(SSegment segment)
 	d = (-x*a-b*y);
 	e = (-y*c-b*x);
 	f = (a*x*x+c*y*y+2*b*x*y-1.0);
-	double data[] ={a,b,d,b,c,e,d,e,f};		//matrix conic coefficients, see 4.2 of [1]
+	double data[] ={a,b,d,b,c,e,d,e,f};	//matrix conic coefficients, see 4.2 of [1]
 
 	/*transformation to camera-centric or user-defined coordinate frames*/
 	//3D->2D homography, see 4.4.2 of [1]
