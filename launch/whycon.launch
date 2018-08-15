@@ -10,7 +10,7 @@
     
     <node pkg="whycon_ros" type="whycon_ros" name="whycon" output="screen" args="$(arg fontPath) $(arg calibResPath) $(arg calibDefPath)">
         
-        <remap from="/cv_camera/image_raw" to="/cv_camera/image_raw" />
+        <remap from="/cv_camera/image_raw" to="/usb_cam/image_raw" />
 <!--        <remap from="/camera/camera_info" to="/cv_camera/camera_info" /> -->
 	
 	<param name="useGui" value="true"/>
