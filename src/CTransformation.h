@@ -7,14 +7,18 @@
  * References: [1] Krajnik, Nitsche et al.: A practical multirobot localization system. Journal of Intelligent and Robotic Systems, 2014.
  */
 
-
 #ifndef __CTRANSFORMATION_H__
 #define __CTRANSFORMATION_H__
 
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#include <opencv2/opencv.hpp>
 #include "CCircleDetect.h"
+
+
+using namespace cv;
+using namespace std;
 
 /*which transform to use*/
 typedef enum{
@@ -31,8 +35,6 @@ typedef struct{
 	float pitch,roll,yaw;		//angles - precision is unknown
 	float roundness;		//segment roundness as calculated by 5 of [1]
 	float bwratio;			//black/white area ratio
-	float error;			//measured error
-	float esterror;			//predicted error
 	int ID;				//ID - not used here
 }STrackedObject;
 
@@ -45,71 +47,53 @@ class CTransformation
 {
 	public:
 		/*initialization: width and height of the image, diameter of the pattern, 'unbarrel the entire image' flag*/
-		CTransformation(int widthi,int heighti,float diam, const char* calibResPath, const char* calibDefPath, bool fullUnbarreli = false);
+		CTransformation(int widthi,int heighti,float diam, const char* calibDefPath);
 		~CTransformation();
 
 		// parameters dynamic reconfigure
 		void reconfigure(float circleDiam);
 
-		//radial (un)distortion functions
-		float barrelX(float x,float y);
-		float barrelY(float x,float y);
-		float unbarrelX(float x,float y);
-		float unbarrelY(float x,float y);
-		//undistort the entire image
-		void unbarrel(unsigned char* src,unsigned char* dst);
+		//update of intrinsic and distortion camera params
+		void updateParams(Mat intri, Mat dist);
+		
+		//get back image coords from canonical coords
+		void reTransformXY(float *x, float *y,float *z);
 
 		/*image to canonical coordinates (unbarrel + focal center and length)*/
-		float transformX(float x,float y);
-		float transformY(float x,float y);
 		void transformXY(float *ix,float *iy);
-		void transformXYerr(float *ix,float *iy);
 
 		/*calculate marker 3D or 2D coordinates in user-defined coordinate system from the segment description provided by the CCircleDetector class, see 4.1-4.4 of [1] */
-		STrackedObject transform(SSegment segment,bool unbarrel);
+		STrackedObject transform(SSegment segment);
+		
 		/*calculate the pattern 3D position from its ellipse characteristic equation, see 4.3 of [1]*/
-		STrackedObject eigen(double data[]);
+		STrackedObject calcEigen(double data[]);
+		
 		/*establish the user-defined coordinate system from four calibration patterns - see 4.4 of [1]*/
 		int calibrate2D(STrackedObject *inp,float dimX,float dimY,float robotRadius = 0,float robotHeight =0,float cameraHeight = 1.0);
 		int calibrate3D(STrackedObject *o,float gridDimX,float gridDimY);
-		int calibrate4D(STrackedObject *o,float gridDimX,float gridDimY);
 		S3DTransform calibrate3D(STrackedObject o0,STrackedObject o1,STrackedObject o2,float gridDimX,float gridDimY);
 
 		/*supporting methods*/
-		STrackedObject crossPrd(STrackedObject o0,STrackedObject o1,STrackedObject o2,float gridDimX,float gridDimY);
 		ETransformType transformType;
 		void saveCalibration(const char *str);
 		void loadCalibration(const char *str);
 		float distance(STrackedObject o1,STrackedObject o2);
-		STrackedObject transformInv(STrackedObject o[]);
 
 	private:
 		STrackedObject  normalize(STrackedObject o);
-		float establishError(STrackedObject o);
 		STrackedObject transform2D(STrackedObject o);
 		STrackedObject transform3D(STrackedObject o,int num = 4);
 		STrackedObject transform4D(STrackedObject o);
-		float *xArray;
-		float *yArray;
-		float *gArrayX;
-		float *gArrayY;
-		int *pArray;
 
 		float hom[9];
 		float trf4D[16];
 		float gDimX,gDimY;
 		S3DTransform D3transform[4];
 		int width,height;
-		bool fullUnbarrel;
-		bool unbarrelInitialized;
 		float trackedObjectDiameter;
-		float kc[6];
-		float kcerr[6];
-		float fcerr[2];
-		float fc[2];
-		float cc[2];
-		float error2D;
-		STrackedObject c2D[4];
+
+		Mat intrinsic;
+		Mat distCoeffs;
 };
 
 #endif

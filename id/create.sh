@@ -5,10 +5,9 @@ make neclage > /dev/null # Suppress STDOUT (Standard Output)
 # Diplay the help menu
 display_help() {
     echo
-    echo "Usage: $0 [option...] {help|bits|build|verbose|legacy|slow}" 
+    echo "Usage: $0 [option...] {help|build|verbose|legacy|slow}" 
     echo
     echo "   -h, --help         Display this help menu"
-    echo "   -n, --bits         Define number of bits to generate IDs"
     echo "   -b, --build        Define a name for the build directory used to generate the images"
     echo "   -v, --verbose      Print a message at each step explaining what is happening"
     echo "   -l, --legacy       Generating the original WhyCon Markers without encoding information"
@@ -91,7 +90,6 @@ while :
 do
     case "$1" in
         -h | --help) display_help ;;
-        -n | --bits) teethCount="$2"; shift 2; ;;
         -b | --build) buildDir="$2"; shift 2; ;;
         -d | --distance) hamming="$2"; shift 2; ;;
         -v | --verbose) verbose=1; shift 1;;
@@ -99,7 +97,7 @@ do
         -s | --slow) multithread=1; shift 1;;
         --) shift; break ;; # End of all options
         -*) echo ; echo "Error: Unknown option: $1"; display_help; exit ;;
-#        *) if [ $# -eq 0 ]; then break; elif [[ $1 =~ ^[0-9]+$ ]]; then teethCount=$1; shift 1; fi
+        *) if [ $# -eq 0 ]; then break; elif [[ $1 =~ ^[0-9]+$ ]]; then teethCount=$1; shift 1; fi
     esac
 done
 
