@@ -26,6 +26,16 @@ CTransformation::CTransformation(int widthi,int heighti,float diam, const char* 
 	height = heighti;
 	trackedObjectDiameter = diam;
 	loadCalibration(calibDefPath);
+
+	distCoeffs = Mat(1,5, CV_32FC1);	
+	intrinsic = Mat(3,3, CV_32FC1);
+
+	for (int i=0;i<9;i++)intrinsic.at<float>(i/3,i%3) = 0;
+	intrinsic.at<float>(0,0) = 650; 
+	intrinsic.at<float>(1,1) = 650;
+	intrinsic.at<float>(0,2) =  320 ; 
+	intrinsic.at<float>(1,2) = 240;
+	intrinsic.at<float>(2,2) = 1;
 }
 
 CTransformation::~CTransformation()
@@ -67,6 +77,7 @@ void CTransformation::transformXY(float *ax,float *ay)
 	Mat metric = Mat::ones(1, 1, CV_32FC2);
 	coords.at<float>(0) = *ax;
 	coords.at<float>(1) = *ay;
+	cout << intrinsic << endl;
 	undistortPoints(coords,metric,intrinsic,distCoeffs);
 	*ax = metric.at<float>(0);
 	*ay = metric.at<float>(1);
@@ -327,16 +338,42 @@ STrackedObject CTransformation::calcEigen(double data[])
 	for(int i=0;i<9;i++) printf("%f ",dat[i/3][i%3]);
 	printf("\n");
 	eigen_decomposition(dat,Vi,d);
-	
 	Mat in = Mat(3,3,CV_32FC1);
 	for(int i=0;i<3;i++){
 		for(int j=0;j<3;j++){
-		in.at<float>(i,j) = data[3*i+j];
+			in.at<float>(i,j) = data[3*i+j];
 		}
 	}
+	Mat valf = Mat(3,1,CV_32FC1);
+	Mat vecf = Mat(3,3,CV_32FC1);
+	for(int i=0;i<3;i++){
+		for(int j=0;j<3;j++){
+			vecf.at<float>(j,i) = Vi[i][j];
+		}
+		valf.at<float>(i) = d[i];
+	}
+	cout << "VALF: "  << valf.row(2) << endl;
+	cout << "VECF: "  << vecf.row(2) << endl;
+	cout << "FRE 0: " << (in*vecf.row(0).t()*(1/valf.row(0))-vecf.row(0).t()).t() << endl;
+	cout << "FRE 1: " << (in*vecf.row(1).t()*(1/valf.row(1))-vecf.row(1).t()).t() << endl;
+	cout << "FRE 2: " << (in*vecf.row(2).t()*(1/valf.row(2))-vecf.row(2).t()).t() << endl;
 	Mat val = Mat(3,1,CV_32FC1);
 	Mat vec = Mat(3,3,CV_32FC1);
+
+
 	eigen(in,val,vec);
+	//cout << "INPUT: " << endl << in << endl;
+	cout << "VALC: " << val.row(0) << endl;
+	cout << "VECC: " << vec.row(0) << endl;
+	cout << "BLA 0: " << (in*vec.row(0).t()*(1/val.row(0))-vec.row(0).t()).t() << endl;
+	cout << "BLA 1: " << (in*vec.row(1).t()*(1/val.row(1))-vec.row(1).t()).t() << endl;
+	cout << "BLA 2: " << (in*vec.row(2).t()*(1/val.row(2))-vec.row(2).t()).t() << endl;
+	for (int u=0;u<3;u++) if (vec.at<float>(u,0)*vecf.at<float>(2-u,0) < 0) cout << "DIFF: "<< vec.row(u)+vecf.row(2-u) << endl; else cout << "DIFF: " << vec.row(u)-vecf.row(2-u) << endl; 
+ 
+	
+	cout << "END " << endl;
+	return result;
+
 	for(int i = 0;i<3;i++){
 		V[i][1] = vec.at<float>(i,1);
 		V[i][2] = vec.at<float>(i,0);
