@@ -43,6 +43,8 @@ class CCircleDetect
 		// dynamic reconfigure of parameters
 		void reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id, int minS);
 
+		SSegment getInnerSegment();
+	
 		//main detection method, implements Algorithm 2 of [1] 
 		SSegment findSegment(CRawImage* image, SSegment init);
 

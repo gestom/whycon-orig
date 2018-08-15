@@ -473,12 +473,18 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
                 pos = queue[p];
                 image->data[step*pos+0] = 255;
                 image->data[step*pos+1] = 255;
-                image->data[step*pos+2] = 0;
+                image->data[step*pos+2] = 200;
             }
         }
     }
     bufferCleanup(outer);
+
     return outer;
+}
+
+SSegment CCircleDetect::getInnerSegment()
+{
+	return inner;
 }
 
 float CCircleDetect::normalizeAngle(float a) {
@@ -595,5 +601,6 @@ int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
 
         }
     }
+    
     return result.id++;
 }

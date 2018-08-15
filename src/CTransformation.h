@@ -55,6 +55,9 @@ class CTransformation
 
 		//update of intrinsic and distortion camera params
 		void updateParams(Mat intri, Mat dist);
+		
+		//get back image coords from canonical coords
+		void reTransformXY(float *x, float *y,float *z);
 
 		/*image to canonical coordinates (unbarrel + focal center and length)*/
 		void transformXY(float *ix,float *iy);
@@ -63,7 +66,7 @@ class CTransformation
 		STrackedObject transform(SSegment segment);
 		
 		/*calculate the pattern 3D position from its ellipse characteristic equation, see 4.3 of [1]*/
-		STrackedObject eigen(double data[]);
+		STrackedObject calcEigen(double data[]);
 		
 		/*establish the user-defined coordinate system from four calibration patterns - see 4.4 of [1]*/
 		int calibrate2D(STrackedObject *inp,float dimX,float dimY,float robotRadius = 0,float robotHeight =0,float cameraHeight = 1.0);

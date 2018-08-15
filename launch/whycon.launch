@@ -6,10 +6,10 @@
     <arg name="fontPath" value="$(find whycon_ros)/etc/font.ttf"/>
     <arg name="calibDefPath" value="$(find whycon_ros)/etc/default.cal"/>
     
-    <node pkg="whycon_ros" type="whycon_ros" name="whycon_ros" output="screen" args="$(arg fontPath) $(arg calibDefPath)" >
+    <node pkg="whycon_ros" type="whycon_ros" name="whycon_ros" output="screen" args="$(arg fontPath) $(arg calibDefPath)">
         
-        <remap from="/camera/image_raw" to="/cv_camera/image_raw"/>
-	<remap from="/camera/camera_info" to="/cv_camera/camera_info"/>
+        <remap from="/camera/image_raw" to="/image_raw"/>
+	<remap from="/camera/camera_info" to="/camera_info"/>
 	
 	<param name="useGui" value="true"/>
 	<param name="saveLog" value="false"/>

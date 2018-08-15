@@ -44,6 +44,23 @@ void CTransformation::updateParams(Mat intri, Mat dist)
 	distCoeffs = dist;
 }
 
+void CTransformation::reTransformXY(float *x, float *y,float *z)
+{
+	Mat in = Mat::ones(1, 1, CV_32FC3);
+        Mat out = Mat::ones(1, 1, CV_32FC2);
+
+        //in.at<float>(0) = (*x - intrinsic.at<float>(0,2))/intrinsic.at<float>(0,0);
+        //in.at<float>(1) = (*y - intrinsic.at<float>(1,2))/intrinsic.at<float>(1,1);
+	in.at<float>(0) = *x;
+	in.at<float>(1) = *y;
+	in.at<float>(2) = *z;
+
+	projectPoints(in, Mat::zeros(3, 1, CV_32FC1), Mat::zeros(3, 1, CV_32FC1), intrinsic, distCoeffs, out);
+
+	*x = out.at<float>(0);
+	*y = out.at<float>(1);
+}
+
 void CTransformation::transformXY(float *ax,float *ay)
 {
 	Mat coords = Mat::ones(1, 1, CV_32FC2);
@@ -299,22 +316,73 @@ int CTransformation::calibrate3D(STrackedObject *o,float gridDimX,float gridDimY
 }
 		
 //implemented according to   
-STrackedObject CTransformation::eigen(double data[])
+STrackedObject CTransformation::calcEigen(double data[])
 {
 	STrackedObject result;
 	double d[3];
 	double V[3][3];
+	double Vi[3][3];
 	double dat[3][3];
 	for (int i = 0;i<9;i++)dat[i/3][i%3] = data[i];
-	eigen_decomposition(dat,V,d);
-
+	for(int i=0;i<9;i++) printf("%f ",dat[i/3][i%3]);
+	printf("\n");
+	eigen_decomposition(dat,Vi,d);
+	
+	Mat in = Mat(3,3,CV_32FC1);
+	for(int i=0;i<3;i++){
+		for(int j=0;j<3;j++){
+		in.at<float>(i,j) = data[3*i+j];
+		}
+	}
+	Mat val = Mat(3,1,CV_32FC1);
+	Mat vec = Mat(3,3,CV_32FC1);
+	eigen(in,val,vec);
+	for(int i = 0;i<3;i++){
+		V[i][1] = vec.at<float>(i,1);
+		V[i][2] = vec.at<float>(i,0);
+		V[i][0] = vec.at<float>(i,2);
+	}
+	
+	cout << in;
+	printf("\n");
+	for(int i=0;i<9;i++) printf("%f ",Vi[i/3][i%3]);
+	printf("\n");
+	for(int i=0;i<9;i++) printf("%f ",V[i/3][i%3]);
+	printf("\n");
+	printf("\n");
+	
 	//eigenvalues
-	float L1 = d[1]; 
-	float L2 = d[2];
-	float L3 = d[0];
+	float L1 = val.at<float>(1);//d[1];
+	float L2 = val.at<float>(0);//d[2];
+	float L3 = val.at<float>(2);//d[0];
 	//eigenvectors
 	int V2=2;
 	int V3=0;
+	printf("opencv\n");
+	printf("%+03.5f %+03.5f %+03.5f\n",L3,L1,L2);
+	printf("%+03.5f %+03.5f %+03.5f\n",V[0][V3],V[1][V3],V[2][V3]);
+	printf("%+03.5f %+03.5f %+03.5f\n",V[0][1],V[1][1],V[2][1]);
+	printf("%+03.5f %+03.5f %+03.5f\n",V[0][V2],V[1][V2],V[2][V2]);
+	
+	/*Mat Li = Mat(1,1,CV_32FC1, L2);
+	Mat cv_res = in.mul(vec.row(0)) - Li * vec.row(0);
+	cout << cv_res;
+	printf("\n");*/
+	
+	printf("fr\n");
+	printf("%+03.5f %+03.5f %+03.5f\n",d[0],d[1],d[2]);
+	printf("%+03.5f %+03.5f %+03.5f\n",Vi[0][V3],Vi[1][V3],Vi[2][V3]);
+	printf("%+03.5f %+03.5f %+03.5f\n",Vi[0][1],Vi[1][1],Vi[2][1]);
+	printf("%+03.5f %+03.5f %+03.5f\n",Vi[0][V2],Vi[1][V2],Vi[2][V2]);
+
+/*	Mat tmp_Vi = Mat(3,1,CV_32FC1);
+	tmp_Vi.at<float>(0) = Vi[0][V2];
+	tmp_Vi.at<float>(1) = Vi[1][V2];
+	tmp_Vi.at<float>(2) = Vi[2][V2];
+	Mat tmp_Li = Mat(1,1,CV_32FC1, d[2]);
+	Mat fr_res = in.mul(tmp_Vi) - tmp_Li * tmp_Vi;
+	cout << fr_res;
+	printf("\n");*/
 
 	//detected pattern position
 	float z = trackedObjectDiameter/sqrt(-L2*L3)/2.0;
@@ -336,19 +404,18 @@ STrackedObject CTransformation::eigen(double data[])
 	float n0 = +s1*c0x+s2*c1x;
 	float n1 = +s1*c0y+s2*c1y;
 	float n2 = +s1*c0z+s2*c1z;
-
 	//n0 = -L3*c0x-L2*c1x;
 	//n1 = -L3*c0y-L2*c1y;
 	//n2 = -L3*c0z-L2*c1z;
-	
+
 	//rotate the vector accordingly
 	if (z2*z < 0){
-		 z2 = -z2;
-		 z1 = -z1;
-		 z0 = -z0;
-	//	 n0 = -n0;
-	//	 n1 = -n1;
-	//	 n2 = -n2;
+		z2 = -z2;
+		z1 = -z1;
+		z0 = -z0;
+	//	n0 = -n0;
+	//	n1 = -n1;
+	//	n2 = -n2;
 	}
 
 	result.x = z2*z;	
@@ -416,7 +483,7 @@ STrackedObject CTransformation::transform(SSegment segment)
 	if (transformType == TRANSFORM_2D)			
 	{
 		//for debug only
-		result = eigen(data);
+		result = calcEigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 
 		result.x = x;
@@ -431,31 +498,32 @@ STrackedObject CTransformation::transform(SSegment segment)
 	//camera-centric coordinate frame, see 4.3 and 4.4 of [1]
 	if (transformType == TRANSFORM_NONE)
 	{
-		result = eigen(data);
+		result = calcEigen(data);
 		result.yaw = segment.angle;
 	}
 	//user-defined 3D coordinate system, see 4.4.1 of [1]
 	if (transformType == TRANSFORM_3D){
-		result = eigen(data);
+		result = calcEigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 		result = transform3D(result);
 		result.d = d;
 	}
 	//alternative calculation of 3D->3D transform
 	if (transformType == TRANSFORM_4D){
-		result = eigen(data);
+		result = calcEigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 		result = transform4D(result);
 		result.d = d;
 	}
 	//camera centric + error estimate
 	if (transformType == TRANSFORM_INV){
-		result = eigen(data);
+		result = calcEigen(data);
 		float d = sqrt(result.x*result.x+result.y*result.y+result.z*result.z);
 		result.d = d;
 	}
 	/*result.pitch = acos(fmin(minor/major,1.0))/M_PI*180.0; //TODO
 	result.roll = segment.horizontal; //TODO*/
+	
 	return result;
 }
 
