@@ -46,7 +46,7 @@ sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
 6. Run code by roslaunch and remap subsribed camera topics either on start up through arguments
 ```
-roslaunch whycon_ros whycon.launch camInfo:=/&lt;your_camera&gt;/camera_info camRaw:=/&lt;your_camera&gt;/image_raw
+roslaunch whycon_ros whycon.launch camInfo:=/<your_camera>/camera_info camRaw:=/<your_camera>/image_raw
 ```
 or rewrite file <a href="launch/whycon.launch">whycon.launch</a> so default values of tags <i>arg</i> called <i>camInfo</i> and <i>camRaw</i> will match topics camera_info and image_raw. Then it's just
 ```
