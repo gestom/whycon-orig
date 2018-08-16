@@ -14,9 +14,7 @@ find_package(catkin REQUIRED
 
 find_package(OpenCV REQUIRED)
 
-generate_dynamic_reconfigure_options(
-	cfg/whycon.cfg
-)
+generate_dynamic_reconfigure_options(cfg/whycon.cfg)
 
 set(CMAKE_CXX_FLAGS "-Ofast -march=native -mno-avx -ggdb")
 
@@ -61,10 +59,10 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#   INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES charging
 #  CATKIN_DEPENDS image_transport roscpp rospy std_msgs
-	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs
+	CATKIN_DEPENDS message_runtime std_msgs geometry_msg dynamic_reconfigure
 #  DEPENDS system_lib
 )
 
@@ -103,6 +101,7 @@ target_link_libraries(whycon_ros
 
 add_dependencies(whycon_ros
 	${catkin_EXPORTED_TARGETS}
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${PROJECT_NAME}_gencfg
 )
 
@@ -114,20 +113,6 @@ target_link_libraries(whycon_ros
 #############
 ## Install ##
 #############
-
-## Mark executable scripts (Python etc.) for installation
-## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
 
 install(TARGETS
 		whycon_detector
@@ -146,13 +131,18 @@ install(TARGETS
 install(DIRECTORY include/${PROJECT_NAME}/
 		DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 		FILES_MATCHING PATTERN "*.h"
-		PATTERN ".svn" EXCLUDE
 )
 
-install(DIRECTORY
-	launch
-	etc
-	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(DIRECTORY launch/
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch
+)
+
+install(DIRECTORY etc/
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/etc
+)
+
+install(DIRECTORY id/
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/id
 )
 
 #############
