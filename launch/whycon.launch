@@ -3,18 +3,16 @@
 
     <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="reconfigurator"/>
     
+    <arg name="camInfo" default="/camera_info" doc="camera_info topic"/>
+    <arg name="camRaw" default="/image_raw" doc="image_raw topic"/>
+
     <arg name="fontPath" value="$(find whycon_ros)/etc/font.ttf"/>
     <arg name="calibDefPath" value="$(find whycon_ros)/etc/default.cal"/>
     
     <node pkg="whycon_ros" type="whycon_ros" name="whycon_ros" output="screen" args="$(arg fontPath) $(arg calibDefPath)">
         
-<<<<<<< HEAD
-        <remap from="/cv_camera/image_raw" to="/usb_cam/image_raw" />
-<!--        <remap from="/camera/camera_info" to="/cv_camera/camera_info" /> -->
-=======
-        <remap from="/camera/image_raw" to="/image_raw"/>
-	<remap from="/camera/camera_info" to="/camera_info"/>
->>>>>>> d78a118ad0b435b97602bb8944c7de8ab41c138b
+	<remap from="/camera/camera_info" to="$(arg camInfo)"/>
+        <remap from="/camera/image_raw" to="$(arg camRaw)"/>
 	
 	<param name="useGui" value="true"/>
 	<param name="saveLog" value="false"/>
