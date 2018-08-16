@@ -42,7 +42,10 @@ sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev
 ```
 2. Download the software from GitHub into a catkin workspace.
 3. Compile the software - just type <i>catkin_make</i> in workspace directory.
-4. Source setup script in package directory into shell enviroment<br/>e.g. <i>source devel/setup.bash</i>
+4. Source setup script in package directory into shell enviroment e.g.
+```
+source devel/setup.bash
+```
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
 6. Run code by roslaunch and remap subsribed camera topics either on start up through arguments
 ```
