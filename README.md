@@ -35,14 +35,23 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Quick setup for initial testing
 
-0. Have Your ros kinetic and appropriate ros camera driver installed. Also You need to have calibrated camera with distortion model "plumb bob".
-1. Install the required <a href="#dependencies">libraries</a>:<br><i>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev</i>.
+0. Have Your ROS Kinetic and appropriate camera driver installed. Also You need to have <a href="http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration">calibrated camera</a> with distortion model "plumb bob".
+1. Install the required <a href="#dependencies">libraries</a>
+```
+sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev
+```
 2. Download the software from GitHub into a catkin workspace.
-3. Open <a href="launch/whycon.launch">whycon.launch</a> file in the <i>launch/</i> folder and change <i>remap</i> tag so attribute <i>to</i> will match Your camera image_raw topic. Do the same with camera_info topic which is used for obtaining camera calibration data.
-4. Compile the software - just type <i>catkin_make</i> in workspace directory.
-5. Source setup script in package directory into shell enviroment<br>e.g. <i>source devel/setup.bash</i>
+3. Compile the software - just type <i>catkin_make</i> in workspace directory.
+4. Source setup script in package directory into shell enviroment<br/>e.g. <i>source devel/setup.bash</i>
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
-6. Run code by<br><i>roslaunch whycon_ros whycon.launch</i>
+6. Run code by roslaunch and remap subsribed camera topics either on start up through arguments
+```
+roslaunch whycon_ros whycon.launch camInfo:=/&lt;your_camera&gt;/camera_info camRaw:=/&lt;your_camera&gt;/image_raw
+```
+or rewrite file <a href="launch/whycon.launch">whycon.launch</a> so default values of tags <i>arg</i> called <i>camInfo</i> and <i>camRaw</i> will match topics camera_info and image_raw. Then it's just
+```
+roslaunch whycon_ros whycon.launch
+```
 7. You should see the image with some numbers below the circle. Pressing <i>D</i> shows the segmentation result.
 8. You can change the parameters in <i>rqt_reconfigure</i> which should open together with whycon GUI.
 
@@ -51,7 +60,10 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 1. Folder <a href="id/">id/</a> contains a script <i>create.sh</i> which generates tags with IDs.
 2. Run the script followed by a number of bits and it will create tags in the working directory.
 3. Other script parameters are specified in help - <i>create.sh -h</i>
-4. Number of ID bits has to be then passed to whycon as a private paratemer on start up.
+4. Number of ID bits has to be then passed to whycon as a private paratemer on start up. The default value is 5.
+```
+roslaunch whycon_ros whycon.launch [...] _idBits:=...
+```
 
 #### Setting up the coordinate system
 
@@ -68,12 +80,15 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 #### Logs, GUI, recording topics
 
 1. Custom logging is not implemented yet. Use the default ROS logging.
-2. GUI can omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up.
+2. GUI can be omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up.
 3. Video and communication topics can be save using <i>rosbag</i>.
 
-#### Published topics
-
+#### Topics
+##### Published
 1. /whycon_ros/markers - you can find its structure in <a href="msg/">msg</a> folder
+##### Subscribed
+1. /&lt;camera&gt;/camera_info - camera matrix and distortion coeffs
+2. /&lt;camera&gt;/image_raw - raw image data without correction
 
 #### Some additional remarks
 
@@ -94,11 +109,13 @@ All the following libraries are probably in your packages.
 3. <b>libncurses5-dev</b> to print stuff on the terminal.
 
 ### References
+
 1. T. Krajník, M. Nitsche et al.: <b>[A Practical Multirobot Localization System.](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_JINT_whycon.pdf)</b> Journal of Intelligent and Robotic Systems (JINT), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_JINT_whycon.bib)].
 2. T. Krajník, M. Nitsche et al.: <b>[External localization system for mobile robotics.](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2013_icar_whycon.pdf)</b> International Conference on Advanced Robotics (ICAR), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2013_icar_whycon.bib)].
 3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficent, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_irososar_whycon.bib)].
 4. J. Faigl, T. Krajník et al.: <b>[Low-cost embedded system for relative localization in robotic swarms.](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6630694)</b> International Conference on Robotics and Automation (ICRA), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2013_icra_whycon.bib)].
 5. P. Lightbody, T. Krajník et al.: <b>[A versatile high-performance visual fiducial marker detection system with scalable identity encoding.](http://eprints.lincoln.ac.uk/25828/1/4d0bd9e8a3b3b5ad6ca2d56c1438fbbc.pdf)</b>Symposium on Applied Computing, 2017.[[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2017_sac_whycon.bib)].
+
 ### Acknowledgements
 
 The development of this work is currently supported by the Czech Science Foundation project 17-27006Y _STRoLL_.
