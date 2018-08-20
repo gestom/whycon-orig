@@ -14,8 +14,8 @@
 //-----These parameters need to be adjusted by the user -----------------------
 
 //Adjust camera resolution here
-int  imageWidth= 960;
-int  imageHeight = 720;
+int  imageWidth= 640;
+int  imageHeight = 480;
 
 //Adjust the black circle diameter [m] 
 float circleDiameter = 0.122;
