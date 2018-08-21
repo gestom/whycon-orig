@@ -443,19 +443,28 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
     }
 
     if (outer.valid && identify){
-        inner.x = outer.x;
+	SSegment tmp;
+	tmp.x = outer.x;
+	tmp.y = outer.y;
+	tmp.m0 = 0.33/0.70*outer.m0;
+        tmp.m1 = 0.33/0.70*outer.m1;
+        tmp.v0 = outer.v0;
+        tmp.v1 = outer.v1;
+        /*
+	inner.x = outer.x;
         inner.y = outer.y;
         inner.m0 = 0.33/0.70*outer.m0;
         inner.m1 = 0.33/0.70*outer.m1;
         inner.v0 = outer.v0;
         inner.v1 = outer.v1;
-        int segment = identifySegment(&inner,image)+1;
+	*/
+        int segment = identifySegment(&tmp,image)+1;
         if (debug) printf("SEGMENT ID: %i\n", segment);
         outer.angle = init.angle;
         outer.ID = init.ID;
         if (segment > -1)
         {
-            outer.angle = inner.angle;
+            outer.angle = tmp.angle;
             outer.ID = segment;
         }
     }

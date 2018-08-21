@@ -30,12 +30,12 @@ CTransformation::CTransformation(int widthi,int heighti,float diam, const char* 
 	distCoeffs = Mat(1,5, CV_32FC1);	
 	intrinsic = Mat(3,3, CV_32FC1);
 
-	for (int i=0;i<9;i++)intrinsic.at<float>(i/3,i%3) = 0;
+	/*for (int i=0;i<9;i++)intrinsic.at<float>(i/3,i%3) = 0;
 	intrinsic.at<float>(0,0) = 650; 
 	intrinsic.at<float>(1,1) = 650;
 	intrinsic.at<float>(0,2) =  320 ; 
 	intrinsic.at<float>(1,2) = 240;
-	intrinsic.at<float>(2,2) = 1;
+	intrinsic.at<float>(2,2) = 1;*/
 }
 
 CTransformation::~CTransformation()
@@ -77,7 +77,7 @@ void CTransformation::transformXY(float *ax,float *ay)
 	Mat metric = Mat::ones(1, 1, CV_32FC2);
 	coords.at<float>(0) = *ax;
 	coords.at<float>(1) = *ay;
-	cout << intrinsic << endl;
+//	cout << intrinsic << endl;
 	undistortPoints(coords,metric,intrinsic,distCoeffs);
 	*ax = metric.at<float>(0);
 	*ay = metric.at<float>(1);
@@ -330,63 +330,29 @@ int CTransformation::calibrate3D(STrackedObject *o,float gridDimX,float gridDimY
 STrackedObject CTransformation::calcEigen(double data[])
 {
 	STrackedObject result;
-	double d[3];
+//	double d[3];
 	double V[3][3];
-	double Vi[3][3];
-	double dat[3][3];
-	for (int i = 0;i<9;i++)dat[i/3][i%3] = data[i];
-	for(int i=0;i<9;i++) printf("%f ",dat[i/3][i%3]);
-	printf("\n");
-	eigen_decomposition(dat,Vi,d);
+//	double Vi[3][3];
+//	double dat[3][3];
+	Mat val = Mat(3,1,CV_32FC1);
+	Mat vec = Mat(3,3,CV_32FC1);
+//	for (int i = 0;i<9;i++)dat[i/3][i%3] = data[i];
+//	eigen_decomposition(dat,Vi,d);
+
 	Mat in = Mat(3,3,CV_32FC1);
 	for(int i=0;i<3;i++){
 		for(int j=0;j<3;j++){
 			in.at<float>(i,j) = data[3*i+j];
 		}
 	}
-	Mat valf = Mat(3,1,CV_32FC1);
-	Mat vecf = Mat(3,3,CV_32FC1);
-	for(int i=0;i<3;i++){
-		for(int j=0;j<3;j++){
-			vecf.at<float>(j,i) = Vi[i][j];
-		}
-		valf.at<float>(i) = d[i];
-	}
-	cout << "VALF: "  << valf.row(2) << endl;
-	cout << "VECF: "  << vecf.row(2) << endl;
-	cout << "FRE 0: " << (in*vecf.row(0).t()*(1/valf.row(0))-vecf.row(0).t()).t() << endl;
-	cout << "FRE 1: " << (in*vecf.row(1).t()*(1/valf.row(1))-vecf.row(1).t()).t() << endl;
-	cout << "FRE 2: " << (in*vecf.row(2).t()*(1/valf.row(2))-vecf.row(2).t()).t() << endl;
-	Mat val = Mat(3,1,CV_32FC1);
-	Mat vec = Mat(3,3,CV_32FC1);
-
-
+	
 	eigen(in,val,vec);
-	//cout << "INPUT: " << endl << in << endl;
-	cout << "VALC: " << val.row(0) << endl;
-	cout << "VECC: " << vec.row(0) << endl;
-	cout << "BLA 0: " << (in*vec.row(0).t()*(1/val.row(0))-vec.row(0).t()).t() << endl;
-	cout << "BLA 1: " << (in*vec.row(1).t()*(1/val.row(1))-vec.row(1).t()).t() << endl;
-	cout << "BLA 2: " << (in*vec.row(2).t()*(1/val.row(2))-vec.row(2).t()).t() << endl;
-	for (int u=0;u<3;u++) if (vec.at<float>(u,0)*vecf.at<float>(2-u,0) < 0) cout << "DIFF: "<< vec.row(u)+vecf.row(2-u) << endl; else cout << "DIFF: " << vec.row(u)-vecf.row(2-u) << endl; 
- 
 	
-	cout << "END " << endl;
-	return result;
-
 	for(int i = 0;i<3;i++){
-		V[i][1] = vec.at<float>(i,1);
-		V[i][2] = vec.at<float>(i,0);
-		V[i][0] = vec.at<float>(i,2);
+		V[i][1] = vec.at<float>(1,i);
+		V[i][2] = vec.at<float>(0,i);
+		V[i][0] = vec.at<float>(2,i);
 	}
-	
-	cout << in;
-	printf("\n");
-	for(int i=0;i<9;i++) printf("%f ",Vi[i/3][i%3]);
-	printf("\n");
-	for(int i=0;i<9;i++) printf("%f ",V[i/3][i%3]);
-	printf("\n");
-	printf("\n");
 	
 	//eigenvalues
 	float L1 = val.at<float>(1);//d[1];
@@ -395,31 +361,6 @@ STrackedObject CTransformation::calcEigen(double data[])
 	//eigenvectors
 	int V2=2;
 	int V3=0;
-	printf("opencv\n");
-	printf("%+03.5f %+03.5f %+03.5f\n",L3,L1,L2);
-	printf("%+03.5f %+03.5f %+03.5f\n",V[0][V3],V[1][V3],V[2][V3]);
-	printf("%+03.5f %+03.5f %+03.5f\n",V[0][1],V[1][1],V[2][1]);
-	printf("%+03.5f %+03.5f %+03.5f\n",V[0][V2],V[1][V2],V[2][V2]);
-	
-	/*Mat Li = Mat(1,1,CV_32FC1, L2);
-	Mat cv_res = in.mul(vec.row(0)) - Li * vec.row(0);
-	cout << cv_res;
-	printf("\n");*/
-	
-	printf("fr\n");
-	printf("%+03.5f %+03.5f %+03.5f\n",d[0],d[1],d[2]);
-	printf("%+03.5f %+03.5f %+03.5f\n",Vi[0][V3],Vi[1][V3],Vi[2][V3]);
-	printf("%+03.5f %+03.5f %+03.5f\n",Vi[0][1],Vi[1][1],Vi[2][1]);
-	printf("%+03.5f %+03.5f %+03.5f\n",Vi[0][V2],Vi[1][V2],Vi[2][V2]);
-
-/*	Mat tmp_Vi = Mat(3,1,CV_32FC1);
-	tmp_Vi.at<float>(0) = Vi[0][V2];
-	tmp_Vi.at<float>(1) = Vi[1][V2];
-	tmp_Vi.at<float>(2) = Vi[2][V2];
-	Mat tmp_Li = Mat(1,1,CV_32FC1, d[2]);
-	Mat fr_res = in.mul(tmp_Vi) - tmp_Li * tmp_Vi;
-	cout << fr_res;
-	printf("\n");*/
 
 	//detected pattern position
 	float z = trackedObjectDiameter/sqrt(-L2*L3)/2.0;
@@ -468,7 +409,7 @@ STrackedObject CTransformation::calcEigen(double data[])
 	return result;
 }
 
-STrackedObject CTransformation::transform(SSegment segment)
+STrackedObject CTransformation::transform(SSegment segment,SSegment inner)
 {
 	float x,y,x1,x2,y1,y2,major,minor,v0,v1;
 	STrackedObject result;
@@ -560,7 +501,47 @@ STrackedObject CTransformation::transform(SSegment segment)
 	}
 	/*result.pitch = acos(fmin(minor/major,1.0))/M_PI*180.0; //TODO
 	result.roll = segment.horizontal; //TODO*/
-	
+
+	float outX = segment.x;
+	float outY = segment.y;
+	//inner major axis
+        //vertices in image coords
+        float Ax = inner.x+fabs(inner.v0)*inner.m0*2;
+        float Bx = inner.x-fabs(inner.v0)*inner.m0*2;
+        float Ay = inner.y+fabs(inner.v1)*inner.m0*2;
+        float By = inner.y-fabs(inner.v1)*inner.m0*2;
+	//inner minor axis 
+        //vertices in image coords
+        float Cx = inner.x+fabs(inner.v1)*inner.m1*2;
+        float Dx = inner.x-fabs(inner.v1)*inner.m1*2;
+        float Cy = inner.y-fabs(inner.v0)*inner.m1*2;
+        float Dy = inner.y+fabs(inner.v0)*inner.m1*2;
+
+	//outer major axis
+        //vertices in image coords
+        float Ex = segment.x+segment.v0*segment.m0*2;
+        float Fx = segment.x-segment.v0*segment.m0*2;
+        float Ey = segment.y+segment.v1*segment.m0*2;
+        float Fy = segment.y-segment.v1*segment.m0*2;
+
+/*	float distA = sqrt((Ax-outX)*(Ax-outX)+(Ay-outY)*(Ay-outY));
+	float distB = sqrt((Bx-outX)*(Bx-outX)+(By-outY)*(By-outY));
+	float distC = sqrt((Cx-outX)*(Cx-outX)+(Cy-outY)*(Cy-outY));
+	float distD = sqrt((Dx-outX)*(Dx-outX)+(Dy-outY)*(Dy-outY));*/
+
+//	printf("A %f B %f C %f D %f\n",sqrt(Ax*Ax+Ay*Ay),sqrt(Bx*Bx+By*By),sqrt(Cx*Cx+Cy*Cy),sqrt(Dx*Dx+Dy*Dy));
+
+//	if(fabs(result.pitch) > fabs(result.roll)){
+	if(fabs(Fy-Ey) > fabs(Fx-Ex)){
+		result.pitch = (fabs(Dx-outX) > fabs(Cx-outX)) ? fabs(result.pitch) : -fabs(result.pitch); //distD < distC
+        	result.roll = (fabs(By-outY) > fabs(Ay-outY)) ? fabs(result.roll) : -fabs(result.roll); //distB < distA
+//		printf("pitch pitch %f roll %f\n",fabs(Cx-outX)-fabs(Dx-outX),fabs(Ay-outY)-fabs(By-outY));
+	}else{
+		result.pitch = (fabs(Bx-outX) > fabs(Ax-outX)) ? fabs(result.pitch) : -fabs(result.pitch);
+        	result.roll = (fabs(Dy-outY) < fabs(Cy-outY)) ? fabs(result.roll) : -fabs(result.roll);
+//		printf("roll pitch %f roll %f\n",fabs(Ax-outX)-fabs(Bx-outX),fabs(Cy-outY)-fabs(Dy-outY));
+	}
+
 	return result;
 }
 

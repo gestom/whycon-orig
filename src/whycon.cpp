@@ -28,6 +28,9 @@ float fieldWidth = 1.00;	//Y dimension of the coordinate system
 int  screenWidth= 1920;		//max GUI width
 int  screenHeight = 1080;	//max GUI height
 
+float innerDiam = 0.05;
+float defRation = (circleDiameter/2.0)/(innerDiam/2.0);
+
 /*robot detection variables*/
 bool identify = false;		//identify ID of tags ?
 int numBots = 0;		//num of robots to track
@@ -38,7 +41,6 @@ SSegment currentSegmentArray[MAX_PATTERNS];	//segment array (detected objects in
 SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
 
 SSegment currInnerSegArr[MAX_PATTERNS];
-STrackedObject objInnerArr[MAX_PATTERNS];
 
 STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in metric space)
 CTransformation *trans;				//allows to transform from image to metric coordinates
@@ -283,6 +285,10 @@ void reconfigureCallback(whycon_ros::whyconConfig &config, uint32_t level)
 
 void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg)
 {
+	if(msg->K[0] == 0){
+		ROS_FATAL("ERROR: Camera is not calibrated! Shutting down!");
+		ros::shutdown();
+	}
 	if(msg->K[0] != intrinsic.at<float>(0,0) || msg->K[2] != intrinsic.at<float>(0,2) || msg->K[4] != intrinsic.at<float>(1,1) ||  msg->K[5] != intrinsic.at<float>(1,2)){
 		for(int i = 0; i < 5; i++) distCoeffs.at<float>(i) = msg->D[i];
 		int tmpIdx = 0;
@@ -351,63 +357,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 		        image->data[step*pos+1] = 255;
 		        image->data[step*pos+2] = 0;
 
-			objectArray[i] = trans->transform(currentSegmentArray[i]);
-			objInnerArr[i] = trans->transform(currInnerSegArr[i]);
-			
-			float newX0 = -objectArray[i].y;
-			float newY0 = -objectArray[i].z;
-			float newZ0 = objectArray[i].x;
-			float newX1 = -objInnerArr[i].y;
-			float newY1 = -objInnerArr[i].z;
-			float newZ1 = objInnerArr[i].x;
-		
-			trans->reTransformXY(&newX0, &newY0, &newZ0);
-			trans->reTransformXY(&newX1, &newY1, &newZ1);
-			
-			pos = ((int)newX0+((int)newY0*image->width));
-			if (pos > 0 && pos < image->width*image->height){
-				image->data[step*pos+0] = 255;
-				image->data[step*pos+1] = 0;
-				image->data[step*pos+2] = 0;
-			};
-			pos = ((int)newX1+((int)newY1*image->width));
-			if (pos > 0 && pos < image->width*image->height){
-				image->data[step*pos+0] = 0;
-				image->data[step*pos+1] = 255;
-				image->data[step*pos+2] = 0;
-			};
-
-			float outerDist = sqrt((newX0-currentSegmentArray[i].x)*(newX0-currentSegmentArray[i].x)+(newY0-currentSegmentArray[i].y)*(newY0-currentSegmentArray[i].y));
-			float innerDist = sqrt((newX1-currInnerSegArr[i].x)*(newX1-currInnerSegArr[i].x)+(newY1-currInnerSegArr[i].y)*(newY1-currInnerSegArr[i].y));
-			float outerCenter0 = sqrt(currentSegmentArray[i].x*currentSegmentArray[i].x+currentSegmentArray[i].y*currentSegmentArray[i].y);
-			float outerCenter1 = sqrt(newX0*newX0+newY0*newY0);
-			float innerCenter0 = sqrt(currInnerSegArr[i].x*currInnerSegArr[i].x+currInnerSegArr[i].y*currInnerSegArr[i].y);
-			float innerCenter1 = sqrt(newX1*newX1+newY1*newY1);
-			printf("o %03.5f i %03.5f %03.5f\n",outerDist,innerDist,outerDist-innerDist);
-			printf("image coords dist\n");
-			printf("o %03.5f i %03.5f %03.5f\n",outerCenter0,innerCenter0,outerCenter0-innerCenter0);
-			printf("o %03.5f i %03.5f %03.5f\n",outerCenter1,innerCenter1,outerCenter1-innerCenter1);
-			printf("o %03.5f %03.5f %03.5f\n",outerCenter0,outerCenter1,outerCenter0-outerCenter1);
-			printf("i %03.5f %03.5f %03.5f\n",innerCenter0,innerCenter1,innerCenter0-innerCenter1);
-		
-			float xi0 = currentSegmentArray[i].x;
-			float yi0 = currentSegmentArray[i].y;
-			float xi1 = currInnerSegArr[i].x;
-			float yi1 = currInnerSegArr[i].y;
-			trans->transformXY(&xi0,&yi0);
-			trans->transformXY(&xi1,&yi1);
-			trans->transformXY(&newX0,&newY0);
-			trans->transformXY(&newX1,&newY1);
-			float oDist0 = sqrt(xi0*xi0+yi0*yi0);
-			float oDist1 = sqrt(newX0*newX0+newY0*newY0);
-			float iDist0 = sqrt(xi1*xi1+yi1*yi1);
-			float iDist1 = sqrt(newX1*newX1+newY1*newY1);
-			printf("camera coords dist\n");
-			printf("o %03.5f i %03.5f %03.5f\n",oDist0,iDist0,oDist0-iDist0);
-			printf("o %03.5f i %03.5f %03.5f\n",oDist1,iDist1,oDist1-iDist1);
-			printf("o %03.5f %03.5f %03.5f\n",oDist0,oDist1,oDist0-oDist1);
-			printf("i %03.5f %03.5f %03.5f\n",iDist0,iDist1,iDist0-iDist1);
-			printf("\n");
+			objectArray[i] = trans->transform(currentSegmentArray[i],currInnerSegArr[i]);
 
 			numFound++;
 			if (currentSegmentArray[i].x == lastSegmentArray[i].x) numStatic++;

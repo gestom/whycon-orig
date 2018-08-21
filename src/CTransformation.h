@@ -63,7 +63,7 @@ class CTransformation
 		void transformXY(float *ix,float *iy);
 
 		/*calculate marker 3D or 2D coordinates in user-defined coordinate system from the segment description provided by the CCircleDetector class, see 4.1-4.4 of [1] */
-		STrackedObject transform(SSegment segment);
+		STrackedObject transform(SSegment segment,SSegment inner);
 		
 		/*calculate the pattern 3D position from its ellipse characteristic equation, see 4.3 of [1]*/
 		STrackedObject calcEigen(double data[]);
