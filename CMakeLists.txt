@@ -62,7 +62,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES charging
 #  CATKIN_DEPENDS image_transport roscpp rospy std_msgs
-	CATKIN_DEPENDS message_runtime std_msgs geometry_msg dynamic_reconfigure
+	CATKIN_DEPENDS message_runtime std_msgs geometry_msgs dynamic_reconfigure
 #  DEPENDS system_lib
 )
 
