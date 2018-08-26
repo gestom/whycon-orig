@@ -15,8 +15,6 @@
         <remap from="/camera/image_raw" to="$(arg camRaw)"/>
 	
 	<param name="useGui" value="true"/>
-	<param name="saveLog" value="false"/>
-	<param name="saveVideo" value="false"/>
 	
 	<param name="idBits" value="5"/>
 	<param name="idSamples" value="360"/>
