@@ -40,8 +40,8 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 ```
 sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev
 ```
-2. Download the software from GitHub into a catkin workspace.
-3. Compile the software - just type <i>catkin_make</i> in workspace directory.
+2. Download the code from GitHub into a catkin workspace.
+3. Compile the code - just type <i>catkin_make</i> in workspace directory.
 4. Source setup script in package directory into shell enviroment e.g.
 ```
 source devel/setup.bash
@@ -49,7 +49,7 @@ source devel/setup.bash
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
 6. Run code by roslaunch and remap subsribed camera topics either on start up through arguments
 ```
-roslaunch whycon_ros whycon.launch camInfo:=/<your_camera>/camera_info camRaw:=/<your_camera>/image_raw
+roslaunch whycon_ros whycon.launch camInfo:=/<camera>/camera_info camRaw:=/<camera>/image_raw
 ```
 or rewrite file <a href="launch/whycon.launch">whycon.launch</a> so default values of tags <i>arg</i> called <i>camInfo</i> and <i>camRaw</i> will match topics camera_info and image_raw. Then it's just
 ```
@@ -82,9 +82,8 @@ roslaunch whycon_ros whycon.launch [...] _idBits:=...
 
 #### Logs, GUI, recording topics
 
-1. Custom logging is not implemented yet. Use the default ROS logging.
-2. GUI can be omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up.
-3. Video and communication topics can be save using <i>rosbag</i>.
+1. GUI can be omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up.
+2. Video and communication topics can be save using <i>rosbag</i>.
 
 #### Topics
 ##### Published
