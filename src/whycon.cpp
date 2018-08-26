@@ -17,6 +17,7 @@
 #include <whycon_ros/whyconConfig.h>
 #include <whycon_ros/MarkerArray.h>
 #include <whycon_ros/Marker.h>
+#include <tf/tf.h>
 
 using namespace cv;
 
@@ -28,9 +29,6 @@ float fieldWidth = 1.00;	//Y dimension of the coordinate system
 int  screenWidth= 1920;		//max GUI width
 int  screenHeight = 1080;	//max GUI height
 
-float innerDiam = 0.05;
-float defRation = (circleDiameter/2.0)/(innerDiam/2.0);
-
 /*robot detection variables*/
 bool identify = false;		//identify ID of tags ?
 int numBots = 0;		//num of robots to track
@@ -40,7 +38,7 @@ CCircleDetect *detectorArray[MAX_PATTERNS];	//detector array (each pattern has i
 SSegment currentSegmentArray[MAX_PATTERNS];	//segment array (detected objects in image space)
 SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
 
-SSegment currInnerSegArr[MAX_PATTERNS];
+SSegment currInnerSegArr[MAX_PATTERNS];		//inner segment array`
 
 STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in metric space)
 CTransformation *trans;				//allows to transform from image to metric coordinates
@@ -63,8 +61,8 @@ ETransformType lastTransformType = TRANSFORM_2D;	//pre-calibration transform (us
 int wasBots = 1;					//pre-calibration number of robots to track (used to preserve pre-calibation number of robots to track)
 
 /*program flow control*/
-bool saveVideo = false;		//save video to output folder?
-bool saveLog = false;		//save log to output folder?
+//bool saveVideo = false;		//save video to output folder?
+//bool saveLog = false;		//save log to output folder?
 bool stop = false;		//stop and exit ?
 int moveVal = 1;		//how many frames to process ?
 int moveOne = moveVal;		//how many frames to process now (setting moveOne to 0 or lower freezes the video stream) 
@@ -81,7 +79,6 @@ bool displayHelp = false;	//displays some usage hints
 bool drawCoords = true;		//draws coordinatess at the robot's positions
 int runs = 0;			//number of gui updates/detections performed 
 int evalTime = 0;		//time required to detect the patterns
-FILE *robotPositionLog = NULL;	//file to log robot positions
 
 // communication input (camera), ROS publishers
 CRawImage *image;
@@ -183,23 +180,6 @@ void autocalibration()
 			autocalibrate = false;
 		}
 	}
-}
-
-/*initialize logging*/
-bool initializeLogging()
-{
-	char logFileName[1000];
-	char timeStr[100];
-	time_t timeNow;
-	time(&timeNow);
-	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S",localtime(&timeNow));
-	sprintf(logFileName,"output/WhyCon_%s.txt",timeStr);
-	robotPositionLog = fopen(logFileName,"w");
-	if (robotPositionLog == NULL){
-		fprintf(stderr,"Cannot write to log file %s. Does the \"output\" directory exist?\n",logFileName);
-		return false;
-	}
-	return true;
 }
 
 /*process events coming from GUI*/
@@ -385,6 +365,15 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 			marker.position.position.y = -objectArray[i].z;
 			marker.position.position.z = objectArray[i].x;
 
+			// Convert YPR to Quaternion
+			tf::Quaternion q;
+			q.setRPY(objectArray[i].roll, objectArray[i].pitch, objectArray[i].yaw);
+			marker.position.orientation.x = q.getX();
+			marker.position.orientation.y = q.getY();
+			marker.position.orientation.z = q.getZ();
+			marker.position.orientation.w = q.getW();
+
+			// Euler angles
 			marker.rotation.x = objectArray[i].pitch;
 			marker.rotation.y = objectArray[i].roll;
 			marker.rotation.z = objectArray[i].yaw;
@@ -432,13 +421,9 @@ int main(int argc,char* argv[])
 	fontPath = argv[1];
 	calibDefPath = argv[2];
 	n.param("useGui", useGui, true);
-	n.param("saveLog", saveLog, false);
-	n.param("saveVideo", saveVideo, false);
 	n.param("idBits", idBits, 5);
 	n.param("idSamples", idSamples, 360);
 	n.param("hammingDist", hammingDist, 1);
-	
-	if (saveLog) initializeLogging();
 	
 	moveOne = moveVal;
 	moveOne  = 0;
@@ -474,7 +459,6 @@ int main(int argc,char* argv[])
 	}
 
 	// cleaning up
-	if (robotPositionLog != NULL) fclose(robotPositionLog);
 	delete image;
 	if (useGui) delete gui;
 	for (int i = 0;i<MAX_PATTERNS;i++) delete detectorArray[i];
