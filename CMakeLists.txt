@@ -10,6 +10,7 @@ find_package(catkin REQUIRED
 	message_generation
 	dynamic_reconfigure
 	cv_bridge
+	tf
 )
 
 find_package(OpenCV REQUIRED)
