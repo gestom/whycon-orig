@@ -35,7 +35,7 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Quick setup for initial testing
 
-0. Have Your ROS Kinetic and appropriate camera driver installed. Also You need to have <a href="http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration">calibrated camera</a> with distortion model "plumb bob".
+0. Have ROS Kinetic and appropriate camera driver installed. Also have a <a href="http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration">calibrated camera</a> with distortion model "plumb bob".
 1. Install the required <a href="#dependencies">libraries</a>
 ```
 sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev
@@ -87,7 +87,15 @@ roslaunch whycon_ros whycon.launch [...] _idBits:=...
 
 #### Topics
 ##### Published
-1. /whycon_ros/markers - you can find its structure in <a href="msg/">msg</a> folder
+1. /whycon_ros/markers - you can find its header files in <a href="msg/">msg</a> folder
+   - Header header
+   - whycon_ros/Marker[] markers
+     - float32 u
+     - float32 v
+     - int32 size
+     - int8 id
+     - geometry_msgs/Pose position
+     - geometry_msgs/Vector3 rotation
 ##### Subscribed
 1. /&lt;camera&gt;/camera_info - camera matrix and distortion coeffs
 2. /&lt;camera&gt;/image_raw - raw image data without correction
