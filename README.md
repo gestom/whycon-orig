@@ -62,8 +62,8 @@ roslaunch whycon_ros whycon.launch
 
 1. Folder <a href="id/">id/</a> contains code which generates tags with IDs.
 2. Move to the <i>id</i> folder and type `make`.
-2. Run `whycon-id-gen` followed by a number of bits and it will create tags in the working directory.
-3. Other program parameters are specified in help `whycon-id-gen -h`
+2. Run `./whycon-id-gen` followed by a number of bits and it will create tags in the working directory.
+3. Other program parameters are specified in help `./whycon-id-gen -h`
 4. Number of ID bits has to be then passed to whycon as a private paratemer on start up. The default value is 5.
 ```
 roslaunch whycon_ros whycon.launch [...] _idBits:=...
