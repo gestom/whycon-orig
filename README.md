@@ -38,7 +38,7 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 0. Have ROS Kinetic and appropriate camera driver installed. Also have a <a href="http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration">calibrated camera</a> with distortion model "plumb bob".
 1. Install the required <a href="#dependencies">libraries</a>
 ```
-sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev
+sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev graphicsmagick-libmagick-dev-compat
 ```
 2. Download the code from GitHub into a catkin workspace.
 3. Compile the code - just type <i>catkin_make</i> in workspace directory.
@@ -60,9 +60,10 @@ roslaunch whycon_ros whycon.launch
 
 #### Generating tags with ID
 
-1. Folder <a href="id/">id/</a> contains a script <i>create.sh</i> which generates tags with IDs.
-2. Run the script followed by a number of bits and it will create tags in the working directory.
-3. Other script parameters are specified in help - <i>create.sh -h</i>
+1. Folder <a href="id/">id/</a> contains code which generates tags with IDs.
+2. Move to the <i>id</i> folder and type `make`.
+2. Run `whycon-id-gen` followed by a number of bits and it will create tags in the working directory.
+3. Other program parameters are specified in help - <i>whycon-id-gen -h</i>
 4. Number of ID bits has to be then passed to whycon as a private paratemer on start up. The default value is 5.
 ```
 roslaunch whycon_ros whycon.launch [...] _idBits:=...
@@ -117,6 +118,7 @@ All the following libraries are probably in your packages.
 1. <b>libsdl1.2-dev</b> for graphical user interface.
 2. <b>libsdl-ttf2.0-dev</b> to print stuff in the GUI.
 3. <b>libncurses5-dev</b> to print stuff on the terminal.
+4. <b>graphicsmagick-libmagick-dev-compat</b> to generate IDs.
 
 ### References
 
