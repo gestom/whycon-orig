@@ -41,17 +41,17 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev graphicsmagick-libmagick-dev-compat
 ```
 2. Download the code from GitHub into a catkin workspace.
-3. Compile the code - just type <i>catkin_make</i> in workspace directory.
+3. Compile the code - just type `catkin_make` in workspace directory.
 4. Source setup script in package directory into shell enviroment e.g.
 ```
 source devel/setup.bash
 ```
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
-6. Run code by roslaunch and remap subsribed camera topics either on start up through arguments
+6. Run code by <i>roslaunch</i> and remap subsribed camera topics either on start up through arguments
 ```
 roslaunch whycon_ros whycon.launch camInfo:=/<camera>/camera_info camRaw:=/<camera>/image_raw
 ```
-or rewrite file <a href="launch/whycon.launch">whycon.launch</a> so default values of tags <i>arg</i> called <i>camInfo</i> and <i>camRaw</i> will match topics camera_info and image_raw. Then it's just
+or rewrite file <a href="launch/whycon.launch">whycon.launch</a> so default values of tags <i>arg</i> called <i>camInfo</i> and <i>camRaw</i> will match topics <i>camera_info</i> and <i>image_raw</i>. Then it's just
 ```
 roslaunch whycon_ros whycon.launch
 ```
@@ -63,7 +63,7 @@ roslaunch whycon_ros whycon.launch
 1. Folder <a href="id/">id/</a> contains code which generates tags with IDs.
 2. Move to the <i>id</i> folder and type `make`.
 2. Run `whycon-id-gen` followed by a number of bits and it will create tags in the working directory.
-3. Other program parameters are specified in help - <i>whycon-id-gen -h</i>
+3. Other program parameters are specified in help `whycon-id-gen -h`
 4. Number of ID bits has to be then passed to whycon as a private paratemer on start up. The default value is 5.
 ```
 roslaunch whycon_ros whycon.launch [...] _idBits:=...
