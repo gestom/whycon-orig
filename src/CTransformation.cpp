@@ -523,13 +523,13 @@ STrackedObject CTransformation::transform(SSegment segment,SSegment inner)
         float Fy = segment.y-fabs(segment.v1)*segment.m0*2;
 	//outer minor axis
         //vertices in image coords
-        float Gx = segment.x+fabs(segment.v1)*segment.m1*2;
-        float Hx = segment.x-fabs(segment.v1)*segment.m1*2;
-        float Gy = segment.y-fabs(segment.v0)*segment.m1*2;
-        float Hy = segment.y+fabs(segment.v0)*segment.m1*2;
+        //float Gx = segment.x+fabs(segment.v1)*segment.m1*2;
+        //float Hx = segment.x-fabs(segment.v1)*segment.m1*2;
+        //float Gy = segment.y-fabs(segment.v0)*segment.m1*2;
+        //float Hy = segment.y+fabs(segment.v0)*segment.m1*2;
 
-	float pX = inner.x - segment.x;
-	float pY = inner.y - segment.y;	
+	//float pX = inner.x - segment.x;
+	//float pY = inner.y - segment.y;	
 
 	if(fabs(Fy-Ey) > fabs(Fx-Ex)){
 		if(fabs(Dx-segment.x) > fabs(Cx-segment.x)) // pX < 0
@@ -540,7 +540,7 @@ STrackedObject CTransformation::transform(SSegment segment,SSegment inner)
 	        	result.roll = fabs(result.roll);
 		else
 			result.roll = -fabs(result.roll); //distB < distA
-		printf("pitch pitch %f roll %f\n",fabs(Cx-segment.x)-fabs(Dx-segment.x),fabs(Ay-segment.y)-fabs(By-segment.y));
+		//printf("pitch pitch %f roll %f\n",fabs(Cx-segment.x)-fabs(Dx-segment.x),fabs(Ay-segment.y)-fabs(By-segment.y));
 	}else{
 		if(fabs(Bx-segment.x) > fabs(Ax-segment.x))
 			result.pitch = fabs(result.pitch);
@@ -550,7 +550,7 @@ STrackedObject CTransformation::transform(SSegment segment,SSegment inner)
 			result.roll = fabs(result.roll);
 		else
 			result.roll = -fabs(result.roll);
-		printf("roll pitch %f roll %f\n",fabs(Ax-segment.x)-fabs(Bx-segment.x),fabs(Cy-segment.y)-fabs(Dy-segment.y));
+		//printf("roll pitch %f roll %f\n",fabs(Ax-segment.x)-fabs(Bx-segment.x),fabs(Cy-segment.y)-fabs(Dy-segment.y));
 	}
 
 	return result;
