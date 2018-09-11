@@ -64,10 +64,11 @@ roslaunch whycon_ros whycon.launch
 2. Move to the <i>id</i> folder and type `make`.
 2. Run `./whycon-id-gen` followed by a number of bits and it will create tags in the working directory.
 3. Other program parameters are specified in help `./whycon-id-gen -h`
-4. Number of ID bits has to be then passed to whycon as a private paratemer on start up. The default value is 5.
+4. Number of ID bits has to be then passed to whycon on start up. The default value is 5.
 ```
-roslaunch whycon_ros whycon.launch [...] _idBits:=...
+roslaunch whycon_ros whycon.launch [...] idBits:=...
 ```
+5. Other ID parameters are treated the same way. ID samples as `idSamples:=...` and Hamming distance as `hammingDist:=...`
 
 #### Setting up the coordinate system
 
@@ -83,7 +84,7 @@ roslaunch whycon_ros whycon.launch [...] _idBits:=...
 
 #### Logs, GUI, recording topics
 
-1. GUI can be omitted by changing private parameter <i>useGui</i> to <i>false</i> at strat up.
+1. GUI can be omitted by passing argument `useGui:=false` at strat up.
 2. Video and communication topics can be save using <i>rosbag</i>.
 
 #### Topics
