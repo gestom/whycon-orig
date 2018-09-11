@@ -11,7 +11,7 @@ CCircleDetect::CCircleDetect(int wi, int he, bool id, int bits, int samples, int
     idBits = bits;
     idSamples = samples;
     hammingDist = dist;
-    decoder = new CNecklace(idBits, hammingDist);
+//    decoder = new CNecklace(idBits, hammingDist);
     identify = id;
     step = -1;
     ID = -1;
@@ -54,13 +54,13 @@ CCircleDetect::CCircleDetect(int wi, int he, bool id, int bits, int samples, int
 
 void CCircleDetect::reconfigure(float ict,float fct,float art,float cdtr,float cdta, bool id, int minS)
 {
-	circularTolerance = ict/100.0;
-	circularityTolerance = fct/100.0;
-	ratioTolerance = 1+art/100.0;
-	centerDistanceToleranceRatio = cdtr/100.0;
-	centerDistanceToleranceAbs = cdta;
-	minSize = minS;
-	identify = id;
+    circularTolerance = ict/100.0;
+    circularityTolerance = fct/100.0;
+    ratioTolerance = 1+art/100.0;
+    centerDistanceToleranceRatio = cdtr/100.0;
+    centerDistanceToleranceAbs = cdta;
+    minSize = minS;
+    identify = id;
 }
 
 int CCircleDetect::adjustDimensions(int wi, int he) {
@@ -80,7 +80,7 @@ CCircleDetect::~CCircleDetect() {
         free(buffer);
         free(queue);
     }
-    delete decoder;
+//    delete decoder;
 }
 
 bool CCircleDetect::changeThreshold() {
@@ -363,12 +363,12 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
                                         outer.r0 = inner.m1/outer.m0;
                                         outer.r1 = inner.m0/outer.m1;
                                     }
-                                    
+
                                     float orient = atan2(outer.y-inner.y,outer.x-inner.x);
                                     outer.angle = atan2(outer.v1,outer.v0);
                                     if (debug) printf("Angle: %.3f %.3f \n",outer.angle,orient);
                                     if (fabs(normalizeAngle(outer.angle-orient)) > M_PI/2) outer.angle = normalizeAngle(outer.angle+M_PI);
-                                    
+
                                     outer.valid = inner.valid = true;
                                     threshold = (outer.mean+inner.mean)/2;
                                     if (track) ii = start -1;
@@ -389,13 +389,13 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
                             if (track && init.valid){
                                 ii = start -1;
                                 if (debug) fprintf(stdout,"Segment failed BW test.\n");
-				    }
+                            }
                         }
                     }else{
                         //tracking failed
                         if (track && init.valid){
-                             ii = start -1;
-                             if (debug) printf("Inner segment not a circle\n");
+                            ii = start -1;
+                            if (debug) printf("Inner segment not a circle\n");
                         }
                     }
                 }else{
@@ -420,7 +420,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
     if (debug)fprintf(stdout,"Inner %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f %03f %03f Axes: %03f \n",inner.x,inner.y,inner.size,inner.maxx-inner.minx,inner.maxy-inner.miny,inner.mean,threshold,inner.m0,inner.m1,inner.v0,inner.v1,inner.v0*outer.v0+inner.v1*outer.v1);
     if (debug && identify) fprintf(stdout,"Outer %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f %03f %03f Ratios: %.3f %.3f %i\n",outer.x,outer.y,outer.size,outer.maxx-outer.minx,outer.maxy-outer.miny,outer.mean,threshold,outer.m0,outer.m1,outer.v0,outer.v1,outer.r0*150,outer.r1*150,outer.ID);
     else if (debug)fprintf(stdout,"Outer %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f %03f %03f Ratios: %.3f %.3f\n",outer.x,outer.y,outer.size,outer.maxx-outer.minx,outer.maxy-outer.miny,outer.mean,threshold,outer.m0,outer.m1,outer.v0,outer.v1,outer.r0*150,outer.r1*150);
-    
+
     if (outer.valid){
         if (numSegments == 2 ){
             lastTrackOK = true;
@@ -441,24 +441,24 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
         if (changeThreshold()==false) numFailed = 0;
         if (debug) drawAll = true;
     }
-
+/*
+    SSegment tmp;
     if (outer.valid && identify){
-	SSegment tmp;
-	tmp.x = outer.x;
-	tmp.y = outer.y;
-	tmp.m0 = 0.33/0.70*outer.m0;
+        tmp.x = inner.x;
+        tmp.y = inner.y;
+        tmp.m0 = 0.33/0.70*outer.m0;
         tmp.m1 = 0.33/0.70*outer.m1;
         tmp.v0 = outer.v0;
         tmp.v1 = outer.v1;
-        /*
-	inner.x = outer.x;
-        inner.y = outer.y;
-        inner.m0 = 0.33/0.70*outer.m0;
-        inner.m1 = 0.33/0.70*outer.m1;
-        inner.v0 = outer.v0;
-        inner.v1 = outer.v1;
-	*/
-        int segment = identifySegment(&tmp,image)+1;
+        
+       // inner.x = outer.x;
+       // inner.y = outer.y;
+       // inner.m0 = 0.33/0.70*outer.m0;
+       // inner.m1 = 0.33/0.70*outer.m1;
+       // inner.v0 = outer.v0;
+       // inner.v1 = outer.v1;
+        
+        int segment = identifySegment(&inner,image)+1;
         if (debug) printf("SEGMENT ID: %i\n", segment);
         outer.angle = init.angle;
         outer.ID = init.ID;
@@ -468,6 +468,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
             outer.ID = segment;
         }
     }
+*/
     //Drawing results 
     if (outer.valid){
         for (int p =  queueOldStart;p< queueEnd;p++)
@@ -493,7 +494,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
 
 SSegment CCircleDetect::getInnerSegment()
 {
-	return inner;
+    return inner;
 }
 
 float CCircleDetect::normalizeAngle(float a) {
@@ -502,114 +503,3 @@ float CCircleDetect::normalizeAngle(float a) {
     return a;
 }
 
-int CCircleDetect::identifySegment(SSegment* inner,CRawImage* image) {
-    int pos;
-    float x[idSamples];
-    float y[idSamples];
-    float signal[idSamples];
-    float differ[idSamples];
-    float smooth[idSamples];
-    int segmentWidth = idSamples/idBits/2;
-    //calculate appropriate positions
-    float topY = 0;
-    int topIndex = 0;
-    for (int a = 0;a<idSamples;a++){
-        x[a] = inner->x+(inner->m0*cos((float)a/idSamples*2*M_PI)*inner->v0+inner->m1*sin((float)a/idSamples*2*M_PI)*inner->v1)*2.0;
-        y[a] = inner->y+(inner->m0*cos((float)a/idSamples*2*M_PI)*inner->v1-inner->m1*sin((float)a/idSamples*2*M_PI)*inner->v0)*2.0;
-    }
-    //retrieve the image brightness on these using bilinear transformation
-    float gx,gy; 
-    int px,py;
-    unsigned char* ptr = image->data;
-    for (int a = 0;a<idSamples;a++)
-    {   
-        px = x[a];
-        py = y[a];
-        gx = x[a]-px;
-        gy = y[a]-py;
-        pos = (px+py*image->width);
-
-        /*detection from the image*/
-        signal[a]  = ptr[(pos+0)*step+0]*(1-gx)*(1-gy)+ptr[(pos+1)*step+0]*gx*(1-gy)+ptr[(pos+image->width)*step+0]*(1-gx)*gy+ptr[step*(pos+image->width+1)+0]*gx*gy; 
-        signal[a] += ptr[(pos+0)*step+1]*(1-gx)*(1-gy)+ptr[(pos+1)*step+1]*gx*(1-gy)+ptr[(pos+image->width)*step+1]*(1-gx)*gy+ptr[step*(pos+image->width+1)+1]*gx*gy; 
-        signal[a] += ptr[(pos+0)*step+2]*(1-gx)*(1-gy)+ptr[(pos+1)*step+2]*gx*(1-gy)+ptr[(pos+image->width)*step+2]*(1-gx)*gy+ptr[step*(pos+image->width+1)+2]*gx*gy;
-    }
-
-    //binarize the signal 
-    float avg = 0;
-    for (int a = 0;a<idSamples;a++) avg += signal[a];  
-    avg = avg/idSamples;
-    for (int a = 0;a<idSamples;a++) if (signal[a] > avg) smooth[a] = 1; else smooth[a] = 0;
-
-    //find the edge's locations
-    int maxIndex = 0;
-    int numEdges = 0;
-    float sx,sy;
-    sx = sy = 0;
-    if (smooth[idSamples-1] != smooth[0])sx = 1;
-    for (int a = 1;a<idSamples;a++){
-	    if (smooth[a] != smooth[a-1])
-	    {
-		    sx += cos(2*M_PI*a/segmentWidth);
-		    sy += sin(2*M_PI*a/segmentWidth);
-		    if (debug) printf("%i ",a);
-	    }
-    }
-    if (debug) printf("\n");
-    maxIndex = atan2(sy,sx)/2/M_PI*segmentWidth+segmentWidth/2;
-
-    //determine raw code
-    char code[idBits*4];
-    for (int i = 0;i<idBits*2;i++) code[i] = smooth[(maxIndex+i*segmentWidth)%idSamples]+'0'; 
-    
-    code[idBits*2] = 0;
-  
-    //determine the control edges' positions
-    int edgeIndex = 0;
-    for (unsigned int a=0;a<idBits*2;a++)
-    {
-	int p = (a+1)%(idBits*2);
-        if (code[a]=='0' && code[p]=='0') edgeIndex = a;
-    }
-    char realCode[idBits*4];
-    edgeIndex = 1-(edgeIndex%2);
-    int ID = 0; 
-    for (unsigned int a=0;a<idBits;a++){
-            realCode[a] = code[edgeIndex+2*a];
-        if (realCode[a] == 'X') ID = -1; 
-        if (ID > -1){
-                ID = ID*2;
-            if (realCode[a]=='1') ID++;
-        }
-    }
-    realCode[idBits] = 0;
-    SNecklace result = decoder->get(ID);
-    inner->angle = 2*M_PI*(-(float)maxIndex/idSamples+(float)result.rotation/idBits)+atan2(inner->v1,inner->v0)+1.5*M_PI/idBits; 
-    inner->angle = 2*M_PI*(-(float)maxIndex/idSamples-(float)edgeIndex/idBits/2.0+(float)result.rotation/idBits)+atan2(inner->v1,inner->v0);//+1.5*M_PI/idBits; 
-    while (inner->angle > +M_PI)  inner->angle-=2*M_PI; 
-    while (inner->angle < -M_PI)  inner->angle+=2*M_PI; 
-    //printf("CODE %i %i %i %i %s %s %.3f %.3f\n",result.id,result.rotation,maxIndex,ID,realCode,code,inner->angle,atan2(inner->v1,inner->v0));
-	    if (debug){
-		    printf("CODE %i %i %.3f\n",result.id,maxIndex,inner->angle);
-		    printf("Realcode %s %i %s\n",code,edgeIndex,realCode);
-		    printf("ORIG: ");
-		    for (int a = 0;a<idSamples;a++)printf("%.2f ",signal[a]);
-		    printf("\n");
-		    //for (int a = 0;a<idSamples;a++)printf("%.2f ",differ[a]);
-		    //printf("\n");
-		    for (int a = 0;a<idSamples;a++)printf("%.2f ",smooth[a]);
-		    printf("\n");
-	    }
-
-    for (int a = 0;a<idSamples;a++){
-        pos = ((int)x[a]+((int)y[a])*image->width);
-        if (pos > 0 && pos < image->width*image->height){   
-            image->data[step*pos+0] = 0;
-            image->data[step*pos+1] = (unsigned char)(255.0*a/idSamples);
-            image->data[step*pos+2] = 0;
-
-        }
-    }
-    
-    return result.id++;
-}
