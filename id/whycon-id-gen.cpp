@@ -98,11 +98,11 @@ void draw_whycode_markers(int id, int idx, const int teethCount){
 
     // Draw a final white circle in the centre to complete the marker
     printf("Rendering final image: %d (encoding %d)  =>  %08d.png\n", idx, id, idx);
-    drawList.push_back(DrawableStrokeWidth(0));
+/*    drawList.push_back(DrawableStrokeWidth(0));
     drawList.push_back(DrawableFillColor("white"));
     drawList.push_back(DrawableEllipse(xc, yc, 240, 240, 0, 360));
     image.draw(drawList);
-    drawList.clear();
+    drawList.clear();*/
 
     char fname[13];
     sprintf(fname, "%08d.png", idx);
