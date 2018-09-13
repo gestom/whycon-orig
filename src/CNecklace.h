@@ -7,6 +7,7 @@
 
 #include "CCircleDetect.h"
 #include "CTransformation.h"
+#include "CRawImage.h"
 
 typedef struct
 {
@@ -24,6 +25,8 @@ class CNecklace{
         float observationEstimation(float confidence);
 
         int identifySegment(SSegment *segment, STrackedObject *object, CRawImage *image);
+
+        bool debugSegment;
 
     private:
         SNecklace unknown;

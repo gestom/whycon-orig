@@ -39,7 +39,8 @@ CCircleDetect *detectorArray[MAX_PATTERNS];	//detector array (each pattern has i
 SSegment currentSegmentArray[MAX_PATTERNS];	//segment array (detected objects in image space)
 SSegment lastSegmentArray[MAX_PATTERNS];	//segment position in the last step (allows for tracking)
 
-SSegment currInnerSegArr[MAX_PATTERNS];		//inner segment array`
+SSegment currInnerSegArr[MAX_PATTERNS];		//inner segment array
+CNecklace *decoder;
 
 STrackedObject objectArray[MAX_PATTERNS];	//object array (detected objects in metric space)
 CTransformation *trans;				//allows to transform from image to metric coordinates
@@ -229,6 +230,7 @@ void processKeys()
         for (int i = 0;i<numBots;i++){
             detectorArray[i]->draw = detectorArray[i]->draw==false;
             detectorArray[i]->debug = detectorArray[i]->debug==false;
+            decoder->debugSegment = decoder->debugSegment==false;
         }
     }
 
@@ -262,6 +264,7 @@ void reconfigureCallback(whycon_ros::whyconConfig &config, uint32_t level)
     for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i]->reconfigure(config.initialCircularityTolerance, config.finalCircularityTolerance, config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs, config.identify, config.minSize);
     fieldLength = config.fieldLength;
     fieldWidth = config.fieldWidth;
+    identify = config.identify;
 }
 
 void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg)
@@ -341,8 +344,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
             objectArray[i] = trans->transform(currentSegmentArray[i]);
 
             if(identify){
-                CNecklace detector(idBits,idSamples,hammingDist);
-                int segmentID = detector.identifySegment(&currentSegmentArray[i], &objectArray[i], image) + 1;
+                int segmentID = decoder->identifySegment(&currentSegmentArray[i], &objectArray[i], image) + 1;
 //                if (debug) printf("SEGMENT ID: %i\n", segmentID);
                 if (segmentID > -1){
                     objectArray[i].yaw = currentSegmentArray[i].angle;
@@ -476,6 +478,8 @@ int main(int argc,char* argv[])
     // initialize the circle detectors - each circle has its own detector instance 
     for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits, idSamples, hammingDist);
     image->getSaveNumber();
+
+    decoder = new CNecklace(idBits,idSamples,hammingDist);
 
     // initialize dynamic reconfiguration feedback
     dynamic_reconfigure::Server<whycon_ros::whyconConfig> server;
