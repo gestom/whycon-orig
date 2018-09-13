@@ -42,10 +42,7 @@ sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev graphicsmag
 ```
 2. Download the code from GitHub into a catkin workspace.
 3. Compile the code - just type `catkin_make` in workspace directory.
-4. Source setup script in package directory into shell enviroment e.g.
-```
-source devel/setup.bash
-```
+4. Source setup script in package directory into shell enviroment e.g. `source devel/setup.bash`
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
 6. Run code by <i>roslaunch</i> and remap subsribed camera topics either on start up through arguments
 ```
@@ -55,8 +52,9 @@ or rewrite file <a href="launch/whycon.launch">whycon.launch</a> so default valu
 ```
 roslaunch whycon_ros whycon.launch
 ```
-7. You should see the image with some numbers below the circle. Pressing <i>D</i> shows the segmentation result.
-8. You can change the parameters in <i>rqt_reconfigure</i> which should open together with whycon GUI.
+7. If using patterns with encoded ID keep the option <i>identify</i> turned on in <i>rqt_reconfigure</i> and if without ID, then turn it off!!!
+8. You should see the image with some numbers below the circle. Pressing <i>D</i> shows the segmentation result.
+9. You can change the parameters in <i>rqt_reconfigure</i> which should open together with whycon GUI.
 
 #### Generating tags with ID
 
