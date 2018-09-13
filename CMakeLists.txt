@@ -88,7 +88,7 @@ add_executable(whycon_ros src/whycon.cpp)
 
 target_link_libraries(whycon_transform whycon_sysmath ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 
-target_link_libraries(whycon_necklace whycon_detector whycon_transform)
+target_link_libraries(whycon_necklace whycon_detector whycon_transform whycon_image)
 
 target_link_libraries(whycon_ros
 	whycon_timer
