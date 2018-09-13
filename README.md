@@ -90,12 +90,12 @@ roslaunch whycon_ros whycon.launch [...] idBits:=...
 1. /whycon_ros/markers - you can find its header files in <a href="msg/">msg</a> folder
    - Header header
    - whycon_ros/Marker[] markers
-     - float32 u
-     - float32 v
-     - int32 size
-     - int8 id
-     - geometry_msgs/Pose position
-     - geometry_msgs/Vector3 rotation
+     - float32 u                        # camera coordinate
+     - float32 v                        # camera coordinate
+     - int32 size                       # size of the segment in pixels
+     - int8 id                          # ID of pattern
+     - geometry_msgs/Pose position      # position with quaternion as orientation
+     - geometry_msgs/Vector3 rotation   # vector of Euler angles - pitch, roll, yaw
 ##### Subscribed
 1. /&lt;camera&gt;/camera_info - camera matrix and distortion coeffs
 2. /&lt;camera&gt;/image_raw - raw image data without correction
