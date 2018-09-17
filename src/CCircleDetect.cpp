@@ -428,6 +428,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
             lastTrackOK = false;
         }
     }
+
     //threshold management
     if (outer.valid){
         lastThreshold = threshold;
@@ -441,34 +442,7 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
         if (changeThreshold()==false) numFailed = 0;
         if (debug) drawAll = true;
     }
-/*
-    SSegment tmp;
-    if (outer.valid && identify){
-        tmp.x = inner.x;
-        tmp.y = inner.y;
-        tmp.m0 = 0.33/0.70*outer.m0;
-        tmp.m1 = 0.33/0.70*outer.m1;
-        tmp.v0 = outer.v0;
-        tmp.v1 = outer.v1;
-        
-       // inner.x = outer.x;
-       // inner.y = outer.y;
-       // inner.m0 = 0.33/0.70*outer.m0;
-       // inner.m1 = 0.33/0.70*outer.m1;
-       // inner.v0 = outer.v0;
-       // inner.v1 = outer.v1;
-        
-        int segment = identifySegment(&inner,image)+1;
-        if (debug) printf("SEGMENT ID: %i\n", segment);
-        outer.angle = init.angle;
-        outer.ID = init.ID;
-        if (segment > -1)
-        {
-            outer.angle = tmp.angle;
-            outer.ID = segment;
-        }
-    }
-*/
+
     //Drawing results 
     if (outer.valid){
         for (int p =  queueOldStart;p< queueEnd;p++)
