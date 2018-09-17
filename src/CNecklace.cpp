@@ -58,13 +58,13 @@ CNecklace::CNecklace(int bits, int samples, int minimalHamming)
             idArray[id].hamming = minHam;
         }
         else if (minHam > 0){
-            idArray[id].id = -1; 
-            idArray[id].rotation = -1;
+            idArray[id].id = -100; 
+            idArray[id].rotation = -100;
             idArray[id].hamming = minHam;
         }
         if(isSymmetrical){
-            idArray[id].id = -1;
-            idArray[id].rotation = -1;
+            idArray[id].id = -100;
+            idArray[id].rotation = -100;
         } 
     }
 
@@ -145,8 +145,8 @@ int CNecklace::verifyHamming(int a[],int bits,int len)
 
 SNecklace CNecklace::get(int sequence, bool probabilistic, float confidence)
 {
-    if (sequence < 0 || sequence >= idLength) return unknown; //changed from sequence <= 0
-    if(! probabilistic) return idArray[sequence];
+    if (sequence <= 0 || sequence >= idLength) return unknown; //changed from sequence <= 0
+    if (!probabilistic) return idArray[sequence];
 
     float oe = observationEstimation(confidence);
     float o=.0;
@@ -219,12 +219,22 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
     float x[2][idSamples];
     float y[2][idSamples];
     float signal[2][idSamples];
-    float differ[2][idSamples];
     float smooth[2][idSamples];
     int segmentWidth = idSamples/length/2;
-    //calculate appropriate positions
+
+    int maxIdx[2];
+    float numPoints[2];
+    int maxIndex = 0;
+
+    char code[2][length*4];
+    int edgeIndex[2];
+    char realCode[2][length*4];
+    int ID[2];
+    SNecklace result[2];
+
     for(int i=0;i<2;i++){
 
+        //calculate appropriate positions
         float topY = 0;
         int topIndex = 0;
         for (int a = 0;a<idSamples;a++){
@@ -253,173 +263,111 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
         for (int a = 0;a<idSamples;a++) avg += signal[i][a];
         avg = avg/idSamples;
         for (int a = 0;a<idSamples;a++) if (signal[i][a] > avg) smooth[i][a] = 1; else smooth[i][a] = 0;
-    }
 
+        //find the edge's locations
+        int numEdges = 0;  // variable not used at all
+        float sx,sy;
 
-    //find the edge's locations
-    int maxIndex = 0;
-    int numEdges = 0;
-    float sx,sy;
-
-    int maxIdx[2];
-    float numPoints[2];
-    for(int k=0;k<2;k++){
         sx = sy = 0;
-        numPoints[k]=0;
-        if (smooth[k][idSamples-1] != smooth[k][0])sx = 1;
+        numPoints[i]=0;
+        if (smooth[i][idSamples-1] != smooth[i][0])sx = 1;
         for (int a = 1;a<idSamples;a++){
-            if (smooth[k][a] != smooth[k][a-1]){
+            if (smooth[i][a] != smooth[i][a-1]){
                 sx += cos(2*M_PI*a/segmentWidth);
                 sy += sin(2*M_PI*a/segmentWidth);
-                numPoints[k]++;
+                numPoints[i]++;
                 if (debugSegment) printf("%i ",a);
             }
         }
         if (debugSegment) printf("\n");
+        maxIdx[i] = atan2(sy,sx)/2/M_PI*segmentWidth+segmentWidth/2;
 
-        float meanX = sx / numPoints[k];
-        float meanY = sy / numPoints[k];
+        float meanX = sx / numPoints[i];
+        float meanY = sy / numPoints[i];
         float errX, errY;
         sx=sy=0;
-        if (smooth[k][idSamples-1] != smooth[k][0])sx = 1;
+        if (smooth[i][idSamples-1] != smooth[i][0])sx = 1;
         for (int a = 1;a<idSamples;a++){
-            if (smooth[k][a] != smooth[k][a-1]){
+            if (smooth[i][a] != smooth[i][a-1]){
                 sx = cos(2*M_PI*a/segmentWidth);
                 sy = sin(2*M_PI*a/segmentWidth);
                 errX = sx - meanX;
                 errY = sy - meanY;
-                sum[k] += errX*errX + errY*errY;
+                sum[i] += errX*errX + errY*errY;
             }
         }
-        variance[k] = sum[k] / (numPoints[k]*2.0);
-    }
+        variance[i] = sum[i] / numPoints[i];
 
-//    maxIndex = atan2(sy,sx)/2/M_PI*segmentWidth+segmentWidth/2;
+        //determine raw code
+        for (int a = 0;a<length*2;a++) code[i][a] = smooth[i][(maxIdx[i]+a*segmentWidth)%idSamples]+'0';
 
-    //determine raw code
-    char code[2][length*4];
-    int edgeIndex[2];
-    char realCode[2][length*4];
-    int ID[2];
-    SNecklace result[2];
-    for(int m=0;m<2;m++){
-        for (int i = 0;i<length*2;i++) code[m][i] = smooth[segIdx][(maxIdx[m]+i*segmentWidth)%idSamples]+'0';
-
-        code[m][length*2] = 0;
+        code[i][length*2] = 0;
 
         //determine the control edges' positions
-        edgeIndex[m] = 0;
+        edgeIndex[i] = 0;
         for (unsigned int a=0;a<length*2;a++){
             int p = (a+1)%(length*2);
-            if (code[m][a]=='0' && code[m][p]=='0') edgeIndex[m] = a;
+            if (code[i][a]=='0' && code[i][p]=='0') edgeIndex[i] = a;
         }
-//        char realCode[length*4];
-        edgeIndex[m] = 1-(edgeIndex[m]%2);
-        ID[m] = 0;
+        edgeIndex[i] = 1-(edgeIndex[i]%2);
+        ID[i] = 0;
         for (unsigned int a=0;a<length;a++){
-            realCode[m][a] = code[m][edgeIndex[m]+2*a];
-            if (realCode[m][a] == 'X') ID[m] = -1;
-            if (ID[m] > -1){
-                ID[m] = ID[m]*2;
-                if (realCode[m][a]=='1') ID[m]++;
+            realCode[i][a] = code[i][edgeIndex[i]+2*a];
+//            if (realCode[i][a] == 'X') ID[i] = -1;
+            if (ID[i] > -1){
+                ID[i] = ID[i]*2;
+                if (realCode[i][a]=='1') ID[i]++;
             }
         }
-        realCode[m][length] = 0;
-        result[m] = get(ID[m]);
+        realCode[i][length] = 0;
+        result[i] = get(ID[i]);
     }
 
-//    for(int i=0;i<2;i++) printf("%d numPoints %f id %d variance %f ID %d\n",i,numPoints[i],result[i].id,variance[i],ID[i]);
+    for(int i=0;i<2;i++) printf("%d numPoints %f id %d variance %f ID %d\n",i,numPoints[i],result[i].id,variance[i],ID[i]);
 
     if(numPoints[0]==numPoints[1]){
         if(result[0].id==result[1].id){
             if(variance[0] < variance[1]){
                 segIdx = 0;
-                segment->x = object->segX1;
-                segment->y = object->segY1;
-                object->x = object->x1;
-                object->y = object->y1;
-                object->z = object->z1;
-                object->pitch = object->pitch1;
-                object->roll = object->roll1;
-                object->yaw = object->yaw1;
             }else{
                 segIdx = 1;
-                segment->x = object->segX2;
-                segment->y = object->segY2;
-                object->x = object->x2;
-                object->y = object->y2;
-                object->z = object->z2;
-                object->pitch = object->pitch2;
-                object->roll = object->roll2;
-                object->yaw = object->yaw2;
+            }
+        }else if(result[0].id > -100 && result[1].id > -100){
+            if(variance[0] < variance[1]){
+                segIdx = 0;
+            }else{
+                segIdx = 1;
             }
         }else if(result[0].id > -100){
             segIdx = 0;
-            segment->x = object->segX1;
-            segment->y = object->segY1;
-            object->x = object->x1;
-            object->y = object->y1;
-            object->z = object->z1;
-            object->pitch = object->pitch1;
-            object->roll = object->roll1;
-            object->yaw = object->yaw1;
         }else{
             segIdx = 1;
-            segment->x = object->segX2;
-            segment->y = object->segY2;
-            object->x = object->x2;
-            object->y = object->y2;
-            object->z = object->z2;
-            object->pitch = object->pitch2;
-            object->roll = object->roll2;
-            object->yaw = object->yaw2;
         }
     }else if(numPoints[0] > length && numPoints[0] < 2*length && numPoints[1] > length && numPoints[1] < 2*length){
         if(result[0].id==result[1].id){
             if(variance[0] < variance[1]){
                 segIdx = 0;
-                segment->x = object->segX1;
-                segment->y = object->segY1;
-                object->x = object->x1;
-                object->y = object->y1;
-                object->z = object->z1;
-                object->pitch = object->pitch1;
-                object->roll = object->roll1;
-                object->yaw = object->yaw1;
             }else{
                 segIdx = 1;
-                segment->x = object->segX2;
-                segment->y = object->segY2;
-                object->x = object->x2;
-                object->y = object->y2;
-                object->z = object->z2;
-                object->pitch = object->pitch2;
-                object->roll = object->roll2;
-                object->yaw = object->yaw2;
+            }
+        }else if(result[0].id > -100 && result[1].id > -100){
+            if(variance[0] < variance[1]){
+                segIdx = 0;
+            }else{
+                segIdx = 1;
             }
         }else if(result[0].id > -100){
             segIdx = 0;
-            segment->x = object->segX1;
-            segment->y = object->segY1;
-            object->x = object->x1;
-            object->y = object->y1;
-            object->z = object->z1;
-            object->pitch = object->pitch1;
-            object->roll = object->roll1;
-            object->yaw = object->yaw1;
         }else{
             segIdx = 1;
-            segment->x = object->segX2;
-            segment->y = object->segY2;
-            object->x = object->x2;
-            object->y = object->y2;
-            object->z = object->z2;
-            object->pitch = object->pitch2;
-            object->roll = object->roll2;
-            object->yaw = object->yaw2;
         }
     }else if(numPoints[0] > length && numPoints[0] < 2*length){
         segIdx = 0;
+    }else{
+        segIdx = 1;
+    }
+
+    if(segIdx == 0){
         segment->x = object->segX1;
         segment->y = object->segY1;
         object->x = object->x1;
@@ -429,7 +377,6 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
         object->roll = object->roll1;
         object->yaw = object->yaw1;
     }else{
-        segIdx = 1;
         segment->x = object->segX2;
         segment->y = object->segY2;
         object->x = object->x2;
@@ -440,8 +387,9 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
         object->yaw = object->yaw2;
     }
 
-//    printf("segIdx %d ",segIdx);
-//    printf("numPoints %f id %d variance %f ID %d\n\n",numPoints[segIdx],result[segIdx].id,variance[segIdx],ID[segIdx]);
+
+    printf("segIdx %d ",segIdx);
+    printf("numPoints %f id %d variance %f ID %d\n\n",numPoints[segIdx],result[segIdx].id,variance[segIdx],ID[segIdx]);
 
     maxIndex = maxIdx[segIdx];
     
@@ -455,8 +403,6 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
         printf("ORIG: ");
         for (int a = 0;a<idSamples;a++)printf("%.2f ",signal[segIdx][a]);
         printf("\n");
-        //for (int a = 0;a<idSamples;a++)printf("%.2f ",differ[a]);
-        //printf("\n");
         for (int a = 0;a<idSamples;a++)printf("%.2f ",smooth[segIdx][a]);
         printf("\n");
     }
