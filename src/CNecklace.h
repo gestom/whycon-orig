@@ -20,7 +20,7 @@ class CNecklace{
     public:
         CNecklace(int bits,int samples,int minimalHamming = 1);
         ~CNecklace();
-        SNecklace get(int sequence, bool probabilistic=true, float confidence=1.0);
+        SNecklace get(int sequence, bool probabilistic=false, float confidence=1.0);
         int verifyHamming(int a[],int bits,int len);
         float observationEstimation(float confidence);
 
