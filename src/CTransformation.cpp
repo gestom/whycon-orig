@@ -510,13 +510,13 @@ STrackedObject CTransformation::transform(SSegment segment)
     //3D->2D homography, see 4.4.2 of [1]
     if (transformType == TRANSFORM_2D){
         // TODO is calcEigen() really necessary
-        //for debug only
+        //for debug only  // which part is for debug only???
         result = calcEigen(data);
         result.x = x;
         result.y = y;
         result = transform2D(result);
 
-        result.yaw = atan2(segment.v0,segment.v1);
+        result.yaw = atan2(segment.v0,segment.v1);  // why calculating twice
         result.yaw = segment.angle;
         result.ID = segment.ID;
     }
@@ -539,8 +539,6 @@ STrackedObject CTransformation::transform(SSegment segment)
     if (transformType == TRANSFORM_INV){
         result = calcEigen(data);
     }
-    /*result.pitch = acos(fmin(minor/major,1.0))/M_PI*180.0; //TODO
-      result.roll = segment.horizontal; //TODO*/
 /*
     //inner major axis      
     //vertices in image coords
@@ -560,12 +558,6 @@ STrackedObject CTransformation::transform(SSegment segment)
     float Fx = segment.x-fabs(segment.v0)*segment.m0*2;
     float Ey = segment.y+fabs(segment.v1)*segment.m0*2;
     float Fy = segment.y-fabs(segment.v1)*segment.m0*2;
-    //outer minor axis
-    //vertices in image coords
-    //float Gx = segment.x+fabs(segment.v1)*segment.m1*2;
-    //float Hx = segment.x-fabs(segment.v1)*segment.m1*2;
-    //float Gy = segment.y-fabs(segment.v0)*segment.m1*2;
-    //float Hy = segment.y+fabs(segment.v0)*segment.m1*2;
 
     if(fabs(Fy-Ey) > fabs(Fx-Ex)){
         if(fabs(Dx-segment.x) > fabs(Cx-segment.x))
