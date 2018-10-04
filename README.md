@@ -1,3 +1,5 @@
+The latest version of the system is in the #whycon-ros-full# branch. 
+
 ## WhyCon
 
 ### A precise, efficient and low-cost localization system 
