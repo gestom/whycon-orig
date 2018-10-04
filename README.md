@@ -1,4 +1,4 @@
-The latest version of the system is in the #whycon-ros-full# branch. 
+The latest version of the system is in the 'whycon-ros-full' branch. 
 
 ## WhyCon
 
