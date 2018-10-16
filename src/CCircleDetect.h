@@ -1,7 +1,6 @@
 #ifndef __CCIRCLEDETECT_H__
 #define __CCIRCLEDETECT_H__
 
-//#include "CNecklace.h"
 #include "CRawImage.h"
 #include <math.h>
 
@@ -11,28 +10,27 @@
 #define OUTER 1
 #define MAX_PATTERNS 50
 
-//this structure contains information related to image coordinates and dimensions of the detected pattern
+// this structure contains information related to image coordinates and dimensions of the detected pattern
 typedef struct{
-    float x;			//center in image coordinates
-    float y;			//center in image coordinates
-    float angle,horizontal;		//orientation (not really used in this case, see the SwarmCon version of this software) 
-    int size;			//number of pixels
-    int maxy,maxx,miny,minx;	//bounding box dimensions
-    int mean;			//mean brightness
-    int type;			//black or white ?
-    float roundness;		//result of the first roundness test, see Eq. 2 of paper [1]
-    float bwRatio;			//ratio of white to black pixels, see Algorithm 2 of paper [1] 
-    bool round;			//segment passed the initial roundness test
-    bool valid;			//marker passed all tests and will be passed to the transformation phase
-    float m0,m1;			//eigenvalues of the pattern's covariance matrix, see Section 3.3 of [1]
-    float v0,v1;			//eigenvectors of the pattern's covariance matrix, see Section 3.3 of [1]
-    float r0,r1;			//ratio of inner vs outer ellipse dimensions (used to establish ID, see the SwarmCon version of this class)
-    int ID;				//pattern ID (experimental, see the SwarmCon version of this class)
+    float x;			// center in image coordinates
+    float y;			// center in image coordinates
+    float angle,horizontal;	// orientation (not really used in this case, see the SwarmCon version of this software)
+    int size;			// number of pixels
+    int maxy,maxx,miny,minx;	// bounding box dimensions
+    int mean;			// mean brightness
+    int type;			// black or white ?
+    float roundness;		// result of the first roundness test, see Eq. 2 of paper [1]
+    float bwRatio;		// ratio of white to black pixels, see Algorithm 2 of paper [1]
+    bool round;			// segment passed the initial roundness test
+    bool valid;			// marker passed all tests and will be passed to the transformation phase
+    float m0,m1;		// eigenvalues of the pattern's covariance matrix, see Section 3.3 of [1]
+    float v0,v1;		// eigenvectors of the pattern's covariance matrix, see Section 3.3 of [1]
+    float r0,r1;		// ratio of inner vs outer ellipse dimensions (used to establish ID, see the SwarmCon version of this class)
+    int ID;			// pattern ID (experimental, see the SwarmCon version of this class)
 } SSegment;
 
 class CCircleDetect
 {
-
     public:
         //constructor, wi and he correspond to the image dimensions 
         CCircleDetect(int wi,int he, bool id, int bits, int samples, int dist);
@@ -69,23 +67,15 @@ class CCircleDetect
         // adjust the dimensions of the image, when the image size changes
         int adjustDimensions(int wi, int he);
 
-        //flags to draw results - used for debugging
-        bool draw,drawAll,lastTrackOK;
-
-        //debug level
-        int debug;
-
-        //used when selecting the circle by mouse click 
-        bool localSearch;
-
-        //attempt to identify segments 
-        bool identify;
+        bool draw,lastTrackOK;      // flags to draw results - used for debugging
+        int debug;                  // debug level
+        bool localSearch;           // used when selecting the circle by mouse click
+        bool identify;              // attempt to identify segments
     private:
         //see the constructor in CCircleDetection.cpp for description of the following parameters
         int idBits;
         int idSamples;
         int hammingDist;
-//        CNecklace *decoder;
         bool track;
         int maxFailed;
         int numFailed;
@@ -113,7 +103,6 @@ class CCircleDetect
         int width,height,len,siz;
         int expand[4];
         unsigned char *ptr;
-        // CTimer timer;
         int tima,timb,timc,timd,sizer,sizerAll;
         float diameterRatio;
         bool ownBuffer;
