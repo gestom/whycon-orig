@@ -26,17 +26,17 @@ class CNecklace{
 
         int identifySegment(SSegment *segment, STrackedObject *object, CRawImage *image);
 
-        bool debugSegment;
+        bool debugSegment;      // for debugging identifySegment()
 
     private:
-        SNecklace unknown;
-        SNecklace *idArray;
-        float* probArray;
-        int maxID;
+        SNecklace unknown;      // default unknown ID
+        SNecklace *idArray;     // precalculated IDs
+        float* probArray;       // probability for each ID
+        int maxID;              // max ID used for Bayes probability
         int idSamples;          // samples to determine black/white signal
         int length;             // number of ID bits
-        int idLength; 
-        bool debug;
+        int idLength;           // amount of all possible IDs
+        bool debug;             // for debugging rest of the class
 
         int getEstimatedID();
         int getHamming(int a, int b);

@@ -145,7 +145,7 @@ int CNecklace::verifyHamming(int a[],int bits,int len)
 
 SNecklace CNecklace::get(int sequence, bool probabilistic, float confidence)
 {
-    if (sequence <= 0 || sequence >= idLength) return unknown; //changed from sequence <= 0
+    if (sequence <= 0 || sequence >= idLength) return unknown;
     if (!probabilistic) return idArray[sequence];
 
     float oe = observationEstimation(confidence);
@@ -386,7 +386,6 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
         object->roll = object->roll2;
         object->yaw = object->yaw2;
     }
-
 
     printf("segIdx %d ",segIdx);
     printf("numPoints %f id %d variance %f ID %d\n\n",numPoints[segIdx],result[segIdx].id,variance[segIdx],ID[segIdx]);
