@@ -75,15 +75,35 @@ roslaunch whycon_ros whycon.launch [...] idBits:=...
 3. Position and fixate your camera so that it has all four circles in it's field of view.
 4. Run whycon and modify the dimensions of the operation space in the <i>rqt_reconfigure</i> - the system will now assume that the four markers are at positions [0,0],[fieldLength,0], [0,fieldWidth],[fieldLength,fieldWidth]. 
 5. Adjust the parameter <i>numBots</i> - the number of patterns you want to track plus 4.
-6. Once all the patterns are found, press <i>a</i> and the four outermost patterns will be used to calculate the coordinate system.
-7. Alternatively, you can press <i>r</i> and then click the four circles that define the coordinate system.
+6. Once all the patterns are found, press `a` and the four outermost patterns will be used to calculate the coordinate system.
+7. Alternatively, you can press `r` and then click the four circles that define the coordinate system.
 8. Pressing 1 should show you the patterns' positions in camera-centric coordinates (x-axis equals to camera optical axis), pressing 2 and 3 will display marker coordinates in user-defined 2D or 3D coordinate systems.
-9. Pressing <i>+</i>,<i>-</i> changes the number of localized patterns.
+9. Pressing `+`,`-` changes the number of localized patterns.
 
 #### Logs, GUI, recording topics
 
 1. GUI can be omitted by passing argument `useGui:=false` at strat up.
 2. Video and communication topics can be save using <i>rosbag</i>.
+
+#### GUI key binding
+
+- `h` - show/hide help
+- `+` - increase the number of tracked patterns
+- `-` - decrease the number of tracked patterns
+- `1` - camera coordinate system
+- `2` - planar coordinate system
+- `3` - 3D coordinate system
+- `l` - draw/hide coordinates
+- `d` - draw/hide segmentation outcome and print debug info
+- `s` - save current image
+- `a` - autocalibration (searches for 4 outermost patterns and uses them to establisht the coordinate system)
+- `r` - manual calibration (click the 4 calibration patterns with mouse)
+- `ESC` - exit WhyCon
+
+- Individual patterns to be tracked can be selected by a mouse click.
+- `m` and `n` are recommended to use only with one tracked pattern.
+- `m` - prints camera coords and eigenvalues of the first pattern
+- `n` - prints image coords and eigenvalues of the first pattern
 
 #### Topics
 ##### Published
