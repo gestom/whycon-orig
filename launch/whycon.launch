@@ -9,6 +9,7 @@
     <arg name="idBits" default="5" doc="Number of encoded bits"/>
     <arg name="idSamples" default="360" doc="Number of samples to detect ID"/>
     <arg name="hammingDist" default="1" doc="Hamming distance used for ID"/>
+    <arg name="maxPatterns" default="5" doc="Maximum possible amount of patterns to be tracked"/>
 
     <arg name="useGui" default="true" doc="Whether to use GUI"/>
 
@@ -23,7 +24,8 @@
 	<param name="useGui" value="$(arg useGui)"/>
 	<param name="idBits" value="$(arg idBits)"/>
 	<param name="idSamples" value="$(arg idSamples)"/>
-	<param name="hammingDist" value="$(arg hammingDist)"/>
+        <param name="hammingDist" value="$(arg hammingDist)"/>
+        <param name="maxPatterns" value="$(arg maxPatterns)"/>
         
     </node>
 
