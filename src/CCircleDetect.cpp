@@ -11,7 +11,6 @@ CCircleDetect::CCircleDetect(int wi, int he, bool id, int bits, int samples, int
     idBits = bits;
     idSamples = samples;
     hammingDist = dist;
-//    decoder = new CNecklace(idBits, hammingDist);
     identify = id;
     step = -1;
     ID = -1;
@@ -19,7 +18,6 @@ CCircleDetect::CCircleDetect(int wi, int he, bool id, int bits, int samples, int
     lastTrackOK = false;
     debug = false;
     draw = true;
-    drawAll = true;
     maxFailed = 0;
     minSize = 100;
     maxThreshold = 256;
@@ -80,7 +78,6 @@ CCircleDetect::~CCircleDetect() {
         free(buffer);
         free(queue);
     }
-//    delete decoder;
 }
 
 bool CCircleDetect::changeThreshold() {
@@ -432,15 +429,12 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
     //threshold management
     if (outer.valid){
         lastThreshold = threshold;
-        drawAll = false;
         numFailed = 0;  
     }else if (numFailed < maxFailed){
         if (numFailed++%2 == 0) changeThreshold(); else threshold = lastThreshold;
-        if (debug) drawAll = true;
     }else{
         numFailed++;
         if (changeThreshold()==false) numFailed = 0;
-        if (debug) drawAll = true;
     }
 
     //Drawing results 
