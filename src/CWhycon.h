@@ -35,16 +35,17 @@ class CWhycon {
         int imageWidth;         // default camera resolution
         int imageHeight;        // default camera resolution
         float circleDiameter;   // default black circle diameter [m];
-        float fieldLength;      // X dimension of the coordinate system             
+        float fieldLength;      // X dimension of the coordinate system
         float fieldWidth;       // Y dimension of the coordinate system
 
         /*robot detection variables*/
         bool identify;          // whether to identify ID
         int numBots;            // num of robots to track
         int numFound;           // num of robots detected in the last step
-        int numStatic;          // num of non-moving robots  
+        int numStatic;          // num of non-moving robots
+        int maxPatterns;        // maximum number of patterns
 
-        //circle identification                                                            
+        //circle identification
         int idBits;             // num of ID bits
         int idSamples;          // num of samples to identify ID
         int hammingDist;        // hamming distance of ID code
@@ -62,8 +63,9 @@ class CWhycon {
         void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg);
         void imageCallback(const sensor_msgs::ImageConstPtr& msg);
 
-        CCircleDetect *detectorArray[MAX_PATTERNS];     // detector array (each pattern has its own detector)
-        CTransformation *trans;                         // allows to transform from image to metric coordinates
+        // dynamic parameter reconfiguration
+        static void reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& config, uint32_t level);
+
     private:
 
         /*GUI-related stuff*/
@@ -94,11 +96,14 @@ class CWhycon {
         int wasBots;                        // pre-calibration number of robots to track (used to preserve pre-calibation number of robots to track)
 
         /*robot detection variables*/
-        SSegment currentSegmentArray[MAX_PATTERNS];     // segment array (detected objects in image space)
-        SSegment lastSegmentArray[MAX_PATTERNS];        // segment position in the last step (allows for tracking)
-        SSegment currInnerSegArr[MAX_PATTERNS];         // inner segment array
+        STrackedObject *objectArray;       // object array (detected objects in metric space)
+        SSegment *currInnerSegArray;       // inner segment array
+        SSegment *currentSegmentArray;     // segment array (detected objects in image space)
+        SSegment *lastSegmentArray;        // segment position in the last step (allows for tracking)
+        CCircleDetect **detectorArray;     // detector array (each pattern has its own detector)
+
+        CTransformation *trans;                         // allows to transform from image to metric coordinates
         CNecklace *decoder;                             // Necklace code decoder
-        STrackedObject objectArray[MAX_PATTERNS];       // object array (detected objects in metric space)
 
         ros::NodeHandle *n;                     // ROS node
         ros::Subscriber subInfo;                // camera info subscriber
@@ -113,8 +118,8 @@ class CWhycon {
         std::string calibDefPath;       // path to user defined coordinate calibration
 
         // intrisic and distortion params from camera_info
-        Mat intrinsic = Mat(3,3, CV_32FC1);
-        Mat distCoeffs = Mat(1,5, CV_32FC1);
+        Mat intrinsic = Mat::ones(3,3, CV_32FC1);
+        Mat distCoeffs = Mat::ones(1,5, CV_32FC1);
 
         /*manual calibration can be initiated by pressing 'r' and then clicking circles at four positions (0,0)(fieldLength,0)...*/
         void manualcalibration();
@@ -126,8 +131,5 @@ class CWhycon {
         void processKeys();
 
 };
-
-// dynamic parameter reconfiguration
-void reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& config, uint32_t level);
 
 #endif

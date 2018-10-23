@@ -155,29 +155,6 @@ void CWhycon::processKeys(){
     memcpy(lastKeys,keys,keyNumber);
 }
 
-// dynamic parameter reconfiguration
-void reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& config, uint32_t level){
-    ROS_INFO("[Reconfigure Request]\n"
-            "numBots %d circleDiam %lf identify %d\n"
-            "initCircularityTolerance %lf finalCircularityTolerance %lf\n"
-            "areaRatioTolerance %lf centerDistTolerance %lf centerDistToleranceAbs %lf",
-            config.numBots, config.circleDiameter, config.identify,\
-            config.initialCircularityTolerance, config.finalCircularityTolerance,\
-            config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs);
-
-    whycon->numBots = (config.numBots > MAX_PATTERNS) ? MAX_PATTERNS : config.numBots;
-    whycon->fieldLength = config.fieldLength;
-    whycon->fieldWidth = config.fieldWidth;
-    whycon->identify = config.identify;
-
-    whycon->trans->reconfigure(config.circleDiameter);
-
-    for (int i = 0;i<MAX_PATTERNS;i++) whycon->detectorArray[i]->reconfigure(\
-            config.initialCircularityTolerance, config.finalCircularityTolerance,\
-            config.areaRatioTolerance,config.centerDistanceToleranceRatio,\
-            config.centerDistanceToleranceAbs, config.identify, config.minSize);
-}
-
 void CWhycon::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg){
     if(msg->K[0] == 0){
         ROS_FATAL("ERROR: Camera is not calibrated! Shutting down!");
@@ -223,7 +200,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
         if (currentSegmentArray[i].valid){
             lastSegmentArray[i] = currentSegmentArray[i];
             currentSegmentArray[i] = detectorArray[i]->findSegment(image,lastSegmentArray[i]);
-            currInnerSegArr[i] = detectorArray[i]->getInnerSegment();
+            currInnerSegArray[i] = detectorArray[i]->getInnerSegment();
         }
     }
 
@@ -232,7 +209,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
         if (currentSegmentArray[i].valid == false){
             lastSegmentArray[i].valid = false;
             currentSegmentArray[i] = detectorArray[i]->findSegment(image,lastSegmentArray[i]);
-            currInnerSegArr[i] = detectorArray[i]->getInnerSegment();
+            currInnerSegArray[i] = detectorArray[i]->getInnerSegment();
         }
         if (currentSegmentArray[i].valid == false) break;		//does not make sense to search for more patterns if the last one was not found
     }
@@ -246,7 +223,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
             image->data[step*pos+0] = 255;
             image->data[step*pos+1] = 0;
             image->data[step*pos+2] = 0;
-            pos = ((int)currInnerSegArr[i].x+((int)currInnerSegArr[i].y)*image->width);
+            pos = ((int)currInnerSegArray[i].x+((int)currInnerSegArray[i].y)*image->width);
             image->data[step*pos+0] = 0;
             image->data[step*pos+1] = 255;
             image->data[step*pos+2] = 0;
@@ -264,8 +241,8 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
                     currentSegmentArray[i].ID = lastSegmentArray[i].ID;
                 }
             }else{
-                float dist1 = sqrt((currInnerSegArr[i].x-objectArray[i].segX1)*(currInnerSegArr[i].x-objectArray[i].segX1)+(currInnerSegArr[i].y-objectArray[i].segY1)*(currInnerSegArr[i].y-objectArray[i].segY1));
-                float dist2 = sqrt((currInnerSegArr[i].x-objectArray[i].segX2)*(currInnerSegArr[i].x-objectArray[i].segX2)+(currInnerSegArr[i].y-objectArray[i].segY2)*(currInnerSegArr[i].y-objectArray[i].segY2));
+                float dist1 = sqrt((currInnerSegArray[i].x-objectArray[i].segX1)*(currInnerSegArray[i].x-objectArray[i].segX1)+(currInnerSegArray[i].y-objectArray[i].segY1)*(currInnerSegArray[i].y-objectArray[i].segY1));
+                float dist2 = sqrt((currInnerSegArray[i].x-objectArray[i].segX2)*(currInnerSegArray[i].x-objectArray[i].segX2)+(currInnerSegArray[i].y-objectArray[i].segY2)*(currInnerSegArray[i].y-objectArray[i].segY2));
                 if(dist1 < dist2){
                     currentSegmentArray[i].x = objectArray[i].segX1;
                     currentSegmentArray[i].y = objectArray[i].segY1;
@@ -358,12 +335,45 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     if (useGui) processKeys();
 }
 
+// dynamic parameter reconfiguration
+void CWhycon::reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& config, uint32_t level){
+    ROS_INFO("[Reconfigure Request]\n"
+            "numBots %d circleDiam %lf identify %d\n"
+            "initCircularityTolerance %lf finalCircularityTolerance %lf\n"
+            "areaRatioTolerance %lf centerDistTolerance %lf centerDistToleranceAbs %lf",
+            config.numBots, config.circleDiameter, config.identify,\
+            config.initialCircularityTolerance, config.finalCircularityTolerance,\
+            config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs);
+
+    whycon->numBots = (config.numBots > whycon->maxPatterns) ? whycon->maxPatterns : config.numBots;
+    whycon->fieldLength = config.fieldLength;
+    whycon->fieldWidth = config.fieldWidth;
+    whycon->identify = config.identify;
+
+    whycon->trans->reconfigure(config.circleDiameter);
+
+    for (int i = 0;i<whycon->maxPatterns;i++) whycon->detectorArray[i]->reconfigure(\
+            config.initialCircularityTolerance, config.finalCircularityTolerance,\
+            config.areaRatioTolerance,config.centerDistanceToleranceRatio,\
+            config.centerDistanceToleranceAbs, config.identify, config.minSize);
+}
+
+// cleaning up
 CWhycon::~CWhycon(){
-    // cleaning up
+    fprintf(stdout, "Releasing memory.\n");
+    free(calibTmp);
+    free(objectArray);
+    free(currInnerSegArray);
+    free(currentSegmentArray);
+    free(lastSegmentArray);
+
     delete image;
     if (useGui) delete gui;
-    for (int i = 0;i<MAX_PATTERNS;i++) delete detectorArray[i];
+    for (int i = 0;i<maxPatterns;i++) delete detectorArray[i];
+    free(detectorArray);
     delete trans;
+    delete decoder;
+    delete n;
 }
 
 CWhycon::CWhycon(){
@@ -397,7 +407,7 @@ CWhycon::CWhycon(){
     screenHeight = 1080;
 
     calibNum = 5;
-    calibTmp = new STrackedObject[calibrationSteps];
+    calibTmp = (STrackedObject*) malloc(calibrationSteps * sizeof(STrackedObject));
     calibStep = calibrationSteps+2;
     autocalibrate = false;
     lastTransformType = TRANSFORM_2D;
@@ -416,9 +426,15 @@ void CWhycon::init(char *fPath, char *calPath){
     n->param("idBits", idBits, 5);
     n->param("idSamples", idSamples, 360);
     n->param("hammingDist", hammingDist, 1);
+    n->param("maxPatterns", maxPatterns, 50);
 
     moveOne = moveVal;
     moveOne  = 0;
+
+    objectArray = (STrackedObject*) malloc(maxPatterns * sizeof(STrackedObject));
+    currInnerSegArray = (SSegment*) malloc(maxPatterns * sizeof(SSegment));
+    currentSegmentArray = (SSegment*) malloc(maxPatterns * sizeof(SSegment));
+    lastSegmentArray = (SSegment*) malloc(maxPatterns * sizeof(SSegment));
 
     // determine gui size so that it fits the screen
     while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
@@ -428,14 +444,16 @@ void CWhycon::init(char *fPath, char *calPath){
     trans = new CTransformation(imageWidth,imageHeight,circleDiameter, calibDefPath.c_str());
     trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
+    detectorArray = (CCircleDetect**) malloc(maxPatterns * sizeof(CCircleDetect*));
+
     // initialize the circle detectors - each circle has its own detector instance 
-    for (int i = 0;i<MAX_PATTERNS;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits, idSamples, hammingDist);
+    for (int i = 0;i<maxPatterns;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits, idSamples, hammingDist);
     image->getSaveNumber();
 
     decoder = new CNecklace(idBits,idSamples,hammingDist);
 
     // initialize dynamic reconfiguration feedback
-    dynSer = boost::bind(&reconfigureCallback, this, _1, _2);
+    dynSer = boost::bind(&CWhycon::reconfigureCallback, this, _1, _2);
     server.setCallback(dynSer);
 
     // subscribe to camera topic, publish topis with card position, rotation and ID
@@ -455,7 +473,8 @@ int main(int argc,char* argv[]){
 
     CWhycon *whycon = new CWhycon();
     whycon->init(argv[1], argv[2]);
-    whycon->~CWhycon();
+
+    delete whycon;
 
     return 0;
 }
