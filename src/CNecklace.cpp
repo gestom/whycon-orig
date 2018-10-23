@@ -323,7 +323,10 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
         result[i] = get(ID[i]);
     }
 
-    for(int i=0;i<2;i++) printf("%d numPoints %f id %d variance %f ID %d\n",i,numPoints[i],result[i].id,variance[i],ID[i]);
+    if(debugSegment){
+        printf("%d numPoints %f id %d variance %f ID %d\n",0,numPoints[0],result[0].id,variance[0],ID[0]);
+        printf("%d numPoints %f id %d variance %f ID %d\n",1,numPoints[1],result[1].id,variance[1],ID[1]);
+    }
 
     if(numPoints[0]==numPoints[1]){
         if(result[0].id==result[1].id){
@@ -387,8 +390,10 @@ int CNecklace::identifySegment(SSegment *segment, STrackedObject *object, CRawIm
         object->yaw = object->yaw2;
     }
 
-    printf("segIdx %d ",segIdx);
-    printf("numPoints %f id %d variance %f ID %d\n\n",numPoints[segIdx],result[segIdx].id,variance[segIdx],ID[segIdx]);
+    if(debugSegment){
+        printf("segIdx %d ",segIdx);
+        printf("numPoints %f id %d variance %f ID %d\n\n",numPoints[segIdx],result[segIdx].id,variance[segIdx],ID[segIdx]);
+    }
 
     maxIndex = maxIdx[segIdx];
     
