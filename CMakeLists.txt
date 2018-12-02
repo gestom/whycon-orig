@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(whycon_ros)
 
-find_package(catkin REQUIRED
-    COMPONENTS
+find_package(catkin REQUIRED COMPONENTS
     image_transport
     roscpp
     std_msgs
@@ -18,9 +17,6 @@ find_package(OpenCV REQUIRED)
 generate_dynamic_reconfigure_options(cfg/whycon.cfg)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -Ofast -march=native -mno-avx -ggdb")
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
