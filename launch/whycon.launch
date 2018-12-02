@@ -9,14 +9,14 @@
     <arg name="idBits" default="5" doc="Number of encoded bits"/>
     <arg name="idSamples" default="360" doc="Number of samples to detect ID"/>
     <arg name="hammingDist" default="1" doc="Hamming distance used for ID"/>
-    <arg name="maxPatterns" default="5" doc="Maximum possible amount of patterns to be tracked"/>
+    <arg name="maxPatterns" default="50" doc="Maximum possible amount of patterns to be tracked"/>
 
     <arg name="useGui" default="true" doc="Whether to use GUI"/>
 
     <arg name="fontPath" value="$(find whycon_ros)/etc/font.ttf"/>
     <arg name="calibDefPath" value="$(find whycon_ros)/etc/default.cal"/>
     
-    <node pkg="whycon_ros" type="whycon_ros" name="whycon_ros" output="screen" args="$(arg fontPath) $(arg calibDefPath)">
+    <node pkg="whycon_ros" type="whycon_ros" name="whycon_ros" output="screen" args="$(arg fontPath) $(arg calibDefPath)" launch-prefix="">
         
 	<remap from="/camera/camera_info" to="$(arg camInfo)"/>
         <remap from="/camera/image_raw" to="$(arg camRaw)"/>
