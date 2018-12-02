@@ -188,6 +188,15 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
         ROS_INFO("Readjusting image format from %ix%i %ibpp, to %ix%i %ibpp.",
                 image->width, image->height, image->bpp, msg->width, msg->height, msg->step/msg->width);
         image = new CRawImage(msg->width,msg->height,msg->step/msg->width);
+        if(useGui){
+            while(image->height/guiScale > screenHeight || image->height/guiScale > screenWidth) guiScale = guiScale*2;
+            if(gui == NULL){
+                gui = new CGui(msg->width, msg->height, guiScale, fontPath.c_str());
+            }else{
+                delete gui;
+                gui = new CGui(msg->width, msg->height, guiScale, fontPath.c_str());
+            }
+        }
     }
 
     memcpy(image->data,(void*)&msg->data[0],msg->step*msg->height);
@@ -340,7 +349,7 @@ void CWhycon::reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& con
     ROS_INFO("[Reconfigure Request]\n"
             "numBots %d circleDiam %lf identify %d\n"
             "initCircularityTolerance %lf finalCircularityTolerance %lf\n"
-            "areaRatioTolerance %lf centerDistTolerance %lf centerDistToleranceAbs %lf",
+            "areaRatioTolerance %lf centerDistTolerance %lf centerDistToleranceAbs %lf\n",
             config.numBots, config.circleDiameter, config.identify,\
             config.initialCircularityTolerance, config.finalCircularityTolerance,\
             config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs);
@@ -360,7 +369,7 @@ void CWhycon::reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& con
 
 // cleaning up
 CWhycon::~CWhycon(){
-    fprintf(stdout, "Releasing memory.\n");
+    ROS_DEBUG("Releasing memory.");
     free(calibTmp);
     free(objectArray);
     free(currInnerSegArray);
