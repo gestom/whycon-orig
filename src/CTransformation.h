@@ -7,8 +7,8 @@
  * References: [1] Krajnik, Nitsche et al.: A practical multirobot localization system. Journal of Intelligent and Robotic Systems, 2014.
  */
 
-#ifndef __CTRANSFORMATION_H__
-#define __CTRANSFORMATION_H__
+#ifndef CTRANSFORMATION_H
+#define CTRANSFORMATION_H
 
 #include <stdio.h>
 #include <math.h>

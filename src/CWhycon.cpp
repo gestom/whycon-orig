@@ -30,7 +30,7 @@ void CWhycon::manualcalibration(){
                 trans->calibrate2D(calib,fieldLength,fieldWidth);
                 trans->calibrate3D(calib,fieldLength,fieldWidth);
                 calibNum++;
-                numBots = wasBots;
+                numMarkers = wasMarkers;
                 trans->saveCalibration(calibDefPath.c_str());
                 trans->transformType = lastTransformType;
                 detectorArray[0]->localSearch = false;
@@ -43,7 +43,7 @@ void CWhycon::manualcalibration(){
 /*finds four outermost circles and uses them to set-up the coordinate system - [0,0] is left-top, [0,fieldLength] next in clockwise direction*/
 void CWhycon::autocalibration(){
     bool saveVals = true;
-    for (int i = 0;i<numBots;i++){
+    for (int i = 0;i<numMarkers;i++){
         if (detectorArray[i]->lastTrackOK == false) saveVals=false;
     }
     if (saveVals){
@@ -54,7 +54,7 @@ void CWhycon::autocalibration(){
         int sY[] = {+1,+1,-1,-1};
         for (int b = 0;b<4;b++){
             maxEval = -10000000;
-            for (int i = 0;i<numBots;i++){
+            for (int i = 0;i<numMarkers;i++){
                 eval = 	sX[b]*currentSegmentArray[i].x +sY[b]*currentSegmentArray[i].y;
                 if (eval > maxEval){
                     maxEval = eval;
@@ -79,7 +79,7 @@ void CWhycon::autocalibration(){
             trans->calibrate2D(calib,fieldLength,fieldWidth);
             trans->calibrate3D(calib,fieldLength,fieldWidth);
             calibNum++;
-            numBots = wasBots;
+            numMarkers = wasMarkers;
             trans->saveCalibration(calibDefPath.c_str());
             trans->transformType = lastTransformType;
             autocalibrate = false;
@@ -96,11 +96,11 @@ void CWhycon::processKeys(){
                 calibStep = 0;
                 trans->transformType = TRANSFORM_NONE;
             }
-            if (numBots > 0){
-                currentSegmentArray[numBots-1].x = event.motion.x*guiScale; 
-                currentSegmentArray[numBots-1].y = event.motion.y*guiScale;
-                currentSegmentArray[numBots-1].valid = true;
-                detectorArray[numBots-1]->localSearch = true;
+            if (numMarkers > 0){
+                currentSegmentArray[numMarkers-1].x = event.motion.x*guiScale; 
+                currentSegmentArray[numMarkers-1].y = event.motion.y*guiScale;
+                currentSegmentArray[numMarkers-1].valid = true;
+                detectorArray[numMarkers-1]->localSearch = true;
             }
         }
     }
@@ -119,15 +119,15 @@ void CWhycon::processKeys(){
     if (keys[SDLK_s] && lastKeys[SDLK_s] == false) image->saveBmp();
 
     //initiate autocalibration (searches for 4 outermost circular patterns and uses them to establisht the coordinate system)
-    if (keys[SDLK_a] && lastKeys[SDLK_a] == false) { calibStep = 0; lastTransformType=trans->transformType; wasBots = numBots; autocalibrate = true;trans->transformType=TRANSFORM_NONE;}; 
+    if (keys[SDLK_a] && lastKeys[SDLK_a] == false) { calibStep = 0; lastTransformType=trans->transformType; wasMarkers = numMarkers; autocalibrate = true;trans->transformType=TRANSFORM_NONE;}; 
 
     //manual calibration (click the 4 calibration circles with mouse)
-    if (keys[SDLK_r] && lastKeys[SDLK_r] == false) { calibNum = 0; wasBots=numBots; numBots = 1;}
+    if (keys[SDLK_r] && lastKeys[SDLK_r] == false) { calibNum = 0; wasMarkers=numMarkers; numMarkers = 1;}
 
     //debugging - toggle drawing coordinates and debugging results results
     if (keys[SDLK_l] && lastKeys[SDLK_l] == false) drawCoords = drawCoords == false;
     if (keys[SDLK_d] && lastKeys[SDLK_d] == false){ 
-        for (int i = 0;i<numBots;i++){
+        for (int i = 0;i<numMarkers;i++){
             detectorArray[i]->draw = detectorArray[i]->draw==false;
             detectorArray[i]->debug = detectorArray[i]->debug==false;
             decoder->debugSegment = decoder->debugSegment==false;
@@ -145,11 +145,11 @@ void CWhycon::processKeys(){
     if (keys[SDLK_h] && lastKeys[SDLK_h] == false) displayHelp = displayHelp == false; 
 
     //adjust the number of robots to be searched for
-    if (keys[SDLK_PLUS]) numBots++;
-    if (keys[SDLK_EQUALS]) numBots++;
-    if (keys[SDLK_MINUS]) numBots--;
-    if (keys[SDLK_KP_PLUS]) numBots++;
-    if (keys[SDLK_KP_MINUS]) numBots--;
+    if (keys[SDLK_PLUS]) numMarkers++;
+    if (keys[SDLK_EQUALS]) numMarkers++;
+    if (keys[SDLK_MINUS]) numMarkers--;
+    if (keys[SDLK_KP_PLUS]) numMarkers++;
+    if (keys[SDLK_KP_MINUS]) numMarkers--;
 
     //store the key states
     memcpy(lastKeys,keys,keyNumber);
@@ -205,7 +205,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     timer.reset();
 
     // track the robots found in the last attempt 
-    for (int i = 0;i<numBots;i++){
+    for (int i = 0;i<numMarkers;i++){
         if (currentSegmentArray[i].valid){
             lastSegmentArray[i] = currentSegmentArray[i];
             currentSegmentArray[i] = detectorArray[i]->findSegment(image,lastSegmentArray[i]);
@@ -214,7 +214,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     }
 
     // search for untracked (not detected in the last frame) robots 
-    for (int i = 0;i<numBots;i++){
+    for (int i = 0;i<numMarkers;i++){
         if (currentSegmentArray[i].valid == false){
             lastSegmentArray[i].valid = false;
             currentSegmentArray[i] = detectorArray[i]->findSegment(image,lastSegmentArray[i]);
@@ -224,7 +224,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     }
 
     // perform transformations from camera to world coordinates
-    for (int i = 0;i<numBots;i++){
+    for (int i = 0;i<numMarkers;i++){
         if (currentSegmentArray[i].valid){
             int step = image->bpp;
             int pos;
@@ -241,12 +241,12 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
 
             if(identify){
                 int segmentID = decoder->identifySegment(&currentSegmentArray[i], &objectArray[i], image) + 1;
-                //                if (debug) printf("SEGMENT ID: %i\n", segmentID);
+                // if (debug) printf("SEGMENT ID: %i\n", segmentID);
                 if (segmentID > -1){
-                    objectArray[i].yaw = currentSegmentArray[i].angle;
+                    // objectArray[i].yaw = currentSegmentArray[i].angle;
                     currentSegmentArray[i].ID = segmentID;
                 }else{
-                    currentSegmentArray[i].angle = lastSegmentArray[i].angle;
+                    // currentSegmentArray[i].angle = lastSegmentArray[i].angle;
                     currentSegmentArray[i].ID = lastSegmentArray[i].ID;
                 }
             }else{
@@ -278,16 +278,16 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
 
         }
     }
-    //    if(numFound > 0) ROS_INFO("Pattern detection time: %i us. Found: %i Static: %i.",globalTimer.getTime(),numFound,numStatic);
+    // if(numFound > 0) ROS_INFO("Pattern detection time: %i us. Found: %i Static: %i.",globalTimer.getTime(),numFound,numStatic);
     evalTime = timer.getTime();
 
     // publishing information about tags 
     whycon_ros::MarkerArray markerArray;
     markerArray.header = msg->header;
 
-    for (int i = 0;i<numBots && useGui && drawCoords;i++){
+    for (int i = 0;i<numMarkers && useGui && drawCoords;i++){
         if (currentSegmentArray[i].valid){
-            //           printf("ID %d\n", currentSegmentArray[i].ID);
+            // printf("ID %d\n", currentSegmentArray[i].ID);
             whycon_ros::Marker marker;
 
             marker.id = currentSegmentArray[i].ID;
@@ -301,12 +301,23 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
             marker.position.position.z = objectArray[i].x;
 
             // Convert YPR to Quaternion
-            tf::Quaternion q;
+            /*tf::Quaternion q;
             q.setRPY(objectArray[i].roll, objectArray[i].pitch, objectArray[i].yaw);
             marker.position.orientation.x = q.getX();
             marker.position.orientation.y = q.getY();
             marker.position.orientation.z = q.getZ();
-            marker.position.orientation.w = q.getW();
+            marker.position.orientation.w = q.getW();*/
+
+            tf::Vector3 axis_vector(objectArray[i].pitch, objectArray[i].roll, objectArray[i].yaw);
+            tf::Vector3 up_vector(0.0, 0.0, 1.0);
+            tf::Vector3 right_vector = axis_vector.cross(up_vector);
+            right_vector.normalized();
+            tf::Quaternion quat(right_vector, -1.0*acos(axis_vector.dot(up_vector)));
+            quat.normalize();
+            geometry_msgs::Quaternion marker_orientation;
+            tf::quaternionTFToMsg(quat, marker_orientation);
+
+            marker.position.orientation = marker_orientation;
 
             // Euler angles
             marker.rotation.x = objectArray[i].pitch;
@@ -322,20 +333,20 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     //draw stuff on the GUI 
     if (useGui){
         gui->drawImage(image);
-        gui->drawTimeStats(evalTime,numBots);
+        gui->drawTimeStats(evalTime,numMarkers);
         gui->displayHelp(displayHelp);
         gui->guideCalibration(calibNum,fieldLength,fieldWidth);
     }
-    for (int i = 0;i<numBots && useGui && drawCoords;i++){
+    for (int i = 0;i<numMarkers && useGui && drawCoords;i++){
         if (currentSegmentArray[i].valid) gui->drawStats(currentSegmentArray[i].minx-30,currentSegmentArray[i].maxy,objectArray[i],trans->transformType == TRANSFORM_2D);
     }
 
     //establishing the coordinate system by manual or autocalibration
-    if (autocalibrate && numFound == numBots) autocalibration();
+    if (autocalibrate && numFound == numMarkers) autocalibration();
     if (calibNum < 4) manualcalibration();
 
     /* empty for-cycle that isn't used even in master orig version
-       for (int i = 0;i<numBots;i++){
+       for (int i = 0;i<numMarkers;i++){
     //if (currentSegmentArray[i].valid) printf("Object %i %03f %03f %03f %03f %03f\n",i,objectArray[i].x,objectArray[i].y,objectArray[i].z,objectArray[i].error,objectArray[i].esterror);
     }*/
 
@@ -347,21 +358,21 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
 // dynamic parameter reconfiguration
 void CWhycon::reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& config, uint32_t level){
     ROS_INFO("[Reconfigure Request]\n"
-            "numBots %d circleDiam %lf identify %d\n"
+            "numMarkers %d circleDiam %lf identify %d\n"
             "initCircularityTolerance %lf finalCircularityTolerance %lf\n"
             "areaRatioTolerance %lf centerDistTolerance %lf centerDistToleranceAbs %lf\n",
-            config.numBots, config.circleDiameter, config.identify,\
+            config.numMarkers, config.circleDiameter, config.identify,\
             config.initialCircularityTolerance, config.finalCircularityTolerance,\
             config.areaRatioTolerance,config.centerDistanceToleranceRatio,config.centerDistanceToleranceAbs);
 
-    whycon->numBots = (config.numBots > whycon->maxPatterns) ? whycon->maxPatterns : config.numBots;
+    whycon->numMarkers = (config.numMarkers > whycon->maxMarkers) ? whycon->maxMarkers : config.numMarkers;
     whycon->fieldLength = config.fieldLength;
     whycon->fieldWidth = config.fieldWidth;
     whycon->identify = config.identify;
 
     whycon->trans->reconfigure(config.circleDiameter);
 
-    for (int i = 0;i<whycon->maxPatterns;i++) whycon->detectorArray[i]->reconfigure(\
+    for (int i = 0;i<whycon->maxMarkers;i++) whycon->detectorArray[i]->reconfigure(\
             config.initialCircularityTolerance, config.finalCircularityTolerance,\
             config.areaRatioTolerance,config.centerDistanceToleranceRatio,\
             config.centerDistanceToleranceAbs, config.identify, config.minSize);
@@ -378,7 +389,7 @@ CWhycon::~CWhycon(){
 
     delete image;
     if (useGui) delete gui;
-    for (int i = 0;i<maxPatterns;i++) delete detectorArray[i];
+    for (int i = 0;i<maxMarkers;i++) delete detectorArray[i];
     free(detectorArray);
     delete trans;
     delete decoder;
@@ -386,41 +397,6 @@ CWhycon::~CWhycon(){
 }
 
 CWhycon::CWhycon(){
-    imageWidth = 640;
-    imageHeight = 480;
-    circleDiameter = 0.122;
-    fieldLength = 1.00;
-    fieldWidth = 1.00;
-
-    identify = false;
-    numBots = 0;
-    numFound = 0;
-    numStatic = 0;
-
-    idBits = 0;
-    idSamples = 360;
-    hammingDist = 1;
-
-    stop = false;
-    moveVal = 1;
-    moveOne = moveVal; 
-    useGui = true;
-    guiScale = 1;
-    keyNumber = 10000;
-    keys = NULL;
-    displayHelp = false;
-    drawCoords = true;
-    runs = 0;
-    evalTime = 0;
-    screenWidth= 1920;
-    screenHeight = 1080;
-
-    calibNum = 5;
-    calibTmp = (STrackedObject*) malloc(calibrationSteps * sizeof(STrackedObject));
-    calibStep = calibrationSteps+2;
-    autocalibrate = false;
-    lastTransformType = TRANSFORM_2D;
-    wasBots = 1;
 }
 
 void CWhycon::init(char *fPath, char *calPath){
@@ -435,15 +411,16 @@ void CWhycon::init(char *fPath, char *calPath){
     n->param("idBits", idBits, 5);
     n->param("idSamples", idSamples, 360);
     n->param("hammingDist", hammingDist, 1);
-    n->param("maxPatterns", maxPatterns, 50);
+    n->param("maxMarkers", maxMarkers, 50);
 
     moveOne = moveVal;
     moveOne  = 0;
+    calibTmp = (STrackedObject*) malloc(calibrationSteps * sizeof(STrackedObject));
 
-    objectArray = (STrackedObject*) malloc(maxPatterns * sizeof(STrackedObject));
-    currInnerSegArray = (SSegment*) malloc(maxPatterns * sizeof(SSegment));
-    currentSegmentArray = (SSegment*) malloc(maxPatterns * sizeof(SSegment));
-    lastSegmentArray = (SSegment*) malloc(maxPatterns * sizeof(SSegment));
+    objectArray = (STrackedObject*) malloc(maxMarkers * sizeof(STrackedObject));
+    currInnerSegArray = (SSegment*) malloc(maxMarkers * sizeof(SSegment));
+    currentSegmentArray = (SSegment*) malloc(maxMarkers * sizeof(SSegment));
+    lastSegmentArray = (SSegment*) malloc(maxMarkers * sizeof(SSegment));
 
     // determine gui size so that it fits the screen
     while (imageHeight/guiScale > screenHeight || imageHeight/guiScale > screenWidth) guiScale = guiScale*2;
@@ -453,10 +430,10 @@ void CWhycon::init(char *fPath, char *calPath){
     trans = new CTransformation(imageWidth,imageHeight,circleDiameter, calibDefPath.c_str());
     trans->transformType = TRANSFORM_NONE;		//in our case, 2D is the default
 
-    detectorArray = (CCircleDetect**) malloc(maxPatterns * sizeof(CCircleDetect*));
+    detectorArray = (CCircleDetect**) malloc(maxMarkers * sizeof(CCircleDetect*));
 
     // initialize the circle detectors - each circle has its own detector instance 
-    for (int i = 0;i<maxPatterns;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits, idSamples, hammingDist);
+    for (int i = 0;i<maxMarkers;i++) detectorArray[i] = new CCircleDetect(imageWidth,imageHeight,identify, idBits, idSamples, hammingDist);
     image->getSaveNumber();
 
     decoder = new CNecklace(idBits,idSamples,hammingDist);

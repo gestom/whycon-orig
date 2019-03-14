@@ -58,20 +58,20 @@ CNecklace::CNecklace(int bits, int samples, int minimalHamming)
             idArray[id].hamming = minHam;
         }
         else if (minHam > 0){
-            idArray[id].id = -100; 
-            idArray[id].rotation = -100;
+            idArray[id].id = -1; 
+            idArray[id].rotation = -1;
             idArray[id].hamming = minHam;
         }
         if(isSymmetrical){
-            idArray[id].id = -100;
-            idArray[id].rotation = -100;
+            idArray[id].id = -1;
+            idArray[id].rotation = -1;
         } 
     }
 
     //idArray[idLength-1].id = 0;
     //idArray[idLength-1].rotation = 0;
-    unknown.id = -100; //both changed from -1 to -100
-    unknown.rotation = -100;
+    unknown.id = -1;
+    unknown.rotation = -1;
 
     for (int i = 0; i < idLength; i++) if(maxID < idArray[i].id) maxID = idArray[i].id;
     probArray = (float*)malloc(sizeof(float)*maxID);

@@ -16,12 +16,7 @@ find_package(OpenCV REQUIRED)
 
 generate_dynamic_reconfigure_options(cfg/whycon.cfg)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Ofast -march=native -mno-avx -ggdb")
-
-## Uncomment this if the package has a setup.py. This macro ensures
-## modules and global scripts declared therein get installed
-## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -march=native -ggdb")
 
 #######################################
 ## Declare ROS messages and services ##
@@ -79,17 +74,26 @@ add_library(whycon_transform src/CTransformation.cpp)
 add_library(whycon_necklace src/CNecklace.cpp)
 add_library(whycon_gui src/CGui.cpp)
 
-add_library(whycon_lib src/CWhycon.cpp)
+target_link_libraries(whycon_detector whycon_image)
 
-add_dependencies(whycon_lib
-    ${catkin_EXPORTED_TARGETS}
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${PROJECT_NAME}_gencfg
+target_link_libraries(whycon_transform
+    whycon_sysmath
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
     )
 
-target_link_libraries(whycon_transform whycon_sysmath ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-target_link_libraries(whycon_necklace whycon_detector whycon_transform whycon_image)
+target_link_libraries(whycon_necklace
+    whycon_detector
+    whycon_transform
+    whycon_image
+    )
 
+target_link_libraries(whycon_gui
+    whycon_image
+    whycon_transform
+    SDL
+    SDL_ttf
+    )
 
 add_executable(whycon_ros src/CWhycon.cpp)
 
@@ -104,16 +108,9 @@ target_link_libraries(whycon_ros
     whycon_image
     whycon_detector
     whycon_transform
-    whycon_sysmath
     whycon_gui
     whycon_necklace
     SDL
-    SDL_ttf
-    )
-
-#target_link_libraries(whycon_ros whycon_lib)
-
-target_link_libraries(whycon_ros
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     )

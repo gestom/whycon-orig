@@ -175,9 +175,12 @@ int main(int argc, char *argv[]){
 
     const int teethCount = atoi(argv[optind]);
     CNecklace decoder = CNecklace(teethCount,hamming);
-    int a[1000];
+    int a[10000];
     n = decoder.printAll(a);
-    if (decoder.verifyHamming(a,teethCount,n) < hamming){ fprintf(stderr,"Hamming distance too low!\n"); return 1; }
+    if (decoder.verifyHamming(a,teethCount,n) < hamming){
+        fprintf(stderr,"Hamming distance too low!\n");
+        return 1;
+    }
     w = 360.0/(float)teethCount/2.0;
 
     thread t_id[n];

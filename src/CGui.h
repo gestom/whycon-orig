@@ -1,5 +1,5 @@
-#ifndef __CGUI_H__
-#define __CGUI_H__
+#ifndef CGUI_H
+#define CGUI_H
 
 #include "CRawImage.h"
 #include "CTransformation.h"

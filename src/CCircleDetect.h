@@ -1,5 +1,5 @@
-#ifndef __CCIRCLEDETECT_H__
-#define __CCIRCLEDETECT_H__
+#ifndef CCIRCLEDETECT_H
+#define CCIRCLEDETECT_H
 
 #include "CRawImage.h"
 #include <math.h>

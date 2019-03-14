@@ -1,5 +1,5 @@
-#ifndef __CNECKLACE_H__
-#define __CNECKLACE_H__
+#ifndef CNECKLACE_H
+#define CNECKLACE_H
 
 #include <stdio.h>
 #include <stdlib.h>
