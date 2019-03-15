@@ -539,48 +539,7 @@ STrackedObject CTransformation::transform(SSegment segment)
     if (transformType == TRANSFORM_INV){
         result = calcEigen(data);
     }
-/*
-    //inner major axis      
-    //vertices in image coords
-    float Ax = inner.x+fabs(inner.v0)*inner.m0*2;
-    float Bx = inner.x-fabs(inner.v0)*inner.m0*2;
-    float Ay = inner.y+fabs(inner.v1)*inner.m0*2;
-    float By = inner.y-fabs(inner.v1)*inner.m0*2;
-    //inner minor axis 
-    //vertices in image coords
-    float Cx = inner.x+fabs(inner.v1)*inner.m1*2;
-    float Dx = inner.x-fabs(inner.v1)*inner.m1*2;
-    float Cy = inner.y-fabs(inner.v0)*inner.m1*2;
-    float Dy = inner.y+fabs(inner.v0)*inner.m1*2;
-    //outer major axis
-    //vertices in image coords
-    float Ex = segment.x+fabs(segment.v0)*segment.m0*2;
-    float Fx = segment.x-fabs(segment.v0)*segment.m0*2;
-    float Ey = segment.y+fabs(segment.v1)*segment.m0*2;
-    float Fy = segment.y-fabs(segment.v1)*segment.m0*2;
 
-    if(fabs(Fy-Ey) > fabs(Fx-Ex)){
-        if(fabs(Dx-segment.x) > fabs(Cx-segment.x))
-            result.pitch = fabs(result.pitch);
-        else
-            result.pitch = -fabs(result.pitch);
-        if(fabs(By-segment.y) > fabs(Ay-segment.y))
-            result.roll = fabs(result.roll);
-        else
-            result.roll = -fabs(result.roll);
-        printf("pitch\n");
-    }else{
-        if(fabs(Bx-segment.x) > fabs(Ax-segment.x))
-            result.pitch = fabs(result.pitch);
-        else
-            result.pitch = -fabs(result.pitch);
-        if(fabs(Dy-segment.y) < fabs(Cy-segment.y))
-            result.roll = fabs(result.roll);
-        else
-            result.roll = -fabs(result.roll);
-        printf("roll\n");
-    }
-*/
     return result;
 }
 

@@ -49,18 +49,18 @@ class CWhycon {
         int maxMarkers;         // maximum number of markers
 
         // circle identification
-        int idBits = 0;            // num of ID bits
-        int idSamples = 360;         // num of samples to identify ID
-        int hammingDist = 1;       // hamming distance of ID code
+        int idBits = 0;         // num of ID bits
+        int idSamples = 360;    // num of samples to identify ID
+        int hammingDist = 1;    // hamming distance of ID code
 
         // program flow control
-        bool stop = false;          // stop and exit ?
+        bool stop = false;      // stop and exit ?
         int moveVal = 1;        // how many frames to process ?
-        int moveOne = moveVal;        // how many frames to process now (setting moveOne to 0 or lower freezes the video stream)
+        int moveOne = moveVal;  // how many frames to process now (setting moveOne to 0 or lower freezes the video stream)
 
-        CWhycon();      // constructor sets up essential variables
-        ~CWhycon();     // destructor
-        void init(char *fPath, char *calPath);      // creates nessesary objects and segment detectors
+        CWhycon();
+        ~CWhycon();
+        void init(char *fPath, char *calPath);  // creates nessesary objects and segment detectors
 
         void cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg);
         void imageCallback(const sensor_msgs::ImageConstPtr& msg);
