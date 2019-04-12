@@ -1,6 +1,7 @@
 #include "CTransformation.h"
-#include <stdio.h>
-#include "sysmat.h" 
+
+/*TODO note #20*/
+#include "sysmat.h"
 
 /*
  * File name: CTransformation.h
@@ -12,6 +13,7 @@
  */
 
 
+/*TODO note #22*/
 int sortByDistance(const void* m1,const void* m2)
 {
     if (((STrackedObject*)m1)->d > ((STrackedObject*)m2)->d) return -1;
@@ -43,6 +45,7 @@ CTransformation::~CTransformation()
 
 }
 
+/*TODO note #23*/
 void CTransformation::reconfigure(float circleDiam)
 {
     trackedObjectDiameter = circleDiam / 100.0;
@@ -109,6 +112,7 @@ STrackedObject CTransformation::transform2D(STrackedObject o)
     return r; 	
 }
 
+/*TODO note #24*/
 float CTransformation::distance(STrackedObject o1,STrackedObject o2)
 {
     return sqrt((o1.x-o2.x)*(o1.x-o2.x)+(o1.y-o2.y)*(o1.y-o2.y)+(o1.z-o2.z)*(o1.z-o2.z));
@@ -187,6 +191,7 @@ void CTransformation::loadCalibration(const char *str)
     }
 }
 
+/*TODO note #25*/
 void CTransformation::saveCalibration(const char *str)
 {
     FILE* file = fopen(str,"w+");
@@ -373,32 +378,13 @@ STrackedObject CTransformation::calcEigen(double data[])
     float c1y = c1*V[1][V3];
     float c1z = c1*V[2][V3];
 
-    float z0 = -L3*c0x+L2*c1x;
-    float z1 = -L3*c0y+L2*c1y;
-    float z2 = -L3*c0z+L2*c1z;
-    float s1,s2,s3;
-    s1 = 1;
-    s2 = 1;
-    s3 = 1;
-    float n0 = +s1*c0x+s2*c1x;
-    float n1 = +s1*c0y+s2*c1y;
-    float n2 = +s1*c0z+s2*c1z;
+    float z0, z1, z2;
+    float s1, s2, s3;
+    float n0, n1, n2;
 
-    if (z2*z < 0){
-        z2 = -z2;
-        z1 = -z1;
-        z0 = -z0;
-//        n0 = -n0;
-//        n1 = -n1;
-//        n2 = -n2;
-    }
-
-    result.x = z2*z;	
-    result.y = -z0*z;	
-    result.z = -z1*z;
-    result.pitch = n0;//cos(segment.m1/segment.m0)/M_PI*180.0;
-    result.roll = n1;//atan2(segment.v1,segment.v0)/M_PI*180.0;
-    result.yaw = n2;//segment.v1/segment.v0;
+    //result.pitch = cos(segment.m1/segment.m0)/M_PI*180.0;
+    //result.roll = atan2(segment.v1,segment.v0)/M_PI*180.0;
+    //result.yaw = segment.v1/segment.v0;
 
     float newX, newY, newZ;
     float nX[2];
@@ -406,9 +392,9 @@ STrackedObject CTransformation::calcEigen(double data[])
     float Z[2][3];
     float N[2][3];
     int tmp_idx = 0;
-    for(int i=1;i<9;i++){
-        s1 = (i%2 == 0) ? -1 : 1;
-        s2 = (i ==3 || i ==4 || i==7 || i==8) ? -1 : 1;
+    for(int i = 1; i < 9; i++){
+        s1 = (i % 2 == 0) ? -1 : 1;
+        s2 = (i == 3 || i == 4 || i == 7 || i == 8) ? -1 : 1;
         s3 = (i > 4) ? -1 : 1;
         z0 = s3*z*(s1*L3*c0x+s2*L2*c1x);
         z1 = s3*z*(s1*L3*c0y+s2*L2*c1y);
@@ -509,21 +495,23 @@ STrackedObject CTransformation::transform(SSegment segment)
     /*transformation to camera-centric or user-defined coordinate frames*/
     //3D->2D homography, see 4.4.2 of [1]
     if (transformType == TRANSFORM_2D){
-        // TODO is calcEigen() really necessary
-        //for debug only  // which part is for debug only???
+        /*TODO note #09*/
+        //for debug only
         result = calcEigen(data);
         result.x = x;
         result.y = y;
         result = transform2D(result);
 
-        result.yaw = atan2(segment.v0,segment.v1);  // why calculating twice
+        /*TODO note #10*/
+        result.yaw = atan2(segment.v0,segment.v1);
         result.yaw = segment.angle;
         result.ID = segment.ID;
     }
     //camera-centric coordinate frame, see 4.3 and 4.4 of [1]
     if (transformType == TRANSFORM_NONE){
         result = calcEigen(data);
-        result.yaw = segment.angle;
+        /*TODO note #11*/
+        //result.yaw = segment.angle;
     }
     //user-defined 3D coordinate system, see 4.4.1 of [1]
     if (transformType == TRANSFORM_3D){

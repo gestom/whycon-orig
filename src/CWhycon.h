@@ -1,9 +1,6 @@
 #ifndef CWHYCON_H
 #define CWHYCON_H
 
-#define _LARGEFILE_SOURCE                                                          
-#define _FILE_OFFSET_BITS 64
-
 #include <stdlib.h>
 #include <string>
 #include <cmath>
@@ -98,14 +95,12 @@ class CWhycon {
         int wasMarkers = 1;                               // pre-calibration number of makrers to track (used to preserve pre-calibation number of markers to track)
 
         // marker detection variables
-        STrackedObject *objectArray;       // object array (detected objects in metric space)
-        SSegment *currInnerSegArray;       // inner segment array
-        SSegment *currentSegmentArray;     // segment array (detected objects in image space)
-        SSegment *lastSegmentArray;        // segment position in the last step (allows for tracking)
+        //STrackedObject *objectArray;       // object array (detected objects in metric space)
+        
+        SMarker *currentMarkerArray;     // segment array (detected objects in image space)
+        SMarker *lastMarkerArray;        // segment position in the last step (allows for tracking)
+        
         CCircleDetect **detectorArray;     // detector array (each pattern has its own detector)
-
-        CTransformation *trans;         // allows to transform from image to metric coordinates
-        CNecklace *decoder;             // Necklace code decoder
 
         ros::NodeHandle *n;                     // ROS node
         ros::Subscriber subInfo;                // camera info subscriber

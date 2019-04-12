@@ -1,22 +1,23 @@
 #include "CGui.h"
 
+/*TODO note #19*/
 #define THICK_CROSS
 
 CGui::CGui(int wi,int he,int sc, const char* font_path)
 {
-    averageTime=maxTime=numStats=0;
+    averageTime = maxTime = numStats = 0;
     height = he/sc;
     width = wi/sc;
     scale = sc;
     SDL_Init(SDL_INIT_VIDEO|SDL_HWSURFACE|SDL_HWACCEL);
-    if(TTF_Init() == -1)printf("Unable to initialize SDL_ttf: %s\n", TTF_GetError());
+    if(TTF_Init() == -1) printf("Unable to initialize SDL_ttf: %s\n", TTF_GetError());
     screen = NULL;
     screen = SDL_SetVideoMode(wi/sc,he/sc,24,SDL_SWSURFACE); 
-    if (screen == NULL)fprintf(stderr,"Couldn't set SDL video mode: %s\r\n",SDL_GetError());
+    if (screen == NULL) fprintf(stderr,"Couldn't set SDL video mode: %s\r\n",SDL_GetError());
     SDL_WM_SetCaption("WHYCON","WhyCon localization system");
 
     smallFont = TTF_OpenFont(font_path ,16);
-    if(!smallFont)printf("Unable to open font: %s\n", TTF_GetError());
+    if(!smallFont) printf("Unable to open font: %s\n", TTF_GetError());
     TTF_SetFontStyle(smallFont, TTF_STYLE_NORMAL);
     num = 0;
 }
@@ -32,7 +33,7 @@ CGui::~CGui()
 
 void CGui::clearStats()
 {
-    averageTime=maxTime=numStats=0;
+    averageTime = maxTime = numStats = 0;
 }
 
 void CGui::drawImage(CRawImage* image)
@@ -149,6 +150,7 @@ void CGui::displayHelp(bool displayHelp)
     }
 }
 
+/*TODO note #18*/
 void CGui::saveScreen(int a)
 {
     CRawImage image((unsigned char*)screen->pixels,width,height, 3);  // added 3 in constructor because of change in CRawImage
@@ -159,7 +161,8 @@ void CGui::saveScreen(int a)
     image.saveBmp(name);
 }
 
-void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
+/*TODO note #17*/
+void CGui::drawStats(int x, int y, STrackedObject o, bool D2)
 {
     SDL_Rect rect;				// text position on the screen
     SDL_Surface *text;			// surface with printed text
@@ -184,7 +187,9 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
         SDL_FreeSurface(text);
     }
 
-    if (D2) sprintf(info,"%03.0f %03.0f",1000*o.x,1000*o.y); else sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
+    if (D2) sprintf(info,"%03.0f %03.0f",1000*o.x,1000*o.y);
+    else sprintf(info,"%.3f %.3f %.3f",o.x,o.y,o.z);
+    
     text = TTF_RenderUTF8_Blended(smallFont, info, ok_col);
     rect.y = y/scale;
     SDL_BlitSurface(text, NULL, screen, &rect);
@@ -204,6 +209,7 @@ void CGui::drawStats(int x,int y,STrackedObject o, bool D2)
       SDL_FreeSurface(text);*/
 }
 
+/*TODO note #15*/
 void CGui::drawLine(float sx1,float sx2,float sy1,float sy2)
 {
     float d,r;
@@ -244,6 +250,7 @@ void CGui::drawLine(float sx1,float sx2,float sy1,float sy2)
     }
 }
 
+/*TODO note #16*/
 void CGui::drawEllipse(SSegment s,STrackedObject t)
 {
     float sx1,sx2,sy1,sy2;

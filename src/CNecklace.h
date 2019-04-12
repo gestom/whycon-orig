@@ -4,29 +4,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
-#include "CCircleDetect.h"
-#include "CTransformation.h"
 #include "CRawImage.h"
+#include "SStructDefs.h"
 
-typedef struct
-{
+
+typedef struct {
     int id;
     int rotation;
     int hamming;
-}SNecklace;
+} SNecklace;
 
-class CNecklace{
+
+class CNecklace {
     public:
-        CNecklace(int bits,int samples,int minimalHamming = 1);
+        CNecklace(int bits, int samples, int minimalHamming = 1);
+
         ~CNecklace();
-        SNecklace get(int sequence, bool probabilistic=false, float confidence=1.0);
-        int verifyHamming(int a[],int bits,int len);
+
+        SNecklace get(int sequence, bool probabilistic = false, float confidence = 1.0);
+
+        int verifyHamming(int a[], int bits, int len);
+
         float observationEstimation(float confidence);
 
-        int identifySegment(SSegment *segment, STrackedObject *object, CRawImage *image);
 
-        bool debugSegment;      // for debugging identifySegment()
+        SDecoded decode(char *code, int maxIndex, float segmentV0, float segmentV1, char *realCode);
+
+        bool debugSegment;
 
     private:
         SNecklace unknown;      // default unknown ID
@@ -39,7 +43,10 @@ class CNecklace{
         bool debug;             // for debugging rest of the class
 
         int getEstimatedID();
+
         int getHamming(int a, int b);
+
         int getMinimalHamming(int a,int len);
 };
+
 #endif

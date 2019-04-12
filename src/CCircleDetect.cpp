@@ -6,6 +6,9 @@
 int* CCircleDetect::buffer = NULL;
 int* CCircleDetect::queue = NULL;
 
+CTransformation *trans;  // allows to transform from image to metric coordinates
+CNecklace *decoder;      // Necklace code decoder
+
 //Variable initialization
 CCircleDetect::CCircleDetect(int wi, int he, bool id, int bits, int samples, int dist) {
     idBits = bits;
@@ -244,7 +247,7 @@ SSegment CCircleDetect::calcSegment(SSegment segment,int size,long int x,long in
     return result;
 }
 
-SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
+SMarker CCircleDetect::findSegment(CRawImage* image, SSegment init) {
     numSegments = 0;
     int pos = 0;
     int ii = 0;
@@ -431,43 +434,254 @@ SSegment CCircleDetect::findSegment(CRawImage* image, SSegment init) {
         lastThreshold = threshold;
         numFailed = 0;  
     }else if (numFailed < maxFailed){
-        if (numFailed++%2 == 0) changeThreshold(); else threshold = lastThreshold;
+        if (numFailed++%2 == 0) changeThreshold();
+        else threshold = lastThreshold;
     }else{
         numFailed++;
         if (changeThreshold()==false) numFailed = 0;
     }
 
+    // TODO analyze and calculate binary code
+    if (outer.valid){
+        trackedObject = trans->transform(outer);
+        if(identify){
+            ambiguityAndObtainCode(image);
+        }else{
+            ambiguityPlain();
+        }
+    }
+
     //Drawing results 
     if (outer.valid){
-        for (int p =  queueOldStart;p< queueEnd;p++)
-        {
-            pos = queue[p]; 
-            image->data[step*pos+0] =  image->data[step*pos+1] =  image->data[step*pos+2] = 0;
+        for (int p = queueOldStart; p < queueEnd; p++){
+            pos = queue[p];
+            image->data[step*pos+0] = image->data[step*pos+1] = image->data[step*pos+2] = 0;
         }
     }
     if (draw){
-        if (init.valid || track || lastTrackOK){
-            for (int p = 0;p<queueOldStart;p++){
+        if (outer.valid || track || lastTrackOK){
+            for (int p = 0; p < queueOldStart; p++){
                 pos = queue[p];
                 image->data[step*pos+0] = 255;
                 image->data[step*pos+1] = 255;
                 image->data[step*pos+2] = 200;
             }
+            /*TODO note #05*/
+            pos = ((int)outer.x+((int)outer.y)*image->width);
+            if (pos > 0 && pos < image->width*image->height){
+                image->data[step*pos+0] = 255;
+                image->data[step*pos+1] = 0;
+                image->data[step*pos+2] = 0;
+            }
+
+            pos = ((int)inner.x+((int)inner.y)*image->width);
+            if (pos > 0 && pos < image->width*image->height){
+                image->data[step*pos+0] = 0;
+                image->data[step*pos+1] = 255;
+                image->data[step*pos+2] = 0;
+            }
         }
     }
     bufferCleanup(outer);
 
-    return outer;
+    SMarker output;
+    output.valid = outer.valid;
+    output.seg = outer;
+    output.obj = trackedObject;
+
+    return output;
 }
 
-SSegment CCircleDetect::getInnerSegment()
-{
-    return inner;
+void CCircleDetect::ambiguityAndObtainCode(CRawImage *image){
+    int segIdx = 0;
+
+    /*TODO note #14*/
+    SSegment tmp[2];
+    tmp[0].x = trackedObject.segX1;
+    tmp[0].y = trackedObject.segY1;
+    tmp[0].m0 = 0.33/0.70*outer.m0;
+    tmp[0].m1 = 0.33/0.70*outer.m1;
+    tmp[0].v0 = outer.v0;
+    tmp[0].v1 = outer.v1;
+
+    tmp[1].x = trackedObject.segX2;
+    tmp[1].y = trackedObject.segY2;
+    tmp[1].m0 = 0.33/0.70*outer.m0;
+    tmp[1].m1 = 0.33/0.70*outer.m1;
+    tmp[1].v0 = outer.v0;
+    tmp[1].v1 = outer.v1;
+
+    float sum[2] = {0.0, 0.0};
+    float variance[2] = {0.0, 0.0};
+
+    int pos = 0;
+
+    float x[2][idSamples];
+    float y[2][idSamples];
+    float signal[2][idSamples];
+    float smooth[2][idSamples];
+    int segmentWidth = idSamples/idBits/2;
+
+    int maxIdx[2];
+    int maxIndex = 0;
+    float numPoints[2];
+
+    char code[2][idBits*4];
+    
+    for(int i = 0; i < 2; i++){
+        //calculate appropriate positions
+        float topY = 0;
+        int topIndex = 0;
+        for (int a = 0;a<idSamples;a++){
+            x[i][a] = tmp[i].x+(tmp[i].m0*cos((float)a/idSamples*2*M_PI)*tmp[i].v0+tmp[i].m1*sin((float)a/idSamples*2*M_PI)*tmp[i].v1)*2.0;
+            y[i][a] = tmp[i].y+(tmp[i].m0*cos((float)a/idSamples*2*M_PI)*tmp[i].v1-tmp[i].m1*sin((float)a/idSamples*2*M_PI)*tmp[i].v0)*2.0;
+        }
+
+        //retrieve the image brightness on these using bilinear transformation
+        float gx,gy;
+        int px,py;
+        unsigned char* ptr = image->data;
+        for (int a = 0;a<idSamples;a++){
+            px = x[i][a];
+            py = y[i][a];
+            gx = x[i][a]-px;
+            gy = y[i][a]-py;
+            pos = (px+py*image->width);
+
+            /*detection from the image*/
+            signal[i][a]  = ptr[(pos+0)*step+0]*(1-gx)*(1-gy)+ptr[(pos+1)*step+0]*gx*(1-gy)+ptr[(pos+image->width)*step+0]*(1-gx)*gy+ptr[step*(pos+image->width+1)+0]*gx*gy;
+            signal[i][a] += ptr[(pos+0)*step+1]*(1-gx)*(1-gy)+ptr[(pos+1)*step+1]*gx*(1-gy)+ptr[(pos+image->width)*step+1]*(1-gx)*gy+ptr[step*(pos+image->width+1)+1]*gx*gy;
+            signal[i][a] += ptr[(pos+0)*step+2]*(1-gx)*(1-gy)+ptr[(pos+1)*step+2]*gx*(1-gy)+ptr[(pos+image->width)*step+2]*(1-gx)*gy+ptr[step*(pos+image->width+1)+2]*gx*gy;
+        }
+
+        //binarize the signal
+        float avg = 0;
+        for (int a = 0;a<idSamples;a++) avg += signal[i][a];
+        avg = avg/idSamples;
+        for (int a = 0;a<idSamples;a++)
+            if (signal[i][a] > avg) smooth[i][a] = 1;
+            else smooth[i][a] = 0;
+
+        //find the edge's locations
+        //int numEdges = 0;  /*TODO note #04*/
+
+        float sx,sy;
+        sx = sy = 0;
+        numPoints[i]=0;
+        if (smooth[i][idSamples-1] != smooth[i][0]) sx = 1;
+        for (int a = 1;a<idSamples;a++){
+            if (smooth[i][a] != smooth[i][a-1]){
+                sx += cos(2*M_PI*a/segmentWidth);
+                sy += sin(2*M_PI*a/segmentWidth);
+                numPoints[i]++;
+                if (debug) printf("%i ",a);
+            }
+        }
+        if (debug) printf("\n");
+        maxIdx[i] = atan2(sy,sx)/2/M_PI*segmentWidth+segmentWidth/2;
+
+        float meanX = sx / numPoints[i];
+        float meanY = sy / numPoints[i];
+        float errX, errY;
+        sx=sy=0;
+        if (smooth[i][idSamples-1] != smooth[i][0]) sx = 1;
+        for (int a = 1;a<idSamples;a++){
+            if (smooth[i][a] != smooth[i][a-1]){
+                sx = cos(2*M_PI*a/segmentWidth);
+                sy = sin(2*M_PI*a/segmentWidth);
+                errX = sx - meanX;
+                errY = sy - meanY;
+                sum[i] += errX*errX + errY*errY;
+            }
+        }
+        variance[i] = sum[i] / numPoints[i];
+
+        //determine raw code
+        for (int a = 0; a < idBits * 2; a++) code[i][a] = smooth[i][(maxIdx[i] + a * segmentWidth) % idSamples] + '0';
+
+        code[i][idBits*2] = 0;
+    }
+
+    if(variance[0] < variance[1]) segIdx = 0;
+    else segIdx = 1;
+
+    if(segIdx == 0){
+        outer.x = trackedObject.segX1;
+        outer.y = trackedObject.segY1;
+        trackedObject.x = trackedObject.x1;
+        trackedObject.y = trackedObject.y1;
+        trackedObject.z = trackedObject.z1;
+        trackedObject.pitch = trackedObject.pitch1;
+        trackedObject.roll = trackedObject.roll1;
+        trackedObject.yaw = trackedObject.yaw1;
+    }else{
+        outer.x = trackedObject.segX2;
+        outer.y = trackedObject.segY2;
+        trackedObject.x = trackedObject.x2;
+        trackedObject.y = trackedObject.y2;
+        trackedObject.z = trackedObject.z2;
+        trackedObject.pitch = trackedObject.pitch2;
+        trackedObject.roll = trackedObject.roll2;
+        trackedObject.yaw = trackedObject.yaw2;
+    }
+
+    maxIndex = maxIdx[segIdx];
+
+    char realCode[idBits+1];
+    /*TODO note #03*/
+    SDecoded segDecoded = decoder->decode(code[segIdx], maxIndex, outer.v0, outer.v1, realCode);
+    outer.ID = segDecoded.id + 1;
+    outer.angle = segDecoded.angle;
+
+    if (debug){
+        printf("CODE %i %i %.3f\n", segDecoded.id, maxIndex, segDecoded.angle);
+        printf("Realcode %s %i %s\n", code[segIdx], segDecoded.edgeIndex, realCode);
+        printf("ORIG signal: ");
+        for (int a = 0; a < idSamples; a++) printf("%.2f ", signal[segIdx][a]);
+        printf("\nsmooth: ");
+        for (int a = 0; a < idSamples; a++) printf("%.2f ", smooth[segIdx][a]);
+        printf("\n");
+    }
+
+    for (int a = 0; a < idSamples; a++){
+        pos = ((int)x[segIdx][a] + ((int)y[segIdx][a])*image->width);
+        if (pos > 0 && pos < image->width*image->height){
+            image->data[step*pos+0] = 0;
+            image->data[step*pos+1] = (unsigned char)(255.0*a/idSamples);
+            image->data[step*pos+2] = 0;
+        }
+    }
+}
+
+void CCircleDetect::ambiguityPlain(){
+    // distance from inner center because it's relatively invariant
+    float dist1 = sqrt((inner.x-trackedObject.segX1)*(inner.x-trackedObject.segX1)+(inner.y-trackedObject.segY1)*(inner.y-trackedObject.segY1));
+    float dist2 = sqrt((inner.x-trackedObject.segX2)*(inner.x-trackedObject.segX2)+(inner.y-trackedObject.segY2)*(inner.y-trackedObject.segY2));
+    
+    if(dist1 < dist2){
+        outer.x = trackedObject.segX1;
+        outer.y = trackedObject.segY1;
+        trackedObject.x = trackedObject.x1;
+        trackedObject.y = trackedObject.y1;
+        trackedObject.z = trackedObject.z1;
+        trackedObject.pitch = trackedObject.pitch1;
+        trackedObject.roll = trackedObject.roll1;
+        trackedObject.yaw = trackedObject.yaw1;
+    }else{
+        outer.x = trackedObject.segX2;
+        outer.y = trackedObject.segY2;
+        trackedObject.x = trackedObject.x2;
+        trackedObject.y = trackedObject.y2;
+        trackedObject.z = trackedObject.z2;
+        trackedObject.pitch = trackedObject.pitch2;
+        trackedObject.roll = trackedObject.roll2;
+        trackedObject.yaw = trackedObject.yaw2;
+    }
 }
 
 float CCircleDetect::normalizeAngle(float a) {
-    while (a > +M_PI) a+=-2*M_PI;
-    while (a < -M_PI) a+=+2*M_PI;
+    /*TODO note #13*/
+    while (a > +M_PI) a += -2 * M_PI;
+    while (a < -M_PI) a += +2 * M_PI;
     return a;
 }
-

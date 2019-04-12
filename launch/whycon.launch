@@ -6,7 +6,7 @@
     <arg name="camInfo" default="/usb_cam/camera_info" doc="camera_info topic"/>
     <arg name="camRaw" default="/usb_cam/image_raw" doc="image_raw topic"/>
 
-    <arg name="idBits" default="5" doc="Number of encoded bits"/>
+    <arg name="idBits" default="6" doc="Number of encoded bits"/>
     <arg name="idSamples" default="360" doc="Number of samples to detect ID"/>
     <arg name="hammingDist" default="1" doc="Hamming distance used for ID"/>
     <arg name="maxPatterns" default="50" doc="Maximum possible amount of patterns to be tracked"/>
