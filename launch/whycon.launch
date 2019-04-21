@@ -12,18 +12,20 @@
     <arg name="maxPatterns" default="50" doc="Maximum possible amount of patterns to be tracked"/>
 
     <arg name="useGui" default="true" doc="Whether to use GUI"/>
+    <arg name="pubVisual" default="true" doc="Whether to publish visualization markers"/>
 
     <arg name="fontPath" value="$(find whycon_ros)/etc/font.ttf"/>
     <arg name="calibDefPath" value="$(find whycon_ros)/etc/default.cal"/>
     
     <node pkg="whycon_ros" type="whycon_ros" name="whycon_ros" output="screen" args="$(arg fontPath) $(arg calibDefPath)" launch-prefix="">
         
-	<remap from="/camera/camera_info" to="$(arg camInfo)"/>
+        <remap from="/camera/camera_info" to="$(arg camInfo)"/>
         <remap from="/camera/image_raw" to="$(arg camRaw)"/>
-	
-	<param name="useGui" value="$(arg useGui)"/>
-	<param name="idBits" value="$(arg idBits)"/>
-	<param name="idSamples" value="$(arg idSamples)"/>
+        
+        <param name="useGui" value="$(arg useGui)"/>
+        <param name="pubVisual" value="$(arg pubVisual)"/>
+        <param name="idBits" value="$(arg idBits)"/>
+        <param name="idSamples" value="$(arg idSamples)"/>
         <param name="hammingDist" value="$(arg hammingDist)"/>
         <param name="maxPatterns" value="$(arg maxPatterns)"/>
         
