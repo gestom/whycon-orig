@@ -14,6 +14,11 @@
 #define OUTER 1
 #define MAX_PATTERNS 50
 
+typedef struct{
+    float x, y;
+    float m0, m1;
+    float v0, v1;
+} SSegSmall;
 
 extern CTransformation *trans;  // allows to transform from image to metric coordinates
 extern CNecklace *decoder;      // Necklace code decoder
@@ -41,10 +46,6 @@ class CCircleDetect {
         //cleanup the shared buffers - see 3.6 of [1] 
         void bufferCleanup(SSegment init);
 
-        /*TODO note #21*/
-        //load descriptions for circle ID's
-        //int loadCircleID(const char* id);
-
         //change threshold if circle not detected, see 3.2 of [1]
         bool changeThreshold();
 
@@ -61,8 +62,6 @@ class CCircleDetect {
         int debug;                  // debug level
         bool localSearch;           // used when selecting the circle by mouse click
         bool identify;              // attempt to identify segments
-
-        
 
     private:
         //see the constructor in CCircleDetection.cpp for description of the following parameters

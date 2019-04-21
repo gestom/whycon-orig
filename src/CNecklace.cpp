@@ -13,7 +13,6 @@ CNecklace::CNecklace(int bits, int samples, int minimalHamming)
     int hamindex = 1000;
     int ham = 1000;
     debug = false;
-    debugSegment = false;
 
     /*for every possible id*/
     for (int id = 0;id<idLength;id++){
@@ -193,9 +192,7 @@ int CNecklace::getEstimatedID()
     return hp;
 }
 
-SDecoded CNecklace::decode(char *code, int maxIndex, float segmentV0, float segmentV1, char *realCode){
-    //char realCode[length*4];  /*TODO note #26*/
-    
+SDecoded CNecklace::decode(char *code, char *realCode, int maxIndex, float segmentV0, float segmentV1){
     // determine the control edges' positions
     int edgeIndex = 0;
     for (unsigned int a = 0; a < length * 2; a++){
@@ -219,8 +216,6 @@ SDecoded CNecklace::decode(char *code, int maxIndex, float segmentV0, float segm
     SNecklace result = get(ID);
     
     //float segmentAngle;
-
-    /*TODO note #12*/
     //segmentAngle = 2*M_PI*(-(float)maxIndex/idSamples+(float)result.rotation/length)+atan2(segmentV1,segmentV0)+1.5*M_PI/length;
     float segmentAngle = 2*M_PI*(-(float)maxIndex/idSamples-(float)edgeIndex/length/2.0+(float)result.rotation/length)+atan2(segmentV1,segmentV0);//+1.5*M_PI/length;
     

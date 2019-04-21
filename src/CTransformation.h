@@ -16,25 +16,25 @@
 #include <opencv2/opencv.hpp>
 #include "SStructDefs.h"
 
-
-using namespace cv;
+//using namespace cv;
 using namespace std;
+
 
 class CTransformation
 {
     public:
         /*init: width & height of the image, diameter of the pattern, path to saved calibration file*/
-        CTransformation(int widthi,int heighti,float diam, const char* calibDefPath);
+        CTransformation(int widthi, int heighti, float diam, const char* calibDefPath);
         ~CTransformation();
 
         // parameters dynamic reconfigure
         void reconfigure(float circleDiam);
 
         // update of intrinsic and distortion camera params
-        void updateParams(Mat intri, Mat dist);
+        void updateParams(cv::Mat intri, cv::Mat dist);
 
         // get back image coords from canonical coords
-        void reTransformXY(float *x, float *y,float *z);
+        void reTransformXY(float *x, float *y, float *z);
 
         /*image to canonical coordinates (unbarrel + focal center and length)*/
         void transformXY(float *ix,float *iy);
@@ -46,33 +46,36 @@ class CTransformation
         STrackedObject calcEigen(double data[]);
 
         /*establish the user-defined coordinate system from four calibration patterns - see 4.4 of [1]*/
-        int calibrate2D(STrackedObject *inp,float dimX,float dimY,float robotRadius = 0,float robotHeight =0,float cameraHeight = 1.0);
+        int calibrate2D(STrackedObject *inp, float dimX, float dimY, float robotRadius = 0, float robotHeight = 0, float cameraHeight = 1.0);
         
-        int calibrate3D(STrackedObject *o,float gridDimX,float gridDimY);
+        int calibrate3D(STrackedObject *o, float gridDimX, float gridDimY);
         
-        S3DTransform calibrate3D(STrackedObject o0,STrackedObject o1,STrackedObject o2,float gridDimX,float gridDimY);
+        S3DTransform calibrate3D(STrackedObject o0, STrackedObject o1, STrackedObject o2, float gridDimX, float gridDimY);
 
         /*supporting methods*/
         ETransformType transformType;
         void saveCalibration(const char *str);
         void loadCalibration(const char *str);
-        float distance(STrackedObject o1,STrackedObject o2);
+        float distance(STrackedObject o1, STrackedObject o2);
+
+        void calcQuaternion(STrackedObject *obj);
+        void calcEulerFromQuat(STrackedObject *obj);
 
     private:
         STrackedObject normalize(STrackedObject o);
         STrackedObject transform2D(STrackedObject o);
-        STrackedObject transform3D(STrackedObject o,int num = 4);
+        STrackedObject transform3D(STrackedObject o, int num = 4);
         STrackedObject transform4D(STrackedObject o);
 
         S3DTransform D3transform[4];
         float trf4D[16];
         float hom[9];
-        float gDimX,gDimY;
+        float gDimX, gDimY;
         float trackedObjectDiameter;
-        int width,height;
+        int width, height;
 
-        Mat intrinsic;
-        Mat distCoeffs;
+        cv::Mat intrinsic;
+        cv::Mat distCoeffs;
 };
 
 #endif

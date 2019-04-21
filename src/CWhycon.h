@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <SDL/SDL.h>
 
-// WhyCon libs
+// WhyCon/WhyCode libs
 #include "CGui.h"
 #include "CTimer.h"
 #include "CCircleDetect.h"
@@ -24,6 +24,7 @@
 #include <whycon_ros/MarkerArray.h>
 #include <whycon_ros/Marker.h>
 #include <geometry_msgs/Quaternion.h>
+#include <visualization_msgs/MarkerArray.h>
 
 using namespace cv;
 
@@ -67,6 +68,8 @@ class CWhycon {
 
     private:
 
+        bool pubVisual = true;     // whether to publish visualization markers
+
         // GUI-related stuff
         CGui* gui;                 // drawing, events capture
         bool useGui = true;        // use graphic interface at all?
@@ -106,6 +109,8 @@ class CWhycon {
         ros::Subscriber subInfo;                // camera info subscriber
         image_transport::Subscriber subImg;     // image raw subscriber
         ros::Publisher markers_pub;             // publisher of MarkerArray
+        ros::Publisher visual_pub;              // publisher of MarkerArray for RVIZ
+
         CRawImage *image;                       // encapsulation of image raw data
 
         dynamic_reconfigure::Server<whycon_ros::whyconConfig> server;                   // server for dynamic reconfigure

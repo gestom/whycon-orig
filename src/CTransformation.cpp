@@ -13,7 +13,6 @@
  */
 
 
-/*TODO note #22*/
 int sortByDistance(const void* m1,const void* m2)
 {
     if (((STrackedObject*)m1)->d > ((STrackedObject*)m2)->d) return -1;
@@ -29,8 +28,8 @@ CTransformation::CTransformation(int widthi,int heighti,float diam, const char* 
     trackedObjectDiameter = diam;
     loadCalibration(calibDefPath);
 
-    distCoeffs = Mat(1,5, CV_32FC1);	
-    intrinsic = Mat(3,3, CV_32FC1);
+    distCoeffs = cv::Mat(1,5, CV_32FC1);	
+    intrinsic = cv::Mat(3,3, CV_32FC1);
 
     /*for (int i=0;i<9;i++)intrinsic.at<float>(i/3,i%3) = 0;
       intrinsic.at<float>(0,0) = 650; 
@@ -45,13 +44,12 @@ CTransformation::~CTransformation()
 
 }
 
-/*TODO note #23*/
 void CTransformation::reconfigure(float circleDiam)
 {
     trackedObjectDiameter = circleDiam / 100.0;
 }
 
-void CTransformation::updateParams(Mat intri, Mat dist)
+void CTransformation::updateParams(cv::Mat intri, cv::Mat dist)
 {
     intrinsic = intri;
     distCoeffs = dist;
@@ -59,16 +57,13 @@ void CTransformation::updateParams(Mat intri, Mat dist)
 
 void CTransformation::reTransformXY(float *x, float *y,float *z)
 {
-    Mat in = Mat::ones(1, 1, CV_32FC3);
-    Mat out = Mat::ones(1, 1, CV_32FC2);
+    cv::Mat in = cv::Mat::ones(1, 1, CV_32FC3);
+    cv::Mat out = cv::Mat::ones(1, 1, CV_32FC2);
 
-    //in.at<float>(0) = (*x - intrinsic.at<float>(0,2))/intrinsic.at<float>(0,0);
-    //in.at<float>(1) = (*y - intrinsic.at<float>(1,2))/intrinsic.at<float>(1,1);
     in.at<float>(0) = *x;
     in.at<float>(1) = *y;
     in.at<float>(2) = *z;
-
-    projectPoints(in, Mat::zeros(3, 1, CV_32FC1), Mat::zeros(3, 1, CV_32FC1), intrinsic, distCoeffs, out);
+    cv::projectPoints(in, cv::Mat::zeros(3, 1, CV_32FC1), cv::Mat::zeros(3, 1, CV_32FC1), intrinsic, distCoeffs, out);
 
     *x = out.at<float>(0);
     *y = out.at<float>(1);
@@ -76,12 +71,12 @@ void CTransformation::reTransformXY(float *x, float *y,float *z)
 
 void CTransformation::transformXY(float *ax,float *ay)
 {
-    Mat coords = Mat::ones(1, 1, CV_32FC2);
-    Mat metric = Mat::ones(1, 1, CV_32FC2);
+    cv::Mat coords = cv::Mat::ones(1, 1, CV_32FC2);
+    cv::Mat metric = cv::Mat::ones(1, 1, CV_32FC2);
     coords.at<float>(0) = *ax;
     coords.at<float>(1) = *ay;
-    //	cout << intrinsic << endl;
-    undistortPoints(coords,metric,intrinsic,distCoeffs);
+ 
+    cv::undistortPoints(coords, metric, intrinsic, distCoeffs);
     *ax = metric.at<float>(0);
     *ay = metric.at<float>(1);
 }
@@ -112,7 +107,6 @@ STrackedObject CTransformation::transform2D(STrackedObject o)
     return r; 	
 }
 
-/*TODO note #24*/
 float CTransformation::distance(STrackedObject o1,STrackedObject o2)
 {
     return sqrt((o1.x-o2.x)*(o1.x-o2.x)+(o1.y-o2.y)*(o1.y-o2.y)+(o1.z-o2.z)*(o1.z-o2.z));
@@ -339,19 +333,19 @@ STrackedObject CTransformation::calcEigen(double data[])
     double V[3][3];
     //	double Vi[3][3];
     //	double dat[3][3];
-    Mat val = Mat(3,1,CV_32FC1);
-    Mat vec = Mat(3,3,CV_32FC1);
+    cv::Mat val = cv::Mat(3, 1, CV_32FC1);
+    cv::Mat vec = cv::Mat(3, 3, CV_32FC1);
     //	for (int i = 0;i<9;i++)dat[i/3][i%3] = data[i];
     //	eigen_decomposition(dat,Vi,d);
 
-    Mat in = Mat(3,3,CV_32FC1);
+    cv::Mat in = cv::Mat(3, 3, CV_32FC1);
     for(int i=0;i<3;i++){
         for(int j=0;j<3;j++){
             in.at<float>(i,j) = data[3*i+j];
         }
     }
 
-    eigen(in,val,vec);
+    cv::eigen(in,val,vec);
 
     for(int i = 0;i<3;i++){
         V[i][1] = vec.at<float>(1,i);
@@ -531,3 +525,86 @@ STrackedObject CTransformation::transform(SSegment segment)
     return result;
 }
 
+// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+void CTransformation::calcQuaternion(STrackedObject *obj){
+    cv::Vec3f initialNorm(0.0, 0.0, 1.0);
+    cv::Vec3f finalNorm(obj->n0, obj->n1, obj->n2);
+    cv::Vec3f axisVec = finalNorm.cross(initialNorm);
+    cv::normalize(axisVec, axisVec);
+
+    float rotAngle = -acos(finalNorm.dot(initialNorm));
+    //printf("rotAngle %.3f\n", rotAngle);
+    float s = sin(rotAngle / 2.0);
+    float qx1 = axisVec[0] * s;
+    float qy1 = axisVec[1] * s;
+    float qz1 = axisVec[2] * s;
+    float qw1 = cos(rotAngle / 2.0);
+
+    float scale = sqrt(qx1*qx1 + qy1*qy1 + qz1*qz1 + qw1*qw1);
+    //printf("quat1 norm %.3f\n", scale);
+    if(fabs(scale - 1) > 1e-6){
+        qx1 /= scale;
+        qy1 /= scale;
+        qz1 /= scale;
+        qw1 /= scale;
+    }
+
+    obj->qx = qx1;
+    obj->qy = qy1;
+    obj->qz = qz1;
+    obj->qw = qw1;
+
+    //printf("angle %.3f\n", obj->angle);
+    /*s = sin(obj->angle / 2.0);
+    float qx2 = finalNorm[0] * s;
+    float qy2 = finalNorm[1] * s;
+    float qz2 = finalNorm[2] * s;
+    float qw2 = cos(obj->angle / 2.0);
+
+    scale = sqrt(qx2*qx2 + qy2*qy2 + qz2*qz2 + qw2*qw2);
+    //printf("quat2 norm %.3f\n", scale);
+    if(fabs(scale - 1) > 1e-6){
+        qx2 /= scale;
+        qy2 /= scale;
+        qz2 /= scale;
+        qw2 /= scale;
+    }
+
+    obj->qx = qw2 * qx1 + qx2 * qw1 + qy2 * qz1 - qz2 * qy1;
+    obj->qy = qw2 * qy1 - qx2 * qz1 + qy2 * qw1 + qz2 * qx1;
+    obj->qz = qw2 * qz1 + qx2 * qy1 - qy2 * qx1 + qz2 * qw1;
+    obj->qw = qw2 * qw1 - qx2 * qx1 - qy2 * qy1 - qz2 * qz1;
+
+    scale = sqrt(obj->qx*obj->qx + obj->qy*obj->qy + obj->qz*obj->qz + obj->qw*obj->qw);
+    //printf("quatFin norm %.3f\n", scale);
+    if(fabs(scale - 1) > 1e-6){
+        obj->qx /= scale;
+        obj->qy /= scale;
+        obj->qz /= scale;
+        obj->qw /= scale;
+    }*/
+}
+
+// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToEuler/index.htm
+void CTransformation::calcEulerFromQuat(STrackedObject *obj){
+    float test = obj->qx * obj->qy + obj->qz * obj->qw;
+    
+    if(test > 0.499){ // singularity at north pole
+        obj->theta = 2 * atan2(obj->qx, obj->qw);
+        obj->phi = M_PI / 2.0;
+        obj->psi = 0;
+    }else if(test < -0.499){ // singularity at south pole
+        obj->theta = -2 * atan2(obj->qx, obj->qw);
+        obj->phi = -M_PI / 2.0;
+        obj->psi = 0;
+        return;
+    }else{
+        float sqx = obj->qx * obj->qx;
+        float sqy = obj->qy * obj->qy;
+        float sqz = obj->qz * obj->qz;
+        obj->theta = atan2(2 * (obj->qy * obj->qw - obj->qx * obj->qz), 1 - 2 * (sqy + sqz));
+        obj->phi = asin(2 * test);
+        obj->psi = atan2(2 * (obj->qx * obj->qw - obj->qy * obj->qz), 1 - 2 * (sqx + sqz));
+    }
+    //printf("theta %.3f phi %.3f psi %.3f\n", obj->theta, obj->phi, obj->psi);
+}

@@ -16,6 +16,7 @@ typedef struct {
 
 
 class CNecklace {
+
     public:
         CNecklace(int bits, int samples, int minimalHamming = 1);
 
@@ -27,10 +28,7 @@ class CNecklace {
 
         float observationEstimation(float confidence);
 
-
-        SDecoded decode(char *code, int maxIndex, float segmentV0, float segmentV1, char *realCode);
-
-        bool debugSegment;
+        SDecoded decode(char *code, char *realCode, int maxIndex, float segmentV0, float segmentV1);
 
     private:
         SNecklace unknown;      // default unknown ID
@@ -40,7 +38,7 @@ class CNecklace {
         int idSamples;          // samples to determine black/white signal
         int length;             // number of ID bits
         int idLength;           // amount of all possible IDs
-        bool debug;             // for debugging rest of the class
+        bool debug;             // debugging the class
 
         int getEstimatedID();
 

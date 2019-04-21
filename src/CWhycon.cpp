@@ -151,7 +151,6 @@ void CWhycon::processKeys(){
             detectorArray[i]->draw = detectorArray[i]->draw == false;
             detectorArray[i]->debug = detectorArray[i]->debug == false;
         }
-        decoder->debugSegment = decoder->debugSegment == false;
     }
 
     //transformations to use - in our case, the relevant transform is '2D'
@@ -192,10 +191,8 @@ void CWhycon::cameraInfoCallback(const sensor_msgs::CameraInfoConstPtr& msg){
 }
 
 void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
-    //setup timers to assess system performance
+    // setup timers to assess system performance
     CTimer timer;
-    timer.reset();
-    timer.start();
 
     // check if readjusting of camera is needed
     if (image->bpp != msg->step/msg->width || image->width != msg->width || image->height != msg->height){
@@ -214,8 +211,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
 
     numFound = numStatic = 0;
     timer.reset();
-
-
+    timer.start();
 
     // track the markers found in the last attempt
     for (int i = 0; i < numMarkers; i++){
@@ -229,9 +225,10 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     for (int i = 0; i < numMarkers; i++){
         if (currentMarkerArray[i].valid == false){
             lastMarkerArray[i].valid = false;
+            lastMarkerArray[i].seg.valid = false;
             currentMarkerArray[i] = detectorArray[i]->findSegment(image, lastMarkerArray[i].seg);
         }
-        if (currentMarkerArray[i].valid == false) break;  //does not make sense to search for more patterns if the last one was not found
+        if (currentMarkerArray[i].seg.valid == false) break;  //does not make sense to search for more patterns if the last one was not found
     }
 
     for (int i = 0; i < numMarkers; i++){
@@ -246,50 +243,75 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     }
 
     evalTime = timer.getTime();
-    // if(numFound > 0) ROS_INFO("Pattern detection time: %i us. Found: %i Static: %i.",evalTime,numFound,numStatic);
 
-    // publishing information about tags 
+    // Generate information about markers
     whycon_ros::MarkerArray markerArray;
     markerArray.header = msg->header;
 
     for (int i = 0; i < numMarkers; i++){
         if (currentMarkerArray[i].valid){
-            // printf("ID %d\n", currentSegmentArray[i].ID);
             whycon_ros::Marker marker;
 
             marker.id = currentMarkerArray[i].seg.ID;
+            marker.size = currentMarkerArray[i].seg.size;
             marker.u = currentMarkerArray[i].seg.x;
             marker.v = currentMarkerArray[i].seg.y;
-            marker.size = currentMarkerArray[i].seg.size;
+            marker.angle = currentMarkerArray[i].obj.angle;
 
             // Convert to ROS standard Coordinate System
             marker.position.position.x = -currentMarkerArray[i].obj.y;
             marker.position.position.y = -currentMarkerArray[i].obj.z;
             marker.position.position.z = currentMarkerArray[i].obj.x;
 
-            // Convert normal to Quaternion
-            /*tf::Vector3 axis_vector(objectArray[i].pitch, objectArray[i].roll, objectArray[i].yaw);
-            tf::Vector3 up_vector(0.0, 0.0, 1.0);
-            tf::Vector3 right_vector = axis_vector.cross(up_vector);
-            right_vector.normalized();
-            tf::Quaternion quat(right_vector, -1.0*acos(axis_vector.dot(up_vector)));
-            quat.normalize();
-            geometry_msgs::Quaternion marker_orientation;
-            tf::quaternionTFToMsg(quat, marker_orientation);
-
-            marker.position.orientation = marker_orientation;*/
+            geometry_msgs::Quaternion orientation;
+            orientation.x = currentMarkerArray[i].obj.qx;
+            orientation.y = currentMarkerArray[i].obj.qy;
+            orientation.z = currentMarkerArray[i].obj.qz;
+            orientation.w = currentMarkerArray[i].obj.qw;
+            marker.position.orientation = orientation;
 
             // Euler angles
-            marker.rotation.x = currentMarkerArray[i].obj.pitch;
-            marker.rotation.y = currentMarkerArray[i].obj.roll;
-            marker.rotation.z = currentMarkerArray[i].obj.yaw;
+            marker.rotation.x = currentMarkerArray[i].obj.theta;
+            marker.rotation.y = currentMarkerArray[i].obj.phi;
+            marker.rotation.z = currentMarkerArray[i].obj.psi;
 
             markerArray.markers.push_back(marker);
         }
     }
-    if(markerArray.markers.size() > 0) markers_pub.publish(markerArray);
 
-    //draw stuff on the GUI 
+    // Generate RVIZ visualization marker
+    visualization_msgs::MarkerArray visualArray;
+
+    if(pubVisual){
+        for (int i = 0; i < numMarkers; i++){
+            if (currentMarkerArray[i].valid){
+                visualization_msgs::Marker visualMarker;
+                visualMarker.header = msg->header;
+                visualMarker.ns = "whycon";
+                visualMarker.id = (identify) ? markerArray.markers[i].id : i;
+                visualMarker.type = visualization_msgs::Marker::SPHERE;
+                visualMarker.action = visualization_msgs::Marker::MODIFY;
+
+                visualMarker.pose = markerArray.markers[i].position;
+                visualMarker.scale.x = 0.5;//circleDiameter;  // meters
+                visualMarker.scale.y = 0.25;//circleDiameter;
+                visualMarker.scale.z = 0.01;
+                visualMarker.color.r = 0.0;
+                visualMarker.color.g = 1.0;
+                visualMarker.color.b = 0.0;
+                visualMarker.color.a = 1.0;
+                visualMarker.lifetime = ros::Duration(0.2);  // sec
+
+                visualArray.markers.push_back(visualMarker);
+            }
+        }
+    }
+
+    // publishing detected markers
+    if(markerArray.markers.size() > 0) markers_pub.publish(markerArray);
+    if(pubVisual && visualArray.markers.size() > 0) visual_pub.publish(visualArray);
+
+    // draw stuff on the GUI 
     if (useGui){
         gui->drawImage(image);
         gui->drawTimeStats(evalTime, numMarkers);
@@ -302,13 +324,14 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
             gui->drawStats(currentMarkerArray[i].seg.minx-30, currentMarkerArray[i].seg.maxy, currentMarkerArray[i].obj, trans->transformType == TRANSFORM_2D);
     }
 
-    //establishing the coordinate system by manual or autocalibration
+    // establishing the coordinate system by manual or autocalibration
     if (autocalibrate && numFound == numMarkers) autocalibration();
     if (calibNum < 4) manualcalibration();
 
-    //gui->saveScreen(runs);
-    if (useGui) gui->update();
-    if (useGui) processKeys();
+    if(useGui){
+        gui->update();
+        processKeys();
+    }
 }
 
 // dynamic parameter reconfiguration
@@ -325,6 +348,7 @@ void CWhycon::reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& con
     whycon->fieldLength = config.fieldLength;
     whycon->fieldWidth = config.fieldWidth;
     whycon->identify = config.identify;
+    whycon->circleDiameter = config.circleDiameter / 100.0;
 
     trans->reconfigure(config.circleDiameter);
 
@@ -338,7 +362,6 @@ void CWhycon::reconfigureCallback(CWhycon *whycon, whycon_ros::whyconConfig& con
 CWhycon::~CWhycon(){
     ROS_DEBUG("Releasing memory.");
     free(calibTmp);
-    //free(objectArray);
     free(currentMarkerArray);
     free(lastMarkerArray);
 
@@ -363,6 +386,7 @@ void CWhycon::init(char *fPath, char *calPath){
     fontPath = fPath;
     calibDefPath = calPath;
     n->param("useGui", useGui, true);
+    n->param("pubVisual", pubVisual, true);
     n->param("idBits", idBits, 5);
     n->param("idSamples", idSamples, 360);
     n->param("hammingDist", hammingDist, 1);
@@ -399,6 +423,7 @@ void CWhycon::init(char *fPath, char *calPath){
     subInfo = n->subscribe("/camera/camera_info", 1, &CWhycon::cameraInfoCallback, this);
     subImg = it.subscribe("/camera/image_raw", 1, &CWhycon::imageCallback, this);
     markers_pub = n->advertise<whycon_ros::MarkerArray>("/whycon_ros/markers", 1);
+    if(pubVisual) visual_pub = n->advertise<visualization_msgs::MarkerArray>( "/whycon_ros/visual", 1);
 
     while (ros::ok()){
         ros::spinOnce();

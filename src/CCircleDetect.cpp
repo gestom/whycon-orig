@@ -429,7 +429,7 @@ SMarker CCircleDetect::findSegment(CRawImage* image, SSegment init) {
         }
     }
 
-    //threshold management
+    // threshold management
     if (outer.valid){
         lastThreshold = threshold;
         numFailed = 0;  
@@ -441,17 +441,18 @@ SMarker CCircleDetect::findSegment(CRawImage* image, SSegment init) {
         if (changeThreshold()==false) numFailed = 0;
     }
 
-    // TODO analyze and calculate binary code
+    // analyze and calculate binary code, resolve ambiguity, process tranformations
     if (outer.valid){
         trackedObject = trans->transform(outer);
-        if(identify){
-            ambiguityAndObtainCode(image);
-        }else{
-            ambiguityPlain();
-        }
+        
+        if(identify) ambiguityAndObtainCode(image);
+        else ambiguityPlain();
+
+        trans->calcQuaternion(&trackedObject);
+        trans->calcEulerFromQuat(&trackedObject);
     }
 
-    //Drawing results 
+    // drawing results 
     if (outer.valid){
         for (int p = queueOldStart; p < queueEnd; p++){
             pos = queue[p];
@@ -459,29 +460,31 @@ SMarker CCircleDetect::findSegment(CRawImage* image, SSegment init) {
         }
     }
     if (draw){
-        if (outer.valid || track || lastTrackOK){
+        if (init.valid || track || lastTrackOK){
             for (int p = 0; p < queueOldStart; p++){
                 pos = queue[p];
                 image->data[step*pos+0] = 255;
                 image->data[step*pos+1] = 255;
                 image->data[step*pos+2] = 200;
             }
-            /*TODO note #05*/
-            pos = ((int)outer.x+((int)outer.y)*image->width);
-            if (pos > 0 && pos < image->width*image->height){
-                image->data[step*pos+0] = 255;
-                image->data[step*pos+1] = 0;
-                image->data[step*pos+2] = 0;
-            }
+            if(debug){
+                pos = ((int)outer.x+((int)outer.y)*image->width);
+                if (pos > 0 && pos < image->width*image->height){
+                    image->data[step*pos+0] = 255;
+                    image->data[step*pos+1] = 0;
+                    image->data[step*pos+2] = 0;
+                }
 
-            pos = ((int)inner.x+((int)inner.y)*image->width);
-            if (pos > 0 && pos < image->width*image->height){
-                image->data[step*pos+0] = 0;
-                image->data[step*pos+1] = 255;
-                image->data[step*pos+2] = 0;
+                pos = ((int)inner.x+((int)inner.y)*image->width);
+                if (pos > 0 && pos < image->width*image->height){
+                    image->data[step*pos+0] = 0;
+                    image->data[step*pos+1] = 255;
+                    image->data[step*pos+2] = 0;
+                }
             }
         }
     }
+
     bufferCleanup(outer);
 
     SMarker output;
@@ -495,8 +498,7 @@ SMarker CCircleDetect::findSegment(CRawImage* image, SSegment init) {
 void CCircleDetect::ambiguityAndObtainCode(CRawImage *image){
     int segIdx = 0;
 
-    /*TODO note #14*/
-    SSegment tmp[2];
+    SSegSmall tmp[2];
     tmp[0].x = trackedObject.segX1;
     tmp[0].y = trackedObject.segY1;
     tmp[0].m0 = 0.33/0.70*outer.m0;
@@ -541,7 +543,7 @@ void CCircleDetect::ambiguityAndObtainCode(CRawImage *image){
         float gx,gy;
         int px,py;
         unsigned char* ptr = image->data;
-        for (int a = 0;a<idSamples;a++){
+        for (int a = 0; a < idSamples; a++){
             px = x[i][a];
             py = y[i][a];
             gx = x[i][a]-px;
@@ -563,7 +565,7 @@ void CCircleDetect::ambiguityAndObtainCode(CRawImage *image){
             else smooth[i][a] = 0;
 
         //find the edge's locations
-        //int numEdges = 0;  /*TODO note #04*/
+        //int numEdges = 0;
 
         float sx,sy;
         sx = sy = 0;
@@ -624,14 +626,18 @@ void CCircleDetect::ambiguityAndObtainCode(CRawImage *image){
         trackedObject.roll = trackedObject.roll2;
         trackedObject.yaw = trackedObject.yaw2;
     }
+    trackedObject.n0 = trackedObject.pitch;
+    trackedObject.n1 = trackedObject.roll;
+    trackedObject.n2 = trackedObject.yaw;
 
     maxIndex = maxIdx[segIdx];
 
+    //char realCode[idBits*4];
     char realCode[idBits+1];
-    /*TODO note #03*/
-    SDecoded segDecoded = decoder->decode(code[segIdx], maxIndex, outer.v0, outer.v1, realCode);
+
+    SDecoded segDecoded = decoder->decode(code[segIdx], realCode, maxIndex, outer.v0, outer.v1);
     outer.ID = segDecoded.id + 1;
-    outer.angle = segDecoded.angle;
+    trackedObject.angle = segDecoded.angle;
 
     if (debug){
         printf("CODE %i %i %.3f\n", segDecoded.id, maxIndex, segDecoded.angle);
@@ -677,6 +683,10 @@ void CCircleDetect::ambiguityPlain(){
         trackedObject.roll = trackedObject.roll2;
         trackedObject.yaw = trackedObject.yaw2;
     }
+    trackedObject.n0 = trackedObject.pitch;
+    trackedObject.n1 = trackedObject.roll;
+    trackedObject.n2 = trackedObject.yaw;
+    trackedObject.angle = outer.angle;
 }
 
 float CCircleDetect::normalizeAngle(float a) {

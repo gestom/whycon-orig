@@ -53,6 +53,11 @@ typedef struct{
     float roundness;        // segment roundness as calculated by 5 of [1]
     float bwratio;          // black/white area ratio
     int ID;                 // ID of marker
+
+    float angle;
+    float n0, n1, n2;
+    float qx, qy, qz, qw;
+    float theta, phi, psi;
 } STrackedObject;
 
 // rotation/translation model of the 3D transformation                                                                                                                  
