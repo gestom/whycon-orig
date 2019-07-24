@@ -35,12 +35,15 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Quick setup for initial testing
 
-0. Have ROS Kinetic and appropriate camera driver installed. Also have a <a href="http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration">calibrated camera</a> with distortion model "plumb bob".
+0. Have ROS Kinetic and appropriate camera driver installed. ROS Melodic should also work but was not tested. Also have a <a href="http://wiki.ros.org/camera_calibration/Tutorials/MonocularCalibration">calibrated camera</a> with distortion model "plumb bob".
 1. Install the required <a href="#dependencies">libraries</a>
 ```
 sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev graphicsmagick-libmagick-dev-compat
 ```
-2. Download the code from GitHub into a catkin workspace.
+2. Download the code from GitHub into a catkin workspace and switch to this branch with 
+```
+git checkout whycon-ros-full 
+``` 
 3. Compile the code - just type `catkin_make` in workspace directory.
 4. Source setup script in package directory into shell enviroment e.g. `source devel/setup.bash`
 5. Download, resize and print one circular <a href="id/test.pdf">pattern</a> - you have the pattern also in the <i>id/test.pdf</i> file.
@@ -52,7 +55,7 @@ or rewrite file <a href="launch/whycon.launch">whycon.launch</a> so default valu
 ```
 roslaunch whycon_ros whycon.launch
 ```
-7. If using patterns with encoded ID keep the option <i>identify</i> turned on in <i>rqt_reconfigure</i> and if without ID, then turn it off!!!
+7. If using patterns with encoded ID keep the option <i>identify</i> turned on in <i>rqt_reconfigure</i> and if <b>without ID</b>, then turn it off by adding `identify:=false` to the roslaunch.
 8. You should see the image with some numbers below the circle. Pressing <i>D</i> shows the segmentation result.
 9. You can change the parameters in <i>rqt_reconfigure</i> which should open together with whycon GUI.
 
