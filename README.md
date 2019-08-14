@@ -37,11 +37,11 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Quick setup for initial testing
 
-1. Install the required <a href="#dependencies">libraries</a>.: <b>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev guvcview</b>.
+1. Install the required <a href="#dependencies">libraries</a>.: <b>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev guvcview</b>. Install git <b>sudo apt install git</b>.
 
 1. Check the available resolutions, framerates and formats of your USB camera by running <b>guvcview -L</b>. 
 1. Run <b>guvcview</b> and adjust your camera settings (exposure, brightness etc).
-1. Download the software from GitHub <b>git clone https://github.com/gestom/whycon-orig.git</b> and go to the <b>src</b> directory.
+1. Download the software from GitHub <b>git clone git@github.com:gestom/whycon-orig.git</b> and go to the <b>src</b> directory.
 1. Adjust the camera resolution in the <i>main/whycon.cpp</i>.
 1. Compile the software - just type <b>make</b>.
 1. Download, resize and print one circular <a href="etc/test.pdf">pattern</a> - you have the pattern also in the <b>etc/test.pdf</b> file.
