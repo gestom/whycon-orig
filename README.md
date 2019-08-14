@@ -37,12 +37,12 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Quick setup for initial testing
 
-1. Install the required <a href="#dependencies">libraries</a>.: <i>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev guvcview</i>.
+1. Install the required <a href="#dependencies">libraries</a>.: <b>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev guvcview</b>.
 
 1. Check the available resolutions, framerates and formats of your USB camera by running <b>guvcview -L</b>. 
 1. Run <b>guvcview</b> and adjust your camera settings (exposure, brightness etc).
-1. Download the software from GitHub and go to the <b>src</b> directory.
-1. Adjust the camera resolution in the <b>main/whycon.cpp</b>.
+1. Download the software from GitHub <b>git clone https://github.com/gestom/whycon-orig.git</b> and go to the <b>src</b> directory.
+1. Adjust the camera resolution in the <i>main/whycon.cpp</i>.
 1. Compile the software - just type <b>make</b>.
 1. Download, resize and print one circular <a href="etc/test.pdf">pattern</a> - you have the pattern also in the <b>etc/test.pdf</b> file.
 1. Try a test run - you need to run the binary from the <b>bin</b> directory. Type <b>./whycon /dev/videoX 1</b>, where X is the number of the camera and 1 tells the system to track one pattern.</li> 
@@ -98,6 +98,7 @@ All the following libraries are probably in your packages.
 3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficent, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2015_irososar_whycon.bib)].
 4. J. Faigl, T. Krajník et al.: <b>[Low-cost embedded system for relative localization in robotic swarms.](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6630694)</b> International Conference on Robotics and Automation (ICRA), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2013_icra_whycon.bib)].
 5. P. Lightbody, T. Krajník et al.: <b>[A versatile high-performance visual fiducial marker detection system with scalable identity encoding.](http://eprints.lincoln.ac.uk/25828/1/4d0bd9e8a3b3b5ad6ca2d56c1438fbbc.pdf)</b>Symposium on Applied Computing, 2017.[[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2017_sac_whycon.bib)].
+
 ### Acknowledgements
 
 The development of this work is currently supported by the Czech Science Foundation project 17-27006Y _STRoLL_.
