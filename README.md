@@ -35,17 +35,18 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 ### Setting up WhyCon 
 
-#### Quick setup for initial testing
+#### Prepare prerequisities
+1 Make sure your system is up to date: <b>sudo apt-get update</b>.
+1. Install the required <a href="#dependencies">libraries</a>.: <b>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev</b>.
+1. Install git, guvcview etc <b>sudo apt install git guvcview</b>.
+1. Run <b>guvcview</b> and check if you see your camera feed, adjust your camera settings (exposure, brightness etc) and check the available resolutions.
 
-1. Install the required <a href="#dependencies">libraries</a>.: <b>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev guvcview</b>.
-1. Install git, gwenview etc <b>sudo apt install git guvcview</b>.
-1. Check the available resolutions, framerates and formats of your USB camera by running <b>guvcview -L</b>. 
-1. Run <b>guvcview</b> and adjust your camera settings (exposure, brightness etc).
+#### Compile, run and test
 1. Download the software from GitHub <b>git clone git@github.com:gestom/whycon-orig.git</b> and go to the <b>src</b> directory.
 1. Adjust the camera resolution in the <i>main/whycon.cpp</i>.
 1. Compile the software - just type <b>make</b>.
-1. Download, resize and print one circular <a href="etc/test.pdf">pattern</a> - you have the pattern also in the <b>etc/test.pdf</b> file.
-1. Try a test run - you need to run the binary from the <b>bin</b> directory. Type <b>./whycon /dev/videoX 1</b>, where X is the number of the camera and 1 tells the system to track one pattern.</li> 
+1. Download, resize and print one circular <a href="whycon-orig/etc/test.pdf">pattern</a> - you have the pattern also in the <b>etc/test.pdf</b> file.
+1. Try a test run - you need to run the binary in the <b>bin</b> directory. Type <b>../bin/whycon /dev/videoX 1</b>, where X is the number of the camera and 1 tells the system to track one pattern.</li> 
 1. You should see the image with some numbers below the circle. Pressing <b>D</b> shows the segmentation result.
 1. At this point, you can also change camera brightness, exposure, contrast by pressing <i>(SHIFT) b, e, c</i> respectively. These settings are stored in <i>etc/camera.cfg</i> and reloaded on restart.
 1. Open your browser to view localhost:6666. You should see the circle position.
