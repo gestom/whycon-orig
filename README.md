@@ -36,12 +36,14 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 ### Setting up WhyCon 
 
 #### Prepare prerequisities
+
 1 Make sure your system is up to date: <b>sudo apt-get update</b>.
 1. Install the required <a href="#dependencies">libraries</a>.: <b>sudo apt-get install libsdl1.2-dev libsdl-ttf2.0-dev libncurses5-dev</b>.
 1. Install git, guvcview etc <b>sudo apt install git guvcview</b>.
 1. Run <b>guvcview</b> and check if you see your camera feed, adjust your camera settings (exposure, brightness etc) and check the available resolutions.
 
 #### Compile, run and test
+
 1. Download the software from GitHub <b>git clone git@github.com:gestom/whycon-orig.git</b> and go to the <b>src</b> directory.
 1. Adjust the camera resolution in the <i>main/whycon.cpp</i>.
 1. Compile the software - just type <b>make</b>.
