@@ -285,7 +285,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
     whycon_ros::MarkerArray markerArray;
     markerArray.header = msg->header;
 
-    for (int i = 0;i<numMarkers && useGui && drawCoords;i++){
+    for (int i = 0;i<numMarkers;i++){
         if (currentSegmentArray[i].valid){
             // printf("ID %d\n", currentSegmentArray[i].ID);
             whycon_ros::Marker marker;
@@ -445,7 +445,7 @@ void CWhycon::init(char *fPath, char *calPath){
     // subscribe to camera topic, publish topis with card position, rotation and ID
     subInfo = n->subscribe("/camera/camera_info", 1, &CWhycon::cameraInfoCallback, this);
     subImg = it.subscribe("/camera/image_raw", 1, &CWhycon::imageCallback, this);
-    markers_pub = n->advertise<whycon_ros::MarkerArray>("/whycon_ros/markers", 1);
+    markers_pub = n->advertise<whycon_ros::MarkerArray>("markers", 1);
 
     while (ros::ok()){
         ros::spinOnce();
