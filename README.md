@@ -44,7 +44,7 @@ If you decide to use this software for your research, please cite <i>WhyCon</i> 
 
 #### Compile, run and test
 
-1. Download the software from GitHub <b>git clone git@github.com:gestom/whycon-orig.git</b> and go to the <b>src</b> directory.
+1. Download the software from GitHub <b>git clone https://github.com/gestom/whycon-orig.git</b> and go to the <b>src</b> directory.
 1. Adjust the camera resolution in the <i>main/whycon.cpp</i>.
 1. Compile the software - just type <b>make</b>.
 1. Download, resize and print one circular <a href="etc/test.pdf">pattern</a> - you have the pattern also in the <b>whycon-orig/etc/test.pdf</b> file.
