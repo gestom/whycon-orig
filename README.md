@@ -1,3 +1,5 @@
+https://uloz.to/file/zF5w5Tw4WbGz/test-avi
+
 The latest version of the system is in the <b>whycon-ros-full</b> branch. 
 
 ## WhyCon
