@@ -246,7 +246,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
                     // objectArray[i].yaw = currentSegmentArray[i].angle;
                     currentSegmentArray[i].ID = segmentID;
                 }else{
-                    // currentSegmentArray[i].angle = lastSegmentArray[i].angle;
+                    currentSegmentArray[i].angle = lastSegmentArray[i].angle;
                     currentSegmentArray[i].ID = lastSegmentArray[i].ID;
                 }
             }else{
@@ -271,6 +271,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
                     objectArray[i].roll = objectArray[i].roll2;
                     objectArray[i].yaw = objectArray[i].yaw2;
                 }
+                currentSegmentArray[i].angle = 0;
             }
 
             numFound++;
@@ -319,10 +320,7 @@ void CWhycon::imageCallback(const sensor_msgs::ImageConstPtr& msg){
 
             marker.position.orientation = marker_orientation;
 
-            // Euler angles
-            marker.rotation.x = objectArray[i].pitch;
-            marker.rotation.y = objectArray[i].roll;
-            marker.rotation.z = objectArray[i].yaw;
+            marker.yaw = currentSegmentArray[i].angle;
 
             markerArray.markers.push_back(marker);
         }
