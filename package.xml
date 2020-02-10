@@ -2,10 +2,13 @@
 <package>
   <name>whycon_ros</name>
   <version>0.1.3</version>
-  <description>Implementats the WhyCon localisation system into ROS.</description>
+  <description>
+    Implementats the WhyCon localisation system into ROS.
+    MIT license is only for non-comertial use. Otherwise, please, contact us.
+  </description>
 
-  <maintainer email="tomas.krajnik@fel.cvut.cz">Tom Krajnik</maintainer>
   <maintainer email="jiri.ulrich@fel.cvut.cz">Jiri Ulrich</maintainer>
+  <maintainer email="tomas.krajnik@fel.cvut.cz">Tom Krajnik</maintainer>
 
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
@@ -14,6 +17,7 @@
   <url type="website">https://github.com/gestom/whycon-orig</url>
 
   <author email="tomas.krajnik@fel.cvut.cz">Tom Krajnik</author>
+  <author email="jiri.ulrich@fel.cvut.cz">Jiri Ulrich</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   
